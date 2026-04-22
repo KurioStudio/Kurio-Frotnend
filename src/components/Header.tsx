@@ -3,9 +3,8 @@ import {
   Box,
   IconButton,
   InputBase,
-  Modal,
-  List,
-  ListItemButton,
+  Menu,
+  MenuItem,
   Typography,
 } from "@mui/material";
 import { IoSearch, IoSettingsSharp, IoChevronDown } from "react-icons/io5";
@@ -27,12 +26,22 @@ const countries: CountryOption[] = [
 ];
 
 function Header() {
-  const [countryModalOpen, setCountryModalOpen] = useState(false);
+  const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0]);
+
+  const countryMenuOpen = Boolean(countryAnchorEl);
+
+  const handleOpenCountryMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setCountryAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseCountryMenu = () => {
+    setCountryAnchorEl(null);
+  };
 
   const handleSelectCountry = (country: CountryOption) => {
     setSelectedCountry(country);
-    setCountryModalOpen(false);
+    handleCloseCountryMenu();
   };
 
   return (
@@ -80,7 +89,7 @@ function Header() {
         </Box>
 
         <IconButton
-          onClick={() => setCountryModalOpen(true)}
+          onClick={handleOpenCountryMenu}
           sx={{
             color: "#fff",
             borderRadius: 1,
@@ -90,6 +99,9 @@ function Header() {
             bgcolor: "rgba(255,255,255,0.08)",
             "&:hover": { bgcolor: "rgba(255,255,255,0.15)" },
           }}
+          aria-controls={countryMenuOpen ? "country-menu" : undefined}
+          aria-expanded={countryMenuOpen ? "true" : undefined}
+          aria-haspopup="true"
           aria-label="Seleccionar pais"
         >
           <Typography component="span" sx={{ fontSize: "1rem", lineHeight: 1 }}>
@@ -107,50 +119,47 @@ function Header() {
         </IconButton>
       </Box>
 
-      <Modal
-        open={countryModalOpen}
-        onClose={() => setCountryModalOpen(false)}
-        aria-labelledby="country-modal-title"
+      <Menu
+        id="country-menu"
+        anchorEl={countryAnchorEl}
+        open={countryMenuOpen}
+        onClose={handleCloseCountryMenu}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 0.8,
+              minWidth: 220,
+              bgcolor: "#1f242d",
+              border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: 2,
+              boxShadow: 10,
+            },
+          },
+        }}
       >
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: { xs: "90%", sm: 360 },
-            bgcolor: "#1f242d",
-            border: "1px solid rgba(255,255,255,0.15)",
-            boxShadow: 24,
-            borderRadius: 2,
-            p: 2,
-          }}
-        >
-          <Typography
-            id="country-modal-title"
-            sx={{ color: "#f1f4f9", fontWeight: 700, mb: 1.2 }}
+        {countries.map((country) => (
+          <MenuItem
+            key={country.code}
+            onClick={() => handleSelectCountry(country)}
+            selected={selectedCountry.code === country.code}
+            sx={{
+              py: 0.8,
+              px: 1.2,
+              borderRadius: 1,
+              mx: 0.8,
+              my: 0.2,
+              color: "#dce3ef",
+              "&.Mui-selected": { bgcolor: "rgba(255,255,255,0.12)" },
+              "&.Mui-selected:hover": { bgcolor: "rgba(255,255,255,0.18)" },
+            }}
           >
-            Selecciona tu pais
-          </Typography>
-
-          <List sx={{ p: 0 }}>
-            {countries.map((country) => (
-              <ListItemButton
-                key={country.code}
-                onClick={() => handleSelectCountry(country)}
-                sx={{
-                  borderRadius: 1.5,
-                  mb: 0.4,
-                  "&:hover": { bgcolor: "rgba(255,255,255,0.08)" },
-                }}
-              >
-                <Typography sx={{ mr: 1.2, fontSize: "1.2rem" }}>{country.flag}</Typography>
-                <Typography sx={{ color: "#dce3ef" }}>{country.name}</Typography>
-              </ListItemButton>
-            ))}
-          </List>
-        </Box>
-      </Modal>
+            <Typography sx={{ mr: 1.2, fontSize: "1.2rem" }}>{country.flag}</Typography>
+            <Typography>{country.name}</Typography>
+          </MenuItem>
+        ))}
+      </Menu>
     </>
   );
 }
