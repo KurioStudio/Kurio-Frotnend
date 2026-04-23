@@ -31,9 +31,19 @@ function ForgotPasswordPage() {
 		'& .MuiInputLabel-root': {
 			color: '#ebeff7',
 			fontWeight: 500,
+			transform: 'translate(14px, 13px) scale(1)',
+			transition: 'transform 160ms ease, color 160ms ease, max-width 160ms ease',
+			pointerEvents: 'none',
+			zIndex: 1,
 		},
-		'& .MuiInputLabel-root.Mui-focused': {
+		'& .MuiInputLabel-root.Mui-focused, & .MuiInputLabel-root.MuiInputLabel-shrink': {
+			transform: 'translate(14px, -9px) scale(0.75)',
 			color: '#d7a449',
+			backgroundColor: '#223852',
+			paddingInline: '6px',
+		},
+		'& .MuiInputLabel-root:not(.Mui-focused):not(.MuiInputLabel-shrink)': {
+			maxWidth: 'calc(100% - 28px)',
 		},
 		'& .MuiInputBase-input::placeholder': {
 			opacity: 1,
@@ -212,7 +222,7 @@ function ForgotPasswordPage() {
 								},
 							}}
 						>
-							<MenuItem value="es">Espanol</MenuItem>
+							<MenuItem value="es">Español</MenuItem>
 							<MenuItem value="en">English</MenuItem>
 							<MenuItem value="fr">Francais</MenuItem>
 							<MenuItem value="pt">Portugues</MenuItem>

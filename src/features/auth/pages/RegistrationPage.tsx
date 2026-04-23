@@ -3,7 +3,7 @@ import { Box, Button, IconButton, InputAdornment, Link, MenuItem, Select, TextFi
 import { IoEyeOff } from 'react-icons/io5'
 import kurioLogo from '../../../assets/iconos/kurioLogo.png'
 
-function LoginPage() {
+function RegistrationPage() {
 	const [language, setLanguage] = useState('es')
 
 	const outlinedInputSx = {
@@ -84,6 +84,7 @@ function LoginPage() {
 						flexDirection: 'column',
 						justifyContent: 'flex-start',
 						height: '100%',
+						overflowY: 'auto',
 					}}
 				>
 					<Box sx={{ display: 'flex', alignItems: 'center', gap: 1.1, mb: 4.6 }}>
@@ -108,11 +109,11 @@ function LoginPage() {
 								textAlign: 'left',
 							}}
 						>
-							Iniciar sesion
+							Registro
 						</Typography>
 
 						<Typography sx={{ color: '#dce5f5', fontWeight: 700, mb: 2.1, fontSize: '1.1rem' }}>
-							Bienvenida de nuevo
+							Crea tu cuenta
 						</Typography>
 
 						<Box component="form" sx={{ display: 'grid', gap: 1.45 }}>
@@ -120,10 +121,22 @@ function LoginPage() {
 								size="small"
 								fullWidth
 								variant="outlined"
+								label="Usuario"
+								slotProps={{ inputLabel: { shrink: false } }}
+								placeholder="username"
+								autoComplete="username"
+								sx={outlinedInputSx}
+							/>
+
+							<TextField
+								size="small"
+								fullWidth
+								variant="outlined"
 								label="Correo"
 								slotProps={{ inputLabel: { shrink: false } }}
 								placeholder="example@email.com"
-								autoComplete="username"
+								type="email"
+								autoComplete="email"
 								sx={outlinedInputSx}
 							/>
 
@@ -146,7 +159,30 @@ function LoginPage() {
 									},
 								}}
 								placeholder="........"
-								autoComplete="current-password"
+								autoComplete="new-password"
+								sx={outlinedInputSx}
+							/>
+
+							<TextField
+								size="small"
+								type="password"
+								fullWidth
+								variant="outlined"
+								label="Confirmar contraseña"
+								slotProps={{
+									inputLabel: { shrink: false },
+									input: {
+										endAdornment: (
+											<InputAdornment position="end">
+												<IconButton size="small" aria-label="Ocultar contrasena" sx={{ color: '#d7a449' }}>
+													<IoEyeOff />
+												</IconButton>
+											</InputAdornment>
+										),
+									},
+								}}
+								placeholder="........"
+								autoComplete="new-password"
 								sx={outlinedInputSx}
 							/>
 
@@ -162,62 +198,28 @@ function LoginPage() {
 									fontWeight: 700,
 									textTransform: 'none',
 									borderRadius: 999,
-									bgcolor: '#1c2028',
-									color: '#ffffff',
+									bgcolor: '#d7a449',
+									color: '#1c2028',
 									boxShadow: 'none',
-									'&:hover': { bgcolor: '#252a34', boxShadow: 'none' },
+									'&:hover': { bgcolor: '#e2ad4f', boxShadow: 'none' },
 								}}
 							>
-								Iniciar sesion
+								Registrarse
 							</Button>
 
-							<Button
-								variant="contained"
+							<Link
+								href="#"
+								underline="hover"
 								sx={{
-									mt: 0.5,
 									mx: 'auto',
-									width: '100%',
-									height: 46,
-									fontSize: '1.1rem',
+									mt: 0.9,
+									fontSize: '0.96rem',
 									fontWeight: 500,
-									textTransform: 'none',
-									borderRadius: 999,
-									bgcolor: '#1c2028',
-									color: '#ffffff',
-									boxShadow: 'none',
-									'&:hover': { bgcolor: '#252a34', boxShadow: 'none' },
+									color: '#ebeff7',
 								}}
 							>
-								Continuar con correo
-							</Button>
-
-							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.8, mt: 0.9 }}>
-								<Link
-									href="#"
-									underline="hover"
-									sx={{
-										mx: 'auto',
-										fontSize: '0.96rem',
-										fontWeight: 500,
-										color: '#ebeff7',
-									}}
-								>
-									¿Contraseña olvidada?
-								</Link>
-
-								<Link
-									href="#"
-									underline="hover"
-									sx={{
-										mx: 'auto',
-										fontSize: '0.96rem',
-										fontWeight: 500,
-										color: '#ebeff7',
-									}}
-								>
-									¿No tienes cuenta?
-								</Link>
-							</Box>
+								¿Ya tienes cuenta?
+							</Link>
 						</Box>
 					</Box>
 
@@ -261,7 +263,6 @@ function LoginPage() {
 							<MenuItem value="pt">Portugues</MenuItem>
 						</Select>
 					</Box>
-
 				</Box>
 
 				<Box
@@ -284,9 +285,8 @@ function LoginPage() {
 				>
 				</Box>
 			</Box>
-
 		</Box>
 	)
 }
 
-export default LoginPage
+export default RegistrationPage
