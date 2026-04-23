@@ -107,11 +107,11 @@ function Header() {
         </IconButton>
 
           <IconButton sx={{ color: "#111", p: 0.35 }} aria-label="Configuracion">
-            <IoSettingsSharp size={18} color="#000" />
+            <IoSettingsSharp size={18} color="#ffffff" />
           </IconButton>
 
           <IconButton sx={{ color: "#111", p: 0.35 }} aria-label="Usuario">
-            <FaRegCircleUser size={18} color="#000" />
+            <FaRegCircleUser size={18} color="#ffffff" />
           </IconButton>
         </Box>
       </Box>

@@ -132,24 +132,29 @@ function ForgotPasswordPage() {
 								sx={outlinedInputSx}
 							/>
 
-							<Box sx={{ display: 'grid', gap: 1.1 }}>
+							<Box
+								sx={{
+									display: 'flex',
+									alignItems: 'stretch',
+									gap: 1.2,
+									width: '100%',
+								}}
+							>
 								<TextField
 									size="small"
-									fullWidth
+									sx={{ ...outlinedInputSx, flex: 1 }}
 									variant="outlined"
 									label="Código"
 									placeholder="123456"
 									autoComplete="one-time-code"
-									sx={outlinedInputSx}
 								/>
 
 								<Button
 									type="button"
 									variant="contained"
 									sx={{
-										alignSelf: 'center',
-										height: 38,
-										minWidth: 112,
+										flex: '0 0 40%',
+										height: 48,
 										px: 2,
 										fontSize: '0.72rem',
 										fontWeight: 700,

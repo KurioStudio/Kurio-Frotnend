@@ -162,33 +162,13 @@ function LoginPage() {
 									fontWeight: 700,
 									textTransform: 'none',
 									borderRadius: 999,
-									bgcolor: '#1c2028',
-									color: '#ffffff',
+									bgcolor: '#d7a449',
+									color: '#1c2028',
 									boxShadow: 'none',
-									'&:hover': { bgcolor: '#252a34', boxShadow: 'none' },
+									'&:hover': { bgcolor: '#e2ad4f', boxShadow: 'none' },
 								}}
 							>
 								Iniciar sesion
-							</Button>
-
-							<Button
-								variant="contained"
-								sx={{
-									mt: 0.5,
-									mx: 'auto',
-									width: '100%',
-									height: 46,
-									fontSize: '1.1rem',
-									fontWeight: 500,
-									textTransform: 'none',
-									borderRadius: 999,
-									bgcolor: '#1c2028',
-									color: '#ffffff',
-									boxShadow: 'none',
-									'&:hover': { bgcolor: '#252a34', boxShadow: 'none' },
-								}}
-							>
-								Continuar con correo
 							</Button>
 
 							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.8, mt: 0.9 }}>
