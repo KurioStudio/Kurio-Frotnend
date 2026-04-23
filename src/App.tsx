@@ -1,10 +1,9 @@
-
-import './App.css'
+import ForgotPasswordPage from './features/auth/pages/ForgotPasswordPage'
 
 function App() {
-
   return (
     <>
+      
     </>
   )
 }
