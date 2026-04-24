@@ -1,5 +1,6 @@
 import { useState, type MouseEvent } from 'react'
-import { Box, Button, IconButton, InputAdornment, Link, Menu, MenuItem, TextField, Typography } from '@mui/material'
+import { Link as MuiLink, Box, Button, IconButton, InputAdornment, Menu, MenuItem, TextField, Typography } from '@mui/material'
+import { Link as RouterLink } from 'react-router-dom';
 import { IoChevronDown, IoEyeOff } from 'react-icons/io5'
 import kurioLogo from '../../../assets/iconos/kurioLogo.png'
 import '../../../styles/auth.css'
@@ -93,13 +94,13 @@ function LoginPage() {
 							</Button>
 
 							<Box className="auth-page__links">
-								<Link href="#" underline="hover" className="auth-page__link">
+								<MuiLink component={RouterLink} to="/auth/forgot-password" underline="hover" className="auth-page__link">
 									¿Contraseña olvidada?
-								</Link>
+								</MuiLink>
 
-								<Link href="#" underline="hover" className="auth-page__link">
+								<MuiLink component={RouterLink} to="/auth/register" underline="hover" className="auth-page__link">
 									¿No tienes cuenta?
-								</Link>
+								</MuiLink>
 							</Box>
 						</Box>
 					</Box>

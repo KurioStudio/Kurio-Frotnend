@@ -1,6 +1,7 @@
 import { useState, type MouseEvent } from 'react'
-import { Box, Button, IconButton, InputAdornment, Link, Menu, MenuItem, TextField, Typography } from '@mui/material'
+import { Box, Button, IconButton, InputAdornment, Link as MuiLink, Menu, MenuItem, TextField, Typography } from '@mui/material'
 import { IoChevronDown, IoEyeOff } from 'react-icons/io5'
+import { Link as RouterLink } from 'react-router-dom';
 import kurioLogo from '../../../assets/iconos/kurioLogo.png'
 import '../../../styles/auth.css'
 import '../../../styles/Header.css'
@@ -127,9 +128,9 @@ function RegistrationPage() {
 								Registrarse
 							</Button>
 
-							<Link href="#" underline="hover" className="auth-page__link auth-page__link--centered">
+							<MuiLink component={RouterLink} to="/auth/login" underline="hover" className="auth-page__link auth-page__link--centered">
 								¿Ya tienes cuenta?
-							</Link>
+							</MuiLink>
 						</Box>
 					</Box>
 
