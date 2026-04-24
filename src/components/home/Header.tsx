@@ -1,134 +1,94 @@
-import { useState } from "react";
-import {
-  Box,
-  IconButton,
-  InputBase,
-  Menu,
-  MenuItem,
-  Typography,
-} from "@mui/material";
-import { IoSearch, IoSettingsSharp, IoChevronDown } from "react-icons/io5";
-import { FaRegCircleUser } from "react-icons/fa6";
+import { useState, type MouseEvent } from 'react'
+import { Box, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
+import { IoSearch, IoSettingsSharp, IoChevronDown } from 'react-icons/io5'
+import { FaRegCircleUser } from 'react-icons/fa6'
+import '../../styles/Header.css'
 
 type CountryOption = {
-  code: string;
-  name: string;
-  flag: string;
-};
+  code: string
+  name: string
+}
 
 const countries: CountryOption[] = [
-  { code: "es", name: "Espana", flag: "🇪🇸" },
-  { code: "us", name: "Estados Unidos", flag: "🇺🇸" },
-  { code: "fr", name: "Francia", flag: "🇫🇷" },
-  { code: "de", name: "Alemania", flag: "🇩🇪" },
-  { code: "it", name: "Italia", flag: "🇮🇹" },
-  { code: "pt", name: "Portugal", flag: "🇵🇹" },
-];
+  { code: 'es', name: 'Español' },
+  { code: 'us', name: 'Inglés' },
+  { code: 'fr', name: 'Francés' },
+  { code: 'de', name: 'Alemán' },
+  { code: 'it', name: 'Italiano' },
+  { code: 'pt', name: 'Portugués' },
+]
+
+const getFlagUrl = (countryCode: string) => `https://flagcdn.com/w40/${countryCode}.png`
 
 function Header() {
-  const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0]);
-  const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
+  const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
+  const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
+  const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null)
 
-  const countryMenuOpen = Boolean(countryAnchorEl);
-  const profileMenuOpen = Boolean(profileAnchorEl);
+  const countryMenuOpen = Boolean(countryAnchorEl)
+  const profileMenuOpen = Boolean(profileAnchorEl)
 
-  const handleOpenCountryMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setCountryAnchorEl(event.currentTarget);
-  };
+  const handleOpenCountryMenu = (event: MouseEvent<HTMLElement>) => {
+    setCountryAnchorEl(event.currentTarget)
+  }
 
   const handleCloseCountryMenu = () => {
-    setCountryAnchorEl(null);
-  };
+    setCountryAnchorEl(null)
+  }
 
   const handleSelectCountry = (country: CountryOption) => {
-    setSelectedCountry(country);
-    handleCloseCountryMenu();
-  };
+    setSelectedCountry(country)
+    handleCloseCountryMenu()
+  }
 
-  const handleOpenProfileMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setProfileAnchorEl(event.currentTarget);
-  };
+  const handleOpenProfileMenu = (event: MouseEvent<HTMLElement>) => {
+    setProfileAnchorEl(event.currentTarget)
+  }
 
   const handleCloseProfileMenu = () => {
-    setProfileAnchorEl(null);
-  };
+    setProfileAnchorEl(null)
+  }
 
   return (
     <>
-      <Box
-        sx={{
-          width: "100%",
-          height: 50,
-          bgcolor: "#1f2a3d",
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          px: { xs: 1, sm: 2, md: 3 },
-          py: 0.35,
-          borderRadius: 1.2,
-        }}
-      >
-        <Box
-          sx={{
-            flex: 1,
-            maxWidth: "50%",
-            height: 30,
-            bgcolor: "#203a61",
-            borderRadius: 999,
-            display: "flex",
-            alignItems: "center",
-            px: 1.2,
-            gap: 0.7,
-          }}
-        >
-          <IoSearch size={15} color="#0f1827" />
-          <InputBase
-            placeholder="Buscar"
-            sx={{
-              color: "#d4dded",
-              width: "100%",
-              fontSize: "0.875rem",
-              "& input::placeholder": { opacity: 1, color: "#b8c8df" },
-            }}
-          />
+      <Box className="header">
+        <Box className="header__search">
+          <IoSearch className="header__search-icon" size={15} />
+          <InputBase placeholder="Buscar" className="header__search-input" />
         </Box>
-      <Box sx={{ display: "flex", gap: 0.8, ml: "auto" }}>
+
+        <Box className="header__actions">
         <IconButton
+          className="header__icon-button header__country-button"
           onClick={handleOpenCountryMenu}
-          sx={{
-            color: "#fff",
-            borderRadius: 1,
-            px: 0.5,
-            py: 0.2,
-            gap: 0.2,
-            bgcolor: "rgba(255,255,255,0.08)",
-            "&:hover": { bgcolor: "rgba(255,255,255,0.15)" },
-          }}
           aria-controls={countryMenuOpen ? "country-menu" : undefined}
           aria-expanded={countryMenuOpen ? "true" : undefined}
           aria-haspopup="true"
           aria-label="Seleccionar pais"
         >
-          <Typography component="span" sx={{ fontSize: "0.85rem", lineHeight: 1 }}>
-            {selectedCountry.flag}
-          </Typography>
-          <IoChevronDown size={10} />
+          <Box
+            component="img"
+            src={getFlagUrl(selectedCountry.code)}
+            alt={selectedCountry.name}
+            className="header__country-flag-image"
+            loading="lazy"
+          />
+          <IoChevronDown className="header__icon" size={10} />
         </IconButton>
 
-          <IconButton sx={{ color: "#111", p: 0.35 }} aria-label="Configuracion">
-            <IoSettingsSharp size={18} color="#ffffff" />
+          <IconButton className="header__icon-button" aria-label="Configuracion">
+            <IoSettingsSharp className="header__icon" size={18} />
           </IconButton>
 
           <IconButton
+            className="header__icon-button"
             onClick={handleOpenProfileMenu}
-            sx={{ color: "#111", p: 0.35 }}
             aria-controls={profileMenuOpen ? "profile-menu" : undefined}
             aria-expanded={profileMenuOpen ? "true" : undefined}
             aria-haspopup="true"
             aria-label="Usuario"
           >
-            <FaRegCircleUser size={18} color="#ffffff" />
+            <FaRegCircleUser className="header__icon" size={18} />
           </IconButton>
         </Box>
       </Box>
@@ -142,32 +102,25 @@ function Header() {
         transformOrigin={{ vertical: "top", horizontal: "right" }}
         slotProps={{
           paper: {
-            sx: {
-              mt: 0.8,
-              minWidth: 190,
-              bgcolor: "#1f242d",
-              border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: 2,
-              boxShadow: 10,
-            },
+            className: 'header__menu-paper',
           },
         }}
       >
         <MenuItem
+          className="header__menu-item"
           onClick={handleCloseProfileMenu}
-          sx={{ color: "#dce3ef", py: 0.8, px: 1.2, mx: 0.8, my: 0.2, borderRadius: 1 }}
         >
           Ver perfil
         </MenuItem>
         <MenuItem
+          className="header__menu-item"
           onClick={handleCloseProfileMenu}
-          sx={{ color: "#dce3ef", py: 0.8, px: 1.2, mx: 0.8, my: 0.2, borderRadius: 1 }}
         >
           Editar perfil
         </MenuItem>
         <MenuItem
+          className="header__menu-item header__menu-item--danger"
           onClick={handleCloseProfileMenu}
-          sx={{ color: "#ff5a5f", py: 0.8, px: 1.2, mx: 0.8, my: 0.2, borderRadius: 1 }}
         >
           Cerrar sesion
         </MenuItem>
@@ -182,40 +135,30 @@ function Header() {
         transformOrigin={{ vertical: "top", horizontal: "right" }}
         slotProps={{
           paper: {
-            sx: {
-              mt: 0.8,
-              minWidth: 220,
-              bgcolor: "#1f242d",
-              border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: 2,
-              boxShadow: 10,
-            },
+            className: 'header__menu-paper header__menu-paper--countries',
           },
         }}
       >
         {countries.map((country) => (
           <MenuItem
             key={country.code}
+            className="header__menu-item"
             onClick={() => handleSelectCountry(country)}
             selected={selectedCountry.code === country.code}
-            sx={{
-              py: 0.8,
-              px: 1.2,
-              borderRadius: 1,
-              mx: 0.8,
-              my: 0.2,
-              color: "#dce3ef",
-              "&.Mui-selected": { bgcolor: "rgba(255,255,255,0.12)" },
-              "&.Mui-selected:hover": { bgcolor: "rgba(255,255,255,0.18)" },
-            }}
           >
-            <Typography sx={{ mr: 1.2, fontSize: "1.2rem" }}>{country.flag}</Typography>
+            <Box
+              component="img"
+              src={getFlagUrl(country.code)}
+              alt={country.name}
+              className="header__menu-flag-image"
+              loading="lazy"
+            />
             <Typography>{country.name}</Typography>
           </MenuItem>
         ))}
       </Menu>
     </>
-  );
+  )
 }
 
-export default Header;
+export default Header

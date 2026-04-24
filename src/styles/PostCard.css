@@ -1,0 +1,46 @@
+.post-card {
+  display: grid;
+  gap: 11px;
+  padding: 9px;
+  background: var(--kurio-surface);
+  border: 1px solid var(--kurio-border-soft);
+  border-radius: 19px;
+}
+
+.post-card__image {
+  height: 170px;
+  background: var(--kurio-card-accent);
+  border-radius: 16px;
+}
+
+.post-card__title,
+.MuiTypography-root.post-card__title {
+  color: var(--kurio-text);
+  font-size: 1.95rem;
+  line-height: 1.1;
+}
+
+.post-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.post-card__meta-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--kurio-text-soft);
+}
+
+.post-card__icon {
+  color: var(--kurio-ink);
+}
+
+.post-card__meta-text,
+.MuiTypography-root.post-card__meta-text {
+  color: var(--kurio-text-soft);
+  font-size: 1.2rem;
+  line-height: 1.2;
+}
