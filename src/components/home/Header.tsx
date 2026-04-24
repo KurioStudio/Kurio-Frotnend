@@ -28,8 +28,10 @@ const countries: CountryOption[] = [
 function Header() {
   const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0]);
+  const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
 
   const countryMenuOpen = Boolean(countryAnchorEl);
+  const profileMenuOpen = Boolean(profileAnchorEl);
 
   const handleOpenCountryMenu = (event: React.MouseEvent<HTMLElement>) => {
     setCountryAnchorEl(event.currentTarget);
@@ -42,6 +44,14 @@ function Header() {
   const handleSelectCountry = (country: CountryOption) => {
     setSelectedCountry(country);
     handleCloseCountryMenu();
+  };
+
+  const handleOpenProfileMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setProfileAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseProfileMenu = () => {
+    setProfileAnchorEl(null);
   };
 
   return (
@@ -110,11 +120,58 @@ function Header() {
             <IoSettingsSharp size={18} color="#ffffff" />
           </IconButton>
 
-          <IconButton sx={{ color: "#111", p: 0.35 }} aria-label="Usuario">
+          <IconButton
+            onClick={handleOpenProfileMenu}
+            sx={{ color: "#111", p: 0.35 }}
+            aria-controls={profileMenuOpen ? "profile-menu" : undefined}
+            aria-expanded={profileMenuOpen ? "true" : undefined}
+            aria-haspopup="true"
+            aria-label="Usuario"
+          >
             <FaRegCircleUser size={18} color="#ffffff" />
           </IconButton>
         </Box>
       </Box>
+
+      <Menu
+        id="profile-menu"
+        anchorEl={profileAnchorEl}
+        open={profileMenuOpen}
+        onClose={handleCloseProfileMenu}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 0.8,
+              minWidth: 190,
+              bgcolor: "#1f242d",
+              border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: 2,
+              boxShadow: 10,
+            },
+          },
+        }}
+      >
+        <MenuItem
+          onClick={handleCloseProfileMenu}
+          sx={{ color: "#dce3ef", py: 0.8, px: 1.2, mx: 0.8, my: 0.2, borderRadius: 1 }}
+        >
+          Ver perfil
+        </MenuItem>
+        <MenuItem
+          onClick={handleCloseProfileMenu}
+          sx={{ color: "#dce3ef", py: 0.8, px: 1.2, mx: 0.8, my: 0.2, borderRadius: 1 }}
+        >
+          Editar perfil
+        </MenuItem>
+        <MenuItem
+          onClick={handleCloseProfileMenu}
+          sx={{ color: "#ff5a5f", py: 0.8, px: 1.2, mx: 0.8, my: 0.2, borderRadius: 1 }}
+        >
+          Cerrar sesion
+        </MenuItem>
+      </Menu>
 
       <Menu
         id="country-menu"
