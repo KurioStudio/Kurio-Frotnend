@@ -1,8 +1,10 @@
-import { useState, type MouseEvent } from 'react'
-import { Box, Button, IconButton, InputAdornment, Link as MuiLink, Menu, MenuItem, TextField, Typography } from '@mui/material'
-import { IoChevronDown, IoEyeOff } from 'react-icons/io5'
-import { Link as RouterLink } from 'react-router-dom';
+import { useState, type FormEvent, type MouseEvent } from 'react'
+import { FirebaseError } from 'firebase/app'
+import { Alert, Box, Button, CircularProgress, IconButton, InputAdornment, Link as MuiLink, Menu, MenuItem, TextField, Typography } from '@mui/material'
+import { IoChevronDown, IoEye, IoEyeOff } from 'react-icons/io5'
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import kurioLogo from '../../../assets/iconos/kurioLogo.png'
+import { registerWithEmail } from '../services/authService'
 import '../../../styles/auth.css'
 import '../../../styles/Header.css'
 
@@ -22,9 +24,40 @@ const countries: CountryOption[] = [
 
 const getFlagUrl = (countryCode: string) => `https://flagcdn.com/w40/${countryCode}.png`
 
+function getRegisterErrorMessage(error: unknown): string {
+	if (error instanceof FirebaseError) {
+		switch (error.code) {
+			case 'auth/email-already-in-use':
+				return 'Este correo ya esta registrado'
+			case 'auth/invalid-email':
+				return 'El correo no es valido'
+			case 'auth/weak-password':
+				return 'La contraseña es demasiado debil'
+			default:
+				return 'No se pudo registrar la cuenta'
+		}
+	}
+
+	if (error instanceof Error) {
+		return error.message || 'No se pudo registrar la cuenta'
+	}
+
+	return 'No se pudo registrar la cuenta'
+}
+
 function RegistrationPage() {
+	const navigate = useNavigate()
 	const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
 	const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
+	const [username, setUsername] = useState('')
+	const [email, setEmail] = useState('')
+	const [password, setPassword] = useState('')
+	const [confirmPassword, setConfirmPassword] = useState('')
+	const [showPassword, setShowPassword] = useState(false)
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [registerError, setRegisterError] = useState<string | null>(null)
+	const [registerSuccess, setRegisterSuccess] = useState<string | null>(null)
 
 	const countryMenuOpen = Boolean(countryAnchorEl)
 
@@ -41,6 +74,39 @@ function RegistrationPage() {
 		handleCloseCountryMenu()
 	}
 
+	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		setRegisterError(null)
+		setRegisterSuccess(null)
+
+		if (!username.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+			setRegisterError('Debes completar todos los campos')
+			return
+		}
+
+		if (password !== confirmPassword) {
+			setRegisterError('Las contraseñas no coinciden')
+			return
+		}
+
+		setIsSubmitting(true)
+
+		try {
+			await registerWithEmail({
+				username: username.trim(),
+				email: email.trim(),
+				password,
+			})
+
+			setRegisterSuccess('Cuenta creada correctamente')
+			navigate('/', { replace: true })
+		} catch (error) {
+			setRegisterError(getRegisterErrorMessage(error))
+		} finally {
+			setIsSubmitting(false)
+		}
+	}
+
 	return (
 		<Box component="main" className="auth-page">
 			<Box className="auth-page__shell">
@@ -54,16 +120,21 @@ function RegistrationPage() {
 						<Typography className="auth-page__title">Registro</Typography>
 						<Typography className="auth-page__subtitle">Crea tu cuenta</Typography>
 
-						<Box component="form" className="auth-page__form">
+						<Box component="form" className="auth-page__form" onSubmit={handleSubmit} autoComplete="off">
+							{registerError ? <Alert severity="error">{registerError}</Alert> : null}
+							{registerSuccess ? <Alert severity="success">{registerSuccess}</Alert> : null}
+
 							<TextField
 								size="small"
 								fullWidth
 								variant="outlined"
 								label="Usuario"
 								className="auth-field"
-								slotProps={{ inputLabel: { shrink: false } }}
-								placeholder="username"
-								autoComplete="username"
+								value={username}
+								onChange={(event) => setUsername(event.target.value)}
+								disabled={isSubmitting}
+								placeholder="Tu nombre de usuario"
+								autoComplete="off"
 							/>
 
 							<TextField
@@ -72,60 +143,78 @@ function RegistrationPage() {
 								variant="outlined"
 								label="Correo"
 								className="auth-field"
-								slotProps={{ inputLabel: { shrink: false } }}
-								placeholder="example@email.com"
+								value={email}
+								onChange={(event) => setEmail(event.target.value)}
+								disabled={isSubmitting}
+								placeholder="usuario@correo.com"
 								type="email"
-								autoComplete="email"
+								autoComplete="off"
 							/>
 
 							<TextField
 								size="small"
-								type="password"
+								type={showPassword ? 'text' : 'password'}
 								fullWidth
 								variant="outlined"
 								label="Contraseña"
 								className="auth-field auth-field--password"
+								value={password}
+								onChange={(event) => setPassword(event.target.value)}
+								disabled={isSubmitting}
 								slotProps={{
-									inputLabel: { shrink: false },
 									input: {
 										endAdornment: (
 											<InputAdornment position="end">
-												<IconButton size="small" aria-label="Ocultar contrasena" className="auth-field__icon-button">
-													<IoEyeOff className="auth-field__icon" />
+												<IconButton
+													size="small"
+													aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+													className="auth-field__icon-button"
+													onClick={() => setShowPassword((current) => !current)}
+													disabled={isSubmitting}
+												>
+													{showPassword ? <IoEyeOff className="auth-field__icon" /> : <IoEye className="auth-field__icon" />}
 												</IconButton>
 											</InputAdornment>
 										),
 									},
 								}}
-								placeholder="........"
-								autoComplete="new-password"
+								placeholder="Crea una contraseña"
+								autoComplete="off"
 							/>
 
 							<TextField
 								size="small"
-								type="password"
+								type={showConfirmPassword ? 'text' : 'password'}
 								fullWidth
 								variant="outlined"
 								label="Confirmar contraseña"
 								className="auth-field auth-field--password"
+								value={confirmPassword}
+								onChange={(event) => setConfirmPassword(event.target.value)}
+								disabled={isSubmitting}
 								slotProps={{
-									inputLabel: { shrink: false },
 									input: {
 										endAdornment: (
 											<InputAdornment position="end">
-												<IconButton size="small" aria-label="Ocultar contrasena" className="auth-field__icon-button">
-													<IoEyeOff className="auth-field__icon" />
+												<IconButton
+													size="small"
+													aria-label={showConfirmPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+													className="auth-field__icon-button"
+													onClick={() => setShowConfirmPassword((current) => !current)}
+													disabled={isSubmitting}
+												>
+													{showConfirmPassword ? <IoEyeOff className="auth-field__icon" /> : <IoEye className="auth-field__icon" />}
 												</IconButton>
 											</InputAdornment>
 										),
 									},
 								}}
-								placeholder="........"
-								autoComplete="new-password"
+								placeholder="Repite tu contraseña"
+								autoComplete="off"
 							/>
 
-							<Button type="submit" variant="contained" className="auth-page__submit">
-								Registrarse
+							<Button type="submit" variant="contained" className="auth-page__submit" disabled={isSubmitting}>
+								{isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Registrarse'}
 							</Button>
 
 							<MuiLink component={RouterLink} to="/auth/login" underline="hover" className="auth-page__link auth-page__link--centered">

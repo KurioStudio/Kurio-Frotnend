@@ -2,6 +2,8 @@ import { useState, type MouseEvent } from 'react'
 import { Box, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
 import { IoSearch, IoSettingsSharp, IoChevronDown } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
+import { useNavigate } from 'react-router-dom'
+import { hasValidSession, logoutUser } from '../../features/auth/services/authService'
 import '../../styles/Header.css'
 
 type CountryOption = {
@@ -21,6 +23,7 @@ const countries: CountryOption[] = [
 const getFlagUrl = (countryCode: string) => `https://flagcdn.com/w40/${countryCode}.png`
 
 function Header() {
+  const navigate = useNavigate()
   const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
   const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
   const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null)
@@ -41,12 +44,30 @@ function Header() {
     handleCloseCountryMenu()
   }
 
-  const handleOpenProfileMenu = (event: MouseEvent<HTMLElement>) => {
+  const handleOpenProfileMenu = async (event: MouseEvent<HTMLElement>) => {
+    const isSessionValid = await hasValidSession()
+
+    if (!isSessionValid) {
+      navigate('/auth/login')
+      return
+    }
+
     setProfileAnchorEl(event.currentTarget)
   }
 
   const handleCloseProfileMenu = () => {
     setProfileAnchorEl(null)
+  }
+
+  const handleLogout = async () => {
+    await logoutUser()
+    handleCloseProfileMenu()
+    navigate('/auth/login')
+  }
+
+  const handleEditProfile = () => {
+    handleCloseProfileMenu()
+    navigate('/profile')
   }
 
   return (
@@ -114,13 +135,13 @@ function Header() {
         </MenuItem>
         <MenuItem
           className="header__menu-item"
-          onClick={handleCloseProfileMenu}
+          onClick={handleEditProfile}
         >
           Editar perfil
         </MenuItem>
         <MenuItem
           className="header__menu-item header__menu-item--danger"
-          onClick={handleCloseProfileMenu}
+          onClick={() => void handleLogout()}
         >
           Cerrar sesion
         </MenuItem>
