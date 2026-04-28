@@ -1,14 +1,16 @@
-import { BrowserRouter, Route, Router, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import ForgotPasswordPage from './features/auth/pages/ForgotPasswordPage'
 import LoginPage from './features/auth/pages/LoginPage'
 import RegistrationPage from './features/auth/pages/RegistrationPage'
 import HomePage from './features/home/pages/HomePage'
+import UploadModelPage from './features/home/pages/UploadModelPage'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/subir-modelo" element={<UploadModelPage />} />
 
         <Route path="/auth">
             <Route path="login" element={<LoginPage />} />
