@@ -30,10 +30,7 @@ export type Post = {
 export async function findAllPosts(): Promise<FeedPost[]> {
     const currentUser = await getCurrentUser()
     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts`, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${currentUser?.idToken ?? ''}`
-        }
+        method: 'GET'
     })
     const posts = await response.json()
     return posts.map((post: any) => ({
