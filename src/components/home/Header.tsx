@@ -1,5 +1,5 @@
 import { useState, type MouseEvent } from 'react'
-import { Box, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
 import { IoSearch, IoSettingsSharp, IoChevronDown } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import { useNavigate } from 'react-router-dom'
@@ -26,10 +26,11 @@ function Header() {
   const navigate = useNavigate()
   const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
   const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
-  const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null)
+  const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null)
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
   const countryMenuOpen = Boolean(countryAnchorEl)
-  const profileMenuOpen = Boolean(profileAnchorEl)
+  const settingsMenuOpen = Boolean(settingsAnchorEl)
 
   const handleOpenCountryMenu = (event: MouseEvent<HTMLElement>) => {
     setCountryAnchorEl(event.currentTarget)
@@ -44,7 +45,12 @@ function Header() {
     handleCloseCountryMenu()
   }
 
-  const handleOpenProfileMenu = async (event: MouseEvent<HTMLElement>) => {
+  const handleEditarPerfil = () => {
+    handleCloseSettingsMenu()
+    navigate('/profile/edit')
+  }
+
+  const handleOpenProfileMenu = async () => {
     const isSessionValid = await hasValidSession()
 
     if (!isSessionValid) {
@@ -52,22 +58,32 @@ function Header() {
       return
     }
 
-    setProfileAnchorEl(event.currentTarget)
+    navigate('/profile')
   }
 
-  const handleCloseProfileMenu = () => {
-    setProfileAnchorEl(null)
+
+  const handleOpenSettingsMenu = (event: MouseEvent<HTMLElement>) => {
+    setSettingsAnchorEl(event.currentTarget)
+  }
+
+  const handleCloseSettingsMenu = () => {
+    setSettingsAnchorEl(null)
   }
 
   const handleLogout = async () => {
     await logoutUser()
-    handleCloseProfileMenu()
+    handleCloseSettingsMenu()
+    setLogoutDialogOpen(false)
     navigate('/auth/login')
   }
 
-  const handleEditProfile = () => {
-    handleCloseProfileMenu()
-    navigate('/profile')
+  const handleAskLogout = () => {
+    handleCloseSettingsMenu()
+    setLogoutDialogOpen(true)
+  }
+
+  const handleCloseLogoutDialog = () => {
+    setLogoutDialogOpen(false)
   }
 
   return (
@@ -97,15 +113,20 @@ function Header() {
           <IoChevronDown className="header__icon" size={10} />
         </IconButton>
 
-          <IconButton className="header__icon-button" aria-label="Configuracion">
+          <IconButton 
+            className="header__icon-button" 
+            aria-label="Configuracion"
+            onClick={handleOpenSettingsMenu}
+            aria-controls={settingsMenuOpen ? "settings-menu" : undefined}
+            aria-expanded={settingsMenuOpen ? "true" : undefined}
+            aria-haspopup="true"
+          >
             <IoSettingsSharp className="header__icon" size={18} />
           </IconButton>
 
           <IconButton
             className="header__icon-button"
             onClick={handleOpenProfileMenu}
-            aria-controls={profileMenuOpen ? "profile-menu" : undefined}
-            aria-expanded={profileMenuOpen ? "true" : undefined}
             aria-haspopup="true"
             aria-label="Usuario"
           >
@@ -113,39 +134,6 @@ function Header() {
           </IconButton>
         </Box>
       </Box>
-
-      <Menu
-        id="profile-menu"
-        anchorEl={profileAnchorEl}
-        open={profileMenuOpen}
-        onClose={handleCloseProfileMenu}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
-        slotProps={{
-          paper: {
-            className: 'header__menu-paper',
-          },
-        }}
-      >
-        <MenuItem
-          className="header__menu-item"
-          onClick={handleCloseProfileMenu}
-        >
-          Ver perfil
-        </MenuItem>
-        <MenuItem
-          className="header__menu-item"
-          onClick={handleEditProfile}
-        >
-          Editar perfil
-        </MenuItem>
-        <MenuItem
-          className="header__menu-item header__menu-item--danger"
-          onClick={() => void handleLogout()}
-        >
-          Cerrar sesion
-        </MenuItem>
-      </Menu>
 
       <Menu
         id="country-menu"
@@ -178,6 +166,62 @@ function Header() {
           </MenuItem>
         ))}
       </Menu>
+
+      <Menu
+        id="settings-menu"
+        anchorEl={settingsAnchorEl}
+        open={settingsMenuOpen}
+        onClose={handleCloseSettingsMenu}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        slotProps={{
+          paper: {
+            className: 'header__menu-paper',
+          },
+        }}
+      >
+        <MenuItem
+          className="header__menu-item"
+          onClick={handleEditarPerfil}
+        >
+          Editar perfil
+        </MenuItem>
+        <MenuItem
+          className="header__menu-item header__menu-item--danger"
+          onClick={handleAskLogout}
+        >
+          Cerrar sesión
+        </MenuItem>
+      </Menu>
+
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={handleCloseLogoutDialog}
+        aria-labelledby="logout-dialog-title"
+        aria-describedby="logout-dialog-description"
+        slotProps={{
+          paper: {
+            className: 'header__dialog-paper',
+          },
+        }}
+      >
+        <DialogTitle id="logout-dialog-title" className="header__dialog-title">
+          Confirmar cierre de sesión
+        </DialogTitle>
+        <DialogContent className="header__dialog-content">
+          <DialogContentText id="logout-dialog-description" className="header__dialog-description">
+            ¿Estás seguro de que quieres cerrar sesión?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions className="header__dialog-actions">
+          <Button onClick={handleCloseLogoutDialog} className="header__dialog-button">
+            Cancelar
+          </Button>
+          <Button onClick={() => void handleLogout()} variant="contained" color="error" className="header__dialog-button header__dialog-button--danger">
+            Cerrar sesión
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   )
 }

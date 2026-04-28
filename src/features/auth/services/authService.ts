@@ -143,20 +143,13 @@ export async function registerWithEmail(payload: RegisterPayload): Promise<Login
       })
     })
 
-    const backendUid = await validateSessionInBackend(idToken ?? '')
-
-    if (apiBaseUrl && !backendUid) {
-      throw new Error('El backend no devolvio un usuario valido')
-    }
-
     saveCachedSession({
       uid: userID ?? '',
       idToken: idToken ?? '',
-    })
+    })  
 
     return {
       uid: userID ?? '',
-      idToken: idToken ?? '',
-      backendUid,
+      idToken: idToken ?? ''
     }
 }
