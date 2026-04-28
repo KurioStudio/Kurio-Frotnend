@@ -1,9 +1,9 @@
 import {
-  createUserWithEmailAndPassword,
-  deleteUser,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  getAuth,
+  onAuthStateChanged
 } from 'firebase/auth'
 import { auth } from '../../../lib/firebase'
 
@@ -27,35 +27,16 @@ type CachedAuthSession = {
   idToken: string
 }
 
+export type User = {
+  id : string,
+  username: string,
+  email: string,
+  avatarImg: string,
+  createdAt: string
+}
+
 function saveCachedSession(session: CachedAuthSession): void {
   localStorage.setItem(authSessionKey, JSON.stringify(session))
-}
-
-export function getCachedSession(): CachedAuthSession | null {
-  const rawSession = localStorage.getItem(authSessionKey)
-
-  if (!rawSession) {
-    return null
-  }
-
-  try {
-    const parsedSession = JSON.parse(rawSession) as Partial<CachedAuthSession>
-
-    if (!parsedSession.idToken || !parsedSession.uid) {
-      return null
-    }
-
-    return {
-      uid: parsedSession.uid,
-      idToken: parsedSession.idToken,
-    }
-  } catch {
-    return null
-  }
-}
-
-export function clearCachedSession(): void {
-  localStorage.removeItem(authSessionKey)
 }
 
 async function validateSessionInBackend(idToken: string): Promise<string | undefined> {
@@ -79,34 +60,21 @@ async function validateSessionInBackend(idToken: string): Promise<string | undef
 }
 
 export async function hasValidSession(): Promise<boolean> {
-  const cachedSession = getCachedSession()
-
-  if (!cachedSession) {
-    return false
-  }
-
-  if (!apiBaseUrl) {
-    return true
-  }
-
   try {
-    const backendUid = await validateSessionInBackend(cachedSession.idToken)
+    const user = getAuth().currentUser
 
-    if (!backendUid) {
-      clearCachedSession()
+    if (!user) {
       return false
     }
 
     return true
   } catch {
-    clearCachedSession()
     return false
   }
 }
 
 export async function logoutUser(): Promise<void> {
   await signOut(auth)
-  clearCachedSession()
 }
 
 export async function sendForgotPasswordEmail(email: string): Promise<void> {
@@ -130,11 +98,22 @@ export async function loginWithEmail(email: string, password: string): Promise<L
   }
 }
 
-export async function registerWithEmail(payload: RegisterPayload): Promise<LoginResult> {
-  const credential = await createUserWithEmailAndPassword(auth, payload.email, payload.password)
-  const idToken = await credential.user.getIdToken()
+export async function getCurrentUser() : Promise<LoginResult | null> {
+  const user = getAuth().currentUser
 
-  try {
+  if(!user) {
+    return null
+  }
+
+  const idToken = await user.getIdToken()
+
+  return {
+    uid: user.uid,
+    idToken: idToken
+  }
+}
+
+export async function registerWithEmail(payload: RegisterPayload): Promise<LoginResult> {
     if (apiBaseUrl) {
       const response = await fetch(`${apiBaseUrl}/api/users/register`, {
         method: 'POST',
@@ -147,32 +126,37 @@ export async function registerWithEmail(payload: RegisterPayload): Promise<Login
           password: payload.password,
         }),
       })
-
+      
       const body = (await response.text()).trim()
-
+      
       if (!response.ok || body !== '0') {
         throw new Error(body || 'No se pudo registrar el usuario en el backend')
       }
     }
 
-    const backendUid = await validateSessionInBackend(idToken)
+    let userID: string | undefined = undefined
+    let idToken: string | undefined = undefined
+    onAuthStateChanged(getAuth(), (user) => {
+      userID = user?.uid
+      user?.getIdToken().then(token => {
+        idToken = token
+      })
+    })
+
+    const backendUid = await validateSessionInBackend(idToken ?? '')
 
     if (apiBaseUrl && !backendUid) {
       throw new Error('El backend no devolvio un usuario valido')
     }
 
     saveCachedSession({
-      uid: credential.user.uid,
-      idToken,
+      uid: userID ?? '',
+      idToken: idToken ?? '',
     })
 
     return {
-      uid: credential.user.uid,
-      idToken,
+      uid: userID ?? '',
+      idToken: idToken ?? '',
       backendUid,
     }
-  } catch (error) {
-    await deleteUser(credential.user)
-    throw error
-  }
 }
