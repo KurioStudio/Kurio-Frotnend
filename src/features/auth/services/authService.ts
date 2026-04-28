@@ -32,6 +32,7 @@ export type User = {
   username: string,
   email: string,
   avatarImg: string,
+  idToken: string,
   createdAt: string
 }
 
@@ -98,7 +99,7 @@ export async function loginWithEmail(email: string, password: string): Promise<L
   }
 }
 
-export async function getCurrentUser() : Promise<LoginResult | null> {
+export async function getCurrentUser() : Promise<User | null> {
   const user = getAuth().currentUser
 
   if(!user) {
@@ -108,8 +109,12 @@ export async function getCurrentUser() : Promise<LoginResult | null> {
   const idToken = await user.getIdToken()
 
   return {
-    uid: user.uid,
-    idToken: idToken
+    id: user.uid,
+    username: user.email ?? 'Usuario desconocido',
+    email: user.email ?? '',
+    avatarImg: '',
+    idToken: idToken,
+    createdAt: ''
   }
 }
 
