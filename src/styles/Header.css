@@ -113,13 +113,46 @@
 
 .header__menu-item--danger,
 .MuiMenuItem-root.header__menu-item--danger {
-  color: var(--kurio-danger) !important;
+  color: #ff7b7f !important;
 }
 
 .header__menu-item--danger:hover,
 .MuiMenuItem-root.header__menu-item--danger:hover {
-  color: var(--kurio-danger) !important;
+  color: #ff8b8f !important;
   background: rgba(255, 90, 95, 0.14) !important;
+}
+
+.header__dialog-paper {
+  background: linear-gradient(180deg, var(--kurio-surface-3), var(--kurio-surface)) !important;
+  color: var(--kurio-text) !important;
+  border: 1px solid var(--kurio-border-paper);
+  border-radius: 16px !important;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.45) !important;
+}
+
+.header__dialog-title {
+  color: var(--kurio-text) !important;
+  font-weight: 700 !important;
+}
+
+.header__dialog-content {
+  color: var(--kurio-text-soft) !important;
+}
+
+.header__dialog-description {
+  color: var(--kurio-text-soft) !important;
+}
+
+.header__dialog-actions {
+  padding: 0 24px 20px;
+}
+
+.header__dialog-button {
+  color: var(--kurio-text-soft) !important;
+}
+
+.header__dialog-button--danger {
+  color: #ffd0d2 !important;
 }
 
 .header__menu-flag-image {
