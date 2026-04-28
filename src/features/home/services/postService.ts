@@ -1,11 +1,12 @@
-import { getCurrentUser } from "../../auth/services/authService";
+import { getCurrentUser, type User } from "../../auth/services/authService";
 
 export type FeedPost = {
     id: string,
     titulo: string,
     image: string,
     username: string,
-    likes: number
+    likes: number,
+    user: User
 }
 
 export type Post = {
@@ -28,7 +29,6 @@ export type Post = {
 }
 
 export async function findAllPosts(): Promise<FeedPost[]> {
-    const currentUser = await getCurrentUser()
     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts`, {
         method: 'GET'
     })
@@ -38,7 +38,13 @@ export async function findAllPosts(): Promise<FeedPost[]> {
         titulo: post.titulo,
         image: post.imagenes[0] ?? '',
         username: post.user?.username ?? 'Usuario desconocido',
-        likes: post.likedBy?.length ?? 0
+        likes: post.likedBy?.length ?? 0,
+        user: {
+            id: post.user?.id ?? '',
+            username: post.user?.username ?? 'Usuario desconocido',
+            avatarImg: post.user?.avatarImg ?? '',
+            email: post.user?.email ?? ''
+        }
     }))
 }
 
@@ -56,7 +62,13 @@ export async function findRecentPosts(): Promise<FeedPost[]> {
         titulo: post.titulo,
         image: post.imagenes[0] ?? '',
         username: post.user?.username ?? 'Usuario desconocido',
-        likes: post.likedBy?.length ?? 0
+        likes: post.likedBy?.length ?? 0,
+        user: {
+            id: post.user?.id ?? '',
+            username: post.user?.username ?? 'Usuario desconocido',
+            avatarImg: post.user?.avatarImg ?? '',
+            email: post.user?.email ?? ''
+        }
     }))
 }
 
@@ -74,14 +86,20 @@ export async function findTopPosts(): Promise<FeedPost[]> {
         titulo: post.titulo,
         image: post.imagenes[0] ?? '',
         username: post.user?.username ?? 'Usuario desconocido',
-        likes: post.likedBy?.length ?? 0
+        likes: post.likedBy?.length ?? 0,
+        user: {
+            id: post.user?.id ?? '',
+            username: post.user?.username ?? 'Usuario desconocido',
+            avatarImg: post.user?.avatarImg ?? '',
+            email: post.user?.email ?? ''
+        }
     }))
 }
 
 export async function findFollowedPosts(): Promise<FeedPost[]> {
     const currentUser = await getCurrentUser()
     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/follow`, {
-        method: 'GET',
+        method: 'POST',
         headers: {
             'Authorization': `Bearer ${currentUser?.idToken ?? ''}`
         },
@@ -95,7 +113,13 @@ export async function findFollowedPosts(): Promise<FeedPost[]> {
         titulo: post.titulo,
         image: post.imagenes[0] ?? '',
         username: post.user?.username ?? 'Usuario desconocido',
-        likes: post.likedBy?.length ?? 0
+        likes: post.likedBy?.length ?? 0,
+        user: {
+            id: post.user?.id ?? '',
+            username: post.user?.username ?? 'Usuario desconocido',
+            avatarImg: post.user?.avatarImg ?? '',
+            email: post.user?.email ?? ''
+        }
     }))
 }
 
@@ -114,7 +138,7 @@ export async function subirPost(post: Omit<Post, 'id' | 'likedBy' | 'createdAt'>
                     licencia: post.licencia,
                     user: {
                         id: currentUser?.id ?? '',
-                        username: currentUser?.email ?? 'Usuario desconocido',
+                        username: currentUser?.username ?? 'Usuario desconocido',
                         avatarImg: '',
                         email: currentUser?.email ?? ''
                     },

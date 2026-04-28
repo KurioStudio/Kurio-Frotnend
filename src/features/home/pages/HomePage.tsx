@@ -12,25 +12,46 @@ function HomePage() {
 	const [filter, setFilter] = useState<FeedFilter>('all')
 	const [posts, setPosts] = useState<FeedPost[]>([])
 
-	const cargarPosts = async () => {
-		switch (filter) {
-			case 'all':
-				findAllPosts().then(response => setPosts(response))
-				break
-			case 'top':
-				findTopPosts().then(response => setPosts(response))
-				break
-			case 'recientes':
-				findRecentPosts().then(response => setPosts(response))
-				break
-			case 'seguidos':
-				findFollowedPosts().then(response => setPosts(response))
-				break
-		}
-	}
-
 	useEffect(() => {
+		let isCancelled = false
+
+		const cargarPosts = async () => {
+			setPosts([])
+
+			try {
+				let response: FeedPost[] = []
+
+				switch (filter) {
+					case 'all':
+						response = await findAllPosts()
+						break
+					case 'top':
+						response = await findTopPosts()
+						break
+					case 'recientes':
+						response = await findRecentPosts()
+						break
+					case 'seguidos':
+						response = await findFollowedPosts()
+						break
+				}
+
+				if (!isCancelled) {
+					setPosts(response)
+				}
+			} catch (error) {
+				if (!isCancelled) {
+					setPosts([])
+				}
+				console.error('Error al cargar publicaciones:', error)
+			}
+		}
+
 		cargarPosts()
+
+		return () => {
+			isCancelled = true
+		}
 	}, [filter])
 
 	return (
@@ -45,7 +66,9 @@ function HomePage() {
 							key={post.id}
 							title={post.titulo}
 							author={post.username}
+							image={post.image}
 							likes={post.likes}
+							userImage={post.user.avatarImg ? post.user.avatarImg : ''}
 						/>
 					))}
 				</Box>

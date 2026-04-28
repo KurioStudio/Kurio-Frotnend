@@ -1,30 +1,70 @@
 .post-card {
+  width: 100%;
+  min-width: 0;
   display: grid;
-  gap: 11px;
-  padding: 9px;
+  gap: 8px;
+  padding: 8px;
   background: var(--kurio-surface);
   border: 1px solid var(--kurio-border-soft);
   border-radius: 19px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .post-card__image {
-  height: 170px;
+  width: 100%;
+  height: 150px;
   background: var(--kurio-card-accent);
   border-radius: 16px;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  transition: opacity 180ms ease;
+}
+
+.post-card__image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 150px;
+}
+
+.post-card__image-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: rgba(10, 15, 24, 0.22);
+}
+
+.post-card__image-loader .MuiCircularProgress-root {
+  color: var(--kurio-accent);
+}
+
+.post-card__image--hidden {
+  opacity: 0;
 }
 
 .post-card__title,
 .MuiTypography-root.post-card__title {
   color: var(--kurio-text);
-  font-size: 1.95rem;
-  line-height: 1.1;
+  width: 100%;
+  min-width: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .post-card__meta {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
 }
 
 .post-card__meta-group {
@@ -32,15 +72,42 @@
   align-items: center;
   gap: 6px;
   color: var(--kurio-text-soft);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.post-card__avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: var(--kurio-surface-3);
+}
+
+.post-card__meta-group--author {
+  overflow: hidden;
 }
 
 .post-card__icon {
   color: var(--kurio-ink);
+  flex: 0 0 auto;
 }
 
 .post-card__meta-text,
 .MuiTypography-root.post-card__meta-text {
+  max-width: 100%;
   color: var(--kurio-text-soft);
-  font-size: 1.2rem;
+  font-size: 0.92rem;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.post-card__meta-text--author {
+  min-width: 0;
+  flex: 1 1 auto;
 }
