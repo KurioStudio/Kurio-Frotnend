@@ -57,14 +57,14 @@ function ModelDetail() {
 			<Header />
 
 			<Stack spacing={2} sx={{ width: '100%', minHeight: 'calc(100vh - var(--kurio-header-height) - 56px)' }}>
-				{/* Gallery & Info Section */}
+
 				<Box sx={{
 					display: 'grid',
 					gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.4fr) minmax(320px, 0.95fr)' },
 					alignItems: 'start',
 					gap: 2
 				}}>
-					{/* Gallery Card */}
+
 					<Paper elevation={0} sx={{
 						flex: '1.4',
 						p: 1.5,
@@ -75,7 +75,7 @@ function ModelDetail() {
 						borderRadius: '14px',
 						boxShadow: '0 18px 32px rgba(0, 0, 0, 0.18)'
 					}}>
-						{/* Main Gallery Image */}
+
 						<Box sx={{
 							position: 'relative',
 							width: '100%',
@@ -106,7 +106,7 @@ function ModelDetail() {
 							</Button>
 						</Box>
 
-						{/* Thumbnails */}
+
 						<Box sx={{
 							position: 'relative',
 							display: 'grid',
@@ -124,6 +124,8 @@ function ModelDetail() {
 								borderRadius: '999px',
 								background: 'rgba(10, 14, 22, 0.68)',
 								border: '1px solid rgba(255, 255, 255, 0.2)',
+								color: '#fff',
+								'& svg': { color: '#fff' },
 								'&:hover': { background: 'rgba(15, 23, 35, 0.86)' }
 							}} aria-label="Imagen anterior">
 								<IoChevronBackOutline />
@@ -159,13 +161,15 @@ function ModelDetail() {
 								borderRadius: '999px',
 								background: 'rgba(10, 14, 22, 0.68)',
 								border: '1px solid rgba(255, 255, 255, 0.2)',
+								color: '#fff',
+								'& svg': { color: '#fff' },
 								'&:hover': { background: 'rgba(15, 23, 35, 0.86)' }
 							}} aria-label="Imagen siguiente">
 								<IoChevronForwardOutline />
 							</IconButton>
 						</Box>
 
-						{/* Meta Row */}
+
 						<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 1.5 }}>
 							<Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1, color: 'var(--kurio-text-soft)' }}>
 								<FaRegCircleUser style={{ fontSize: '1.8rem' }} />
@@ -199,7 +203,7 @@ function ModelDetail() {
 						</Box>
 					</Paper>
 
-					{/* Info Card */}
+
 					<Paper elevation={0} sx={{
 						flex: '0.95',
 						minWidth: 320,
@@ -238,7 +242,7 @@ function ModelDetail() {
 							Descargar
 						</Button>
 
-						{/* Stats Bar */}
+
 						<Box sx={{
 							display: 'grid',
 							gridTemplateColumns: 'repeat(4, 1fr)',
@@ -270,7 +274,7 @@ function ModelDetail() {
 					</Paper>
 				</Box>
 
-				{/* Comments Card */}
+
 				<Paper elevation={0} sx={{
 					p: 1.5,
 					display: 'grid',

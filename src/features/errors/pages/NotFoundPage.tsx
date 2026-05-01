@@ -29,7 +29,7 @@ function NotFoundPage() {
 				maxWidth: 600,
 				gap: 3
 			}}>
-				{/* Large 404 */}
+
 				<Typography sx={{
 					fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
 					fontWeight: 900,
@@ -44,7 +44,7 @@ function NotFoundPage() {
 					404
 				</Typography>
 
-				{/* Title */}
+
 				<Typography sx={{
 					fontSize: { xs: '1.75rem', sm: '2.25rem' },
 					fontWeight: 700,
@@ -53,7 +53,7 @@ function NotFoundPage() {
 					Página no encontrada
 				</Typography>
 
-				{/* Description */}
+
 				<Typography sx={{
 					fontSize: '1rem',
 					color: 'var(--kurio-text-soft)',
@@ -63,7 +63,7 @@ function NotFoundPage() {
 					La página que buscas no existe o ha sido movida. No te preocupes, podemos ayudarte a encontrar lo que necesitas.
 				</Typography>
 
-				{/* Divider */}
+
 				<Box sx={{
 					width: 60,
 					height: 2,
@@ -71,7 +71,7 @@ function NotFoundPage() {
 					borderRadius: '999px'
 				}} />
 
-				{/* Action Buttons */}
+
 				<Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, width: '100%', maxWidth: 400 }}>
 					<Button
 						onClick={() => navigate(-1)}
@@ -118,7 +118,7 @@ function NotFoundPage() {
 					</Button>
 				</Box>
 
-				{/* Additional Info */}
+
 				<Box sx={{
 					marginTop: 3,
 					padding: 2,

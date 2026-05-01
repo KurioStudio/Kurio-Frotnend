@@ -61,7 +61,7 @@ function ErrorPage({
 				maxWidth: 600,
 				gap: 3
 			}}>
-				{/* Error Icon */}
+
 				<Box sx={{
 					fontSize: '5rem',
 					color: 'var(--kurio-accent)',
@@ -71,7 +71,7 @@ function ErrorPage({
 					<IoWarningOutline />
 				</Box>
 
-				{/* Status Code */}
+
 				<Typography sx={{
 					fontSize: { xs: '3rem', sm: '4rem' },
 					fontWeight: 900,
@@ -85,7 +85,7 @@ function ErrorPage({
 					{statusCode}
 				</Typography>
 
-				{/* Title */}
+
 				<Typography sx={{
 					fontSize: { xs: '1.75rem', sm: '2.25rem' },
 					fontWeight: 700,
@@ -94,7 +94,7 @@ function ErrorPage({
 					{title}
 				</Typography>
 
-				{/* Description */}
+
 				<Typography sx={{
 					fontSize: '1rem',
 					color: 'var(--kurio-text-soft)',
@@ -104,7 +104,7 @@ function ErrorPage({
 					{message}
 				</Typography>
 
-				{/* Divider */}
+
 				<Box sx={{
 					width: 60,
 					height: 2,
@@ -112,7 +112,7 @@ function ErrorPage({
 					borderRadius: '999px'
 				}} />
 
-				{/* Action Buttons */}
+
 				<Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, width: '100%', maxWidth: 400 }}>
 					<Button
 						onClick={() => navigate(-1)}
@@ -159,7 +159,7 @@ function ErrorPage({
 					</Button>
 				</Box>
 
-				{/* Additional Info */}
+
 				<Box sx={{
 					marginTop: 3,
 					padding: 2,

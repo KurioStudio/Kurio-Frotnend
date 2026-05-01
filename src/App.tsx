@@ -5,6 +5,7 @@ import RegistrationPage from './features/auth/pages/RegistrationPage'
 import HomePage from './features/home/pages/HomePage'
 import ModelDetail from './features/home/pages/ModelDetail'
 import UploadModelPage from './features/home/pages/UploadModelPage'
+import NotFoundPage from './features/errors/pages/NotFoundPage'
 
 function App() {
   return (
@@ -21,7 +22,7 @@ function App() {
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
         </Route>
 
-        <Route path="*" element={<h1>404 Not Found</h1>} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   )

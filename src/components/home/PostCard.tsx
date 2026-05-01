@@ -1,6 +1,5 @@
 import { Box, CircularProgress, Tooltip, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
-import type { KeyboardEvent } from 'react'
 import { IoThumbsUpOutline } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import '../../styles/PostCard.css'
@@ -37,24 +36,10 @@ function PostCard({ title, author, likes, image, userImage, onClick }: PostCardP
 		setImageLoading(true)
 	}, [image])
 
-	const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-		if (!onClick) {
-			return
-		}
-
-		if (event.key === 'Enter' || event.key === ' ') {
-			event.preventDefault()
-			onClick()
-		}
-	}
-
 	return (
 		<Box
 			className={`post-card ${onClick ? 'post-card--clickable' : ''}`}
 			onClick={onClick}
-			onKeyDown={handleKeyDown}
-			role={onClick ? 'button' : undefined}
-			tabIndex={onClick ? 0 : -1}
 		>
 			<Box className="post-card__image-wrapper">
 				{imageLoading && (
