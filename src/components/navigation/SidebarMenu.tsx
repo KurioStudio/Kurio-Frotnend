@@ -5,6 +5,7 @@ import {
 	IoPeopleOutline,
 	IoTimeOutline,
 	IoTrendingUpOutline,
+	IoBookmarkOutline,
 } from 'react-icons/io5'
 import { useNavigate } from 'react-router-dom'
 import kurioLogo from '../../assets/iconos/kurioLogo.png'
@@ -31,6 +32,7 @@ const defaultItems: {
 		{ label: 'Top publicaciones', icon: <IoTrendingUpOutline />, filter: 'top' },
 		{ label: 'Publicaciones recientes', icon: <IoTimeOutline />, filter: 'recientes' },
 		{ label: 'Seguidos', icon: <IoPeopleOutline />, filter: 'seguidos' },
+		{ label: 'Guardados', icon: <IoBookmarkOutline />, path: '/guardados' },
 		{ label: 'Subir modelo', icon: <IoCloudUploadOutline />, path: '/subir-modelo' },
 		{ label: 'Inbox', icon: <IoMailOutline /> },
 	]

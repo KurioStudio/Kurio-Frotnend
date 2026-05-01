@@ -5,10 +5,12 @@ import SidebarMenu from '../../../components/navigation/SidebarMenu'
 import '../../../styles/HomePage.css'
 import { useEffect, useState } from 'react'
 import { findFollowedPosts, findRecentPosts, findTopPosts, findAllPosts, type FeedPost,  } from '../services/postService'
+import { useNavigate } from 'react-router-dom'
 
 export type FeedFilter = 'all' |'top' | 'recientes' | 'seguidos'
 
 function HomePage() {
+	const navigate = useNavigate()
 	const [filter, setFilter] = useState<FeedFilter>('all')
 	const [posts, setPosts] = useState<FeedPost[]>([])
 
@@ -69,6 +71,7 @@ function HomePage() {
 							image={post.image}
 							likes={post.likes}
 							userImage={post.user.avatarImg ? post.user.avatarImg : ''}
+							onClick={() => navigate(`/detalle-modelo/${post.id}`)}
 						/>
 					))}
 				</Box>

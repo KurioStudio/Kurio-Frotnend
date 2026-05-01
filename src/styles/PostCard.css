@@ -11,6 +11,22 @@
   box-sizing: border-box;
 }
 
+.post-card--clickable {
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.post-card--clickable:hover {
+  transform: translateY(-2px);
+  border-color: var(--kurio-border-strong);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.2);
+}
+
+.post-card--clickable:focus-visible {
+  outline: 2px solid var(--kurio-outline-soft);
+  outline-offset: 2px;
+}
+
 .post-card__image {
   width: 100%;
   height: 150px;
@@ -92,7 +108,7 @@
 }
 
 .post-card__icon {
-  color: var(--kurio-ink);
+  color: var(--kurio-accent);
   flex: 0 0 auto;
 }
 

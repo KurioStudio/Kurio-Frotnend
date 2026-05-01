@@ -1,15 +1,14 @@
 .home-page {
   min-height: 100vh;
-  display: flex;
   background: var(--kurio-bg);
 }
 
 .home-page__content {
-  flex: 1;
+  margin-left: var(--kurio-sidebar-width);
   min-width: 0;
   display: grid;
   gap: 12px;
-  padding: 12px;
+  padding: 74px 12px 12px;
   grid-template-rows: auto 1fr;
 }
 
@@ -20,7 +19,7 @@
   align-content: start;
   padding: 12px;
   overflow: auto;
-  max-height: calc(100vh - 180px);
+  max-height: calc(100vh - 96px);
   border-radius: 4px;
 }
 
@@ -37,16 +36,14 @@
 }
 
 @media (max-width: 900px) {
-  .home-page {
-    flex-direction: column;
-  }
-
   .home-page__content {
+    margin-left: 0;
     padding: 10px;
+    padding-top: 72px;
   }
 
   .home-page__posts {
     grid-template-columns: 1fr;
-    max-height: none;
+    max-height: calc(100vh - 160px);
   }
 }

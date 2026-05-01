@@ -1,5 +1,6 @@
 import { Box, CircularProgress, Tooltip, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
+import type { KeyboardEvent } from 'react'
 import { IoThumbsUpOutline } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import '../../styles/PostCard.css'
@@ -10,6 +11,7 @@ type PostCardProps = {
 	likes: number
 	image: string
 	userImage: string
+	onClick?: () => void
 }
 
 const formatLikes = (likes: number): string => {
@@ -28,15 +30,32 @@ const formatLikes = (likes: number): string => {
 	return `${Math.round(likes / 1000000000)}B`
 }
 
-function PostCard({ title, author, likes, image, userImage }: PostCardProps) {
+function PostCard({ title, author, likes, image, userImage, onClick }: PostCardProps) {
 	const [imageLoading, setImageLoading] = useState(true)
 
 	useEffect(() => {
 		setImageLoading(true)
 	}, [image])
 
+	const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+		if (!onClick) {
+			return
+		}
+
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault()
+			onClick()
+		}
+	}
+
 	return (
-		<Box className="post-card">
+		<Box
+			className={`post-card ${onClick ? 'post-card--clickable' : ''}`}
+			onClick={onClick}
+			onKeyDown={handleKeyDown}
+			role={onClick ? 'button' : undefined}
+			tabIndex={onClick ? 0 : -1}
+		>
 			<Box className="post-card__image-wrapper">
 				{imageLoading && (
 					<Box className="post-card__image-loader" aria-label="Cargando imagen">

@@ -3,6 +3,7 @@ import ForgotPasswordPage from './features/auth/pages/ForgotPasswordPage'
 import LoginPage from './features/auth/pages/LoginPage'
 import RegistrationPage from './features/auth/pages/RegistrationPage'
 import HomePage from './features/home/pages/HomePage'
+import ModelDetail from './features/home/pages/ModelDetail'
 import UploadModelPage from './features/home/pages/UploadModelPage'
 
 function App() {
@@ -10,6 +11,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/detalle-modelo" element={<ModelDetail />} />
+        <Route path="/detalle-modelo/:postId" element={<ModelDetail />} />
         <Route path="/subir-modelo" element={<UploadModelPage />} />
 
         <Route path="/auth">
