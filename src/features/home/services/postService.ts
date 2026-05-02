@@ -207,3 +207,25 @@ export async function descargarFichero(oid: string): Promise<void> {
   a.remove();
   window.URL.revokeObjectURL(url);
 }
+
+export async function getPostById(idPost: string): Promise<FeedPost> {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/${idPost}`, {
+        method: 'GET',
+    })
+    const post = await response.json()
+    return {
+        id: post.id,
+        titulo: post.titulo,
+        image: post.imagenes[0] ?? '',
+        username: post.user?.username ?? 'Usuario desconocido',
+        likes: post.likedBy?.length ?? 0,
+        user: {
+            id: post.user?.id ?? '',
+            email: post.user?.email ?? '',
+            username: post.user?.username ?? 'Usuario desconocido',
+            avatarImg: post.user?.avatarImg ?? '',
+            idToken: post.user?.idToken ?? '',
+            createdAt: post.user?.createdAt ?? ''
+        }
+    }
+}

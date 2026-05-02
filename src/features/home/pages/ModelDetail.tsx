@@ -14,6 +14,9 @@ import {
 import { FaRegCircleUser } from 'react-icons/fa6'
 import Header from '../../../components/home/Header'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
+import type { comentarios } from '../services/detailService'
+
+const [comentarios, setComentarios] = useState<comentarios[]>([])
 
 type ModelComment = {
 	id: string
