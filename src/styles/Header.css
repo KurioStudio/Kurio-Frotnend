@@ -35,13 +35,20 @@
 
 .header__search-input {
   width: 100%;
-  color: var(--kurio-text);
+  color: var(--kurio-white);
   font-size: 0.875rem;
 }
 
-.header__search-input input::placeholder {
+/* Ensure the actual input element and MUI input inner element use white text */
+.header__search-input input,
+.header__search-input .MuiInputBase-input {
+  color: var(--kurio-white) !important;
+}
+
+.header__search-input input::placeholder,
+.header__search-input .MuiInputBase-input::placeholder {
   opacity: 1;
-  color: var(--kurio-text-muted);
+  color: rgba(255,255,255,0.7) !important;
 }
 
 .header__actions {
