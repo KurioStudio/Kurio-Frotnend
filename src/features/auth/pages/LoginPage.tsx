@@ -106,7 +106,14 @@ function LoginPage() {
 
 		try {
 			await loginWithEmail(email.trim(), password)
-			navigate('/', { replace: true })
+			// Check if there's a redirect path saved
+			const redirectPath = localStorage.getItem('kurio_post_login_redirect')
+			if (redirectPath) {
+				localStorage.removeItem('kurio_post_login_redirect')
+				navigate(redirectPath, { replace: true })
+			} else {
+				navigate('/', { replace: true })
+			}
 		} catch (error) {
 			setLoginError(getLoginErrorMessage(error))
 		} finally {

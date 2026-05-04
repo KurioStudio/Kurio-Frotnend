@@ -9,6 +9,7 @@ import {
 } from 'react-icons/io5'
 import { useNavigate } from 'react-router-dom'
 import kurioLogo from '../../assets/iconos/kurioLogo.png'
+import { hasValidSession } from '../../utils/peticiones'
 import '../../styles/SidebarMenu.css'
 import type { FeedFilter } from '../../features/home/pages/HomePage'
 
@@ -44,6 +45,36 @@ function SidebarMenu({
 }: SidebarMenuProps) {
 	const navigate = useNavigate()
 
+	const handleItemClick = async (item: typeof defaultItems[0]) => {
+		// Items that require authentication
+		const authRequiredItems = ['Seguidos', 'Guardados', 'Subir modelo', 'Inbox']
+		
+		if (authRequiredItems.includes(item.label)) {
+			const sessionIsValid = await hasValidSession()
+			if (!sessionIsValid) {
+				// Save the redirect path based on the item
+				let redirectPath = '/'
+				if (item.path) {
+					redirectPath = item.path
+				} else if (item.filter) {
+					redirectPath = `/?filter=${item.filter}`
+				}
+				localStorage.setItem('kurio_post_login_redirect', redirectPath)
+				navigate('/auth/login', { replace: true })
+				return
+			}
+		}
+
+		if (item.filter) {
+			onSelect?.(item.filter)
+			return
+		}
+
+		if (item.path) {
+			navigate(item.path)
+		}
+	}
+
 	return (
 		<Box className="sidebar-menu">
 			<Box className="sidebar-menu__brand">
@@ -65,16 +96,7 @@ function SidebarMenu({
 					<ButtonBase
 						key={item.label}
 						className="sidebar-menu__item"
-						onClick={() => {
-							if (item.filter) {
-								onSelect?.(item.filter)
-								return
-							}
-
-							if (item.path) {
-								navigate(item.path)
-							}
-						}}
+						onClick={() => handleItemClick(item)}
 					>
 						<Box component="span" className="sidebar-menu__item-icon">
 							{item.icon}

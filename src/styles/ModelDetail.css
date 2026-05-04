@@ -362,6 +362,14 @@
   gap: 12px;
 }
 
+.model-detail__comments-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  min-height: 200px;
+}
+
 .model-detail__comment-item {
   display: flex;
   flex-direction: row;

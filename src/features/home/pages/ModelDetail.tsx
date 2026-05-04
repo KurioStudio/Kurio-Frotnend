@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, Button, ButtonBase, IconButton, InputBase, Typography, Stack, Paper } from '@mui/material'
+import { Box, Button, ButtonBase, IconButton, InputBase, Typography, Stack, Paper, CircularProgress } from '@mui/material'
 import {
 	IoChevronBackOutline,
 	IoChevronForwardOutline,
@@ -54,6 +54,7 @@ function ModelDetail() {
 	const [commentValue, setCommentValue] = useState('')
 	const [comentarios, setComentarios] = useState<CommentView[]>([])
 	const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+	const [loadingComments, setLoadingComments] = useState(false)
 	const currentImages = postData.imagenes.length > 0 ? postData.imagenes : []
 	const currentImage = currentImages[postData.imageIndex % currentImages.length]
 	const commentCount = comentarios.length
@@ -76,6 +77,7 @@ function ModelDetail() {
 
 		const cargarComentarios = async () => {
 			setComentarios([])
+			setLoadingComments(true)
 			const user = await getCurrentUser()
 			if (!isCancelled) {
 				setCurrentUserId(user?.id ?? null)
@@ -92,7 +94,10 @@ function ModelDetail() {
 				}
 			}
 
-			if (!postId) return
+			if (!postId) {
+				setLoadingComments(false)
+				return
+			}
 			try {
 				const response = await findAllComments(postId)
 				const comentariosConUsuario = await Promise.all(
@@ -113,10 +118,12 @@ function ModelDetail() {
 				)
 				if (!isCancelled) {
 					setComentarios(comentariosConUsuario)
+					setLoadingComments(false)
 				}
 			} catch (error) {
 				if (!isCancelled) {
 					setComentarios([])
+					setLoadingComments(false)
 				}
 				console.error('Error al cargar comentarios:', error)
 			}
@@ -134,6 +141,7 @@ function ModelDetail() {
 		const user = await getCurrentUser()
 
 		if (!user) {
+			localStorage.setItem('kurio_post_login_redirect', window.location.pathname)
 			navigate('/auth/login', { replace: true })
 			return
 		}
@@ -166,6 +174,7 @@ function ModelDetail() {
 		const user = await getCurrentUser()
 
 		if (!user) {
+			localStorage.setItem('kurio_post_login_redirect', window.location.pathname)
 			navigate('/auth/login', { replace: true })
 			return
 		}
@@ -297,6 +306,11 @@ function ModelDetail() {
 							Enviar
 						</Button>
 					</Box>
+					{loadingComments ? (
+						<Box className="model-detail__comments-loader">
+							<CircularProgress />
+						</Box>
+					) : (
 						<Box className="model-detail__comments-list">
 							{comentarios.map((cmt, idx) => (
                 <Comment
@@ -309,6 +323,7 @@ function ModelDetail() {
                   />
               ))}
 						</Box>
+					)}
 				</Paper>
 			</Stack>
 		</Box>

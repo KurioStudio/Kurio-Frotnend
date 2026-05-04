@@ -100,7 +100,14 @@ function RegistrationPage() {
 			})
 
 			setRegisterSuccess('Cuenta creada correctamente')
-			navigate('/', { replace: true })
+			// Check if there's a redirect path saved
+			const redirectPath = localStorage.getItem('kurio_post_login_redirect')
+			if (redirectPath) {
+				localStorage.removeItem('kurio_post_login_redirect')
+				navigate(redirectPath, { replace: true })
+			} else {
+				navigate('/', { replace: true })
+			}
 		} catch (error) {
 			setRegisterError(getRegisterErrorMessage(error))
 		} finally {
