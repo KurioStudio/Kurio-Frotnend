@@ -12,8 +12,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/detalle-modelo" element={<ModelDetail />} />
-        <Route path="/detalle-modelo/:postId" element={<ModelDetail />} />
+        <Route path="/detalle-modelo/:postId" element={<ModelDetail/>} />
         <Route path="/subir-modelo" element={<UploadModelPage />} />
 
         <Route path="/auth">

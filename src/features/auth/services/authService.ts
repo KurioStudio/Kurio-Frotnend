@@ -158,3 +158,19 @@ export async function registerWithEmail(payload: RegisterPayload): Promise<Login
       idToken: idToken ?? ''
     }
 }
+
+export async function getUserById(id: string): Promise<User> {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/${id}`, {
+        method: 'GET',
+    })
+    const user = await response.json()
+    console.log('Usuario recibido:', user)
+    return {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        avatarImg: user.avatarImg,
+        idToken: '',
+        createdAt: user.createdAt
+    }
+}

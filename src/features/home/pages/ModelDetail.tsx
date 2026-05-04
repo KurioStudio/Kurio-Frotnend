@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Box, Button, ButtonBase, IconButton, InputBase, Typography, Stack, Paper } from '@mui/material'
 import {
 	IoChevronBackOutline,
@@ -14,15 +14,11 @@ import {
 import { FaRegCircleUser } from 'react-icons/fa6'
 import Header from '../../../components/home/Header'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
-import type { comentarios } from '../services/detailService'
-
-const [comentarios, setComentarios] = useState<comentarios[]>([])
-
-type ModelComment = {
-	id: string
-	author: string
-	text: string
-}
+import { findAllComments, sendComment, type comentarios } from '../services/detailService'
+import Comment from '../../../components/details/Comment'
+import { getCurrentUser, getUserById, type User } from '../../auth/services/authService'
+import { useParams } from 'react-router-dom'
+import '../../../styles/ModelDetail.css'
 
 const galleryImages = [
 	'https://images.unsplash.com/photo-1618005198919-d3d4b5a92eee?auto=format&fit=crop&w=1200&q=80',
@@ -30,176 +26,141 @@ const galleryImages = [
 	'https://images.unsplash.com/photo-1615529182904-14819c35db37?auto=format&fit=crop&w=1200&q=80',
 ]
 
-const comments: ModelComment[] = [
-	{
-		id: '1',
-		author: 'Pablo Ruiz',
-		text: 'Muy buen modelo, la malla está limpia y se imprime sin soportes en PLA.',
-	},
-	{
-		id: '2',
-		author: 'Laura Mena',
-		text: 'Probado en 0.2 mm y quedó genial. Una versión más pequeña sería ideal.',
-	},
-]
+type CommentView = comentarios & {
+	username: string
+}
 
 function ModelDetail() {
+  const { postId } = useParams<{ postId?: string }>()
 	const [imageIndex, setImageIndex] = useState(0)
 	const [commentValue, setCommentValue] = useState('')
-
+	const [comentarios, setComentarios] = useState<CommentView[]>([])
+	const [currentUser, setCurrentUser] = useState<User | null>(null)
 	const currentImage = galleryImages[imageIndex]
 
+  useEffect(() => {
+		let isCancelled = false
+
+		const cargarComentarios = async () => {
+			setComentarios([])
+			const user = await getCurrentUser()
+			if (!isCancelled) {
+				setCurrentUser(user)
+			}
+
+			if (!postId) return
+			try {
+				const response = await findAllComments(postId)
+				const comentariosConUsuario = await Promise.all(
+					response.map(async (comentario) => {
+						try {
+							const usuario = await getUserById(comentario.idUser)
+							return {
+								...comentario,
+								username: usuario.username,
+							}
+						} catch {
+							return {
+								...comentario,
+								username: comentario.idUser,
+							}
+						}
+					})
+				)
+				if (!isCancelled) {
+					setComentarios(comentariosConUsuario)
+				}
+			} catch (error) {
+				if (!isCancelled) {
+					setComentarios([])
+				}
+				console.error('Error al cargar comentarios:', error)
+			}
+		}
+		cargarComentarios()
+
+		return () => {
+			isCancelled = true
+		}
+  }, [postId])
+
+	const handleSendComment = async () => {
+		if (!commentValue.trim() || !postId) return
+		try {
+			await sendComment(postId, currentUser?.id ?? '', currentUser?.idToken ?? '', commentValue)
+			// recargar comentarios desde el backend para asegurarnos que se muestran correctamente
+			const updated = await findAllComments(postId)
+			const updatedWithUser = await Promise.all(
+				updated.map(async (comentario) => {
+					try {
+						const usuario = await getUserById(comentario.idUser)
+						return { ...comentario, username: usuario.username }
+					} catch {
+						return { ...comentario, username: comentario.idUser }
+					}
+				})
+			)
+			setComentarios(updatedWithUser)
+			setCommentValue('')
+		} catch (error) {
+			console.error('Error al enviar comentario:', error)
+		}
+	}
+
 	return (
-		<Box sx={{
-			minHeight: '100vh',
-			background: 'radial-gradient(circle at 88% 8%, rgba(215, 164, 73, 0.14), transparent 34%), radial-gradient(circle at 12% 92%, rgba(32, 58, 97, 0.48), transparent 38%), var(--kurio-bg)',
-			marginLeft: 'var(--kurio-sidebar-width)',
-			padding: 'calc(var(--kurio-header-height) + 30px) 16px 24px'
-		}}>
+		<Box className="model-detail">
 			<SidebarMenu />
 			<Header />
 
-			<Stack spacing={2} sx={{ width: '100%', minHeight: 'calc(100vh - var(--kurio-header-height) - 56px)' }}>
+			<Stack spacing={2} className="model-detail__container">
 
-				<Box sx={{
-					display: 'grid',
-					gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.4fr) minmax(320px, 0.95fr)' },
-					alignItems: 'start',
-					gap: 2
-				}}>
+				<Box className="model-detail__grid">
 
-					<Paper elevation={0} sx={{
-						flex: '1.4',
-						p: 1.5,
-						display: 'grid',
-						gap: 1.5,
-						background: 'rgba(18, 24, 35, 0.62)',
-						border: '1px solid var(--kurio-border)',
-						borderRadius: '14px',
-						boxShadow: '0 18px 32px rgba(0, 0, 0, 0.18)'
-					}}>
+					<Paper elevation={0} className="model-detail__gallery-paper">
 
-						<Box sx={{
-							position: 'relative',
-							width: '100%',
-							aspectRatio: '16 / 10',
-							borderRadius: '10px',
-							overflow: 'hidden',
-							background: 'rgba(255, 255, 255, 0.06)'
-						}}>
-							<Box component="img" src={currentImage} alt="Modelo 3D" sx={{
-								width: '100%',
-								height: '100%',
-								objectFit: 'cover',
-								display: 'block'
-							}} />
+						<Box className="model-detail__image-container">
+							<Box component="img" src={currentImage} alt="Modelo 3D" className="model-detail__image" />
 
-							<Button sx={{
-								position: 'absolute',
-								left: 16,
-								bottom: 16,
-								borderRadius: '8px',
-								background: 'var(--kurio-accent)',
-								color: '#fff',
-								textTransform: 'none',
-								fontWeight: 700,
-								'&:hover': { background: 'var(--kurio-accent-hover)' }
-							}} startIcon={<IoCubeOutline />}>
+							<Button className="model-detail__preview-btn" startIcon={<IoCubeOutline />}>
 								Vista previa en 3D
 							</Button>
 						</Box>
 
 
-						<Box sx={{
-							position: 'relative',
-							display: 'grid',
-							gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-							gap: 1.25
-						}} role="list" aria-label="Miniaturas del modelo">
-							<IconButton onClick={() => setImageIndex((prevIndex) => (prevIndex - 1 + galleryImages.length) % galleryImages.length)} sx={{
-								position: 'absolute',
-								left: 8,
-								top: '50%',
-								transform: 'translateY(-50%)',
-								width: 38,
-								height: 38,
-								zIndex: 2,
-								borderRadius: '999px',
-								background: 'rgba(10, 14, 22, 0.68)',
-								border: '1px solid rgba(255, 255, 255, 0.2)',
-								color: '#fff',
-								'& svg': { color: '#fff' },
-								'&:hover': { background: 'rgba(15, 23, 35, 0.86)' }
-							}} aria-label="Imagen anterior">
+						<Box className="model-detail__thumbnails" role="list" aria-label="Miniaturas del modelo">
+							<IconButton 
+								className="model-detail__carousel-btn model-detail__carousel-btn--prev"
+								onClick={() => setImageIndex((prevIndex) => (prevIndex - 1 + galleryImages.length) % galleryImages.length)} 
+								aria-label="Imagen anterior">
 								<IoChevronBackOutline />
 							</IconButton>
 
 							{galleryImages.map((image, idx) => (
-								<ButtonBase key={`${image}-${idx}`} onClick={() => setImageIndex(idx)} sx={{
-									width: '100%',
-									borderRadius: '8px',
-									overflow: 'hidden',
-									border: imageIndex === idx ? '2px solid #15c21a' : '2px solid transparent',
-									opacity: imageIndex === idx ? 1 : 0.88,
-									transition: 'border-color 150ms ease, opacity 150ms ease, transform 150ms ease',
-									'&:hover': { opacity: 1, transform: 'translateY(-1px)' }
-								}}>
-									<Box component="img" src={image} alt={`Miniatura ${idx + 1}`} sx={{
-										width: '100%',
-										aspectRatio: '4 / 3',
-										objectFit: 'cover',
-										display: 'block'
-									}} />
+								<ButtonBase 
+									key={`${image}-${idx}`} 
+									onClick={() => setImageIndex(idx)} 
+									className={`model-detail__thumbnail ${imageIndex === idx ? 'model-detail__thumbnail--active' : ''}`}>
+									<Box component="img" src={image} alt={`Miniatura ${idx + 1}`} className="model-detail__thumbnail-img" />
 								</ButtonBase>
 							))}
 
-							<IconButton onClick={() => setImageIndex((prevIndex) => (prevIndex + 1) % galleryImages.length)} sx={{
-								position: 'absolute',
-								right: 8,
-								top: '50%',
-								transform: 'translateY(-50%)',
-								width: 38,
-								height: 38,
-								zIndex: 2,
-								borderRadius: '999px',
-								background: 'rgba(10, 14, 22, 0.68)',
-								border: '1px solid rgba(255, 255, 255, 0.2)',
-								color: '#fff',
-								'& svg': { color: '#fff' },
-								'&:hover': { background: 'rgba(15, 23, 35, 0.86)' }
-							}} aria-label="Imagen siguiente">
+							<IconButton 
+								className="model-detail__carousel-btn model-detail__carousel-btn--next"
+								onClick={() => setImageIndex((prevIndex) => (prevIndex + 1) % galleryImages.length)} 
+								aria-label="Imagen siguiente">
 								<IoChevronForwardOutline />
 							</IconButton>
 						</Box>
 
 
-						<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 1.5 }}>
-							<Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1, color: 'var(--kurio-text-soft)' }}>
-								<FaRegCircleUser style={{ fontSize: '1.8rem' }} />
-								<Typography sx={{ fontSize: '0.95rem' }}>Usuario Kurio</Typography>
-								<Button sx={{
-									minWidth: 92,
-									height: 32,
-									marginLeft: 0.75,
-									borderRadius: '999px',
-									border: '1px solid var(--kurio-accent)',
-									color: 'var(--kurio-accent)',
-									textTransform: 'none',
-									fontWeight: 700,
-									background: 'rgba(215, 164, 73, 0.08)',
-									'&:hover': { color: '#fff', background: 'var(--kurio-accent)' }
-								}}>Seguir</Button>
+						<Box className="model-detail__meta-row">
+							<Box className="model-detail__meta-group">
+								<FaRegCircleUser className="model-detail__user-icon" />
+								<Typography className="model-detail__username">{currentUser?.username ?? 'Usuario'}</Typography>
+								<Button className="model-detail__follow-btn">Seguir</Button>
 							</Box>
 
-							<Box sx={{
-								display: 'inline-flex',
-								alignItems: 'center',
-								gap: 0.75,
-								padding: '8px 14px',
-								borderRadius: '999px',
-								color: '#fff',
-								background: 'linear-gradient(135deg, rgba(215, 164, 73, 0.92), rgba(160, 119, 45, 0.92))'
-							}}>
+							<Box className="model-detail__likes-badge">
 								<IoThumbsUpOutline />
 								<Typography>12345</Typography>
 							</Box>
@@ -207,70 +168,27 @@ function ModelDetail() {
 					</Paper>
 
 
-					<Paper elevation={0} sx={{
-						flex: '0.95',
-						minWidth: 320,
-						p: 2.75,
-						display: 'grid',
-						alignContent: 'start',
-						height: 'fit-content',
-						gap: 2,
-						background: 'rgba(18, 24, 35, 0.62)',
-						border: '1px solid var(--kurio-border)',
-						borderRadius: '14px',
-						boxShadow: '0 18px 32px rgba(0, 0, 0, 0.18)'
-					}}>
-						<Typography sx={{ color: 'var(--kurio-text-muted)', fontSize: '0.84rem', letterSpacing: '0.04em', justifySelf: 'end', textAlign: 'right' }}>
+					<Paper elevation={0} className="model-detail__info-paper">
+						<Typography className="model-detail__info-date">
 							Fecha publicación:
 						</Typography>
-						<Typography sx={{ color: 'var(--kurio-text)', fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>
+						<Typography className="model-detail__info-title">
 							Titulo
 						</Typography>
-						<Typography sx={{ color: 'var(--kurio-text-soft)', lineHeight: 1.45 }}>
+						<Typography className="model-detail__info-desc">
 							Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris non lorem pharetra, feugiat dolor sed, sodales dui. Fusce fermentum et nisl nec consequat. Ut a ligula viverra, euismod metus nec, dapibus elit.
 						</Typography>
 
-						<Button sx={{
-							minWidth: 190,
-							marginTop: 0.5,
-							justifySelf: 'center',
-							borderRadius: '8px',
-							padding: '10px 26px',
-							color: '#fff',
-							textTransform: 'none',
-							fontWeight: 700,
-							background: 'linear-gradient(135deg, rgba(215, 164, 73, 0.96), rgba(176, 126, 42, 0.96))',
-							'&:hover': { background: 'linear-gradient(135deg, rgba(226, 173, 79, 1), rgba(191, 137, 50, 1))' }
-						}} startIcon={<IoDownloadOutline />}>
+						<Button className="model-detail__download-btn" startIcon={<IoDownloadOutline />}>
 							Descargar
 						</Button>
 
 
-						<Box sx={{
-							display: 'grid',
-							gridTemplateColumns: 'repeat(4, 1fr)',
-							gap: 1,
-							padding: '12px 0',
-							borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-							borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-							marginTop: 1
-						}}>
+						<Box className="model-detail__stats-bar">
 							{[{ icon: IoThumbsUpOutline, label: 'Me gusta', num: '610' }, { icon: IoBookmarkOutline, label: 'Guardar', num: '1371' }, { icon: IoChatbubblesOutline, label: 'Comentarios', num: '28' }, { icon: IoShareSocialOutline, label: 'Compartir', num: undefined }].map((stat) => (
-								<IconButton key={stat.label} sx={{
-									display: 'flex',
-									alignItems: 'center',
-									justifyContent: 'center',
-									gap: 0.75,
-									height: 36,
-									borderRadius: '6px',
-									color: 'var(--kurio-text-soft)',
-									background: 'transparent',
-									border: '1px solid rgba(255, 255, 255, 0.08)',
-									padding: '0 8px',
-									'&:hover': { background: 'rgba(215, 164, 73, 0.15)', color: 'var(--kurio-accent)', borderColor: 'var(--kurio-accent)' }
-								}} aria-label={stat.label}>
+								<IconButton key={stat.label} className="model-detail__stat-btn" aria-label={stat.label}>
 									<stat.icon />
-									{stat.num && <Typography component="span" sx={{ fontSize: '0.85rem', fontWeight: 600 }}>{stat.num}</Typography>}
+									{stat.num && <Typography component="span" className="model-detail__stat-num">{stat.num}</Typography>}
 								</IconButton>
 							))}
 						</Box>
@@ -278,61 +196,35 @@ function ModelDetail() {
 				</Box>
 
 
-				<Paper elevation={0} sx={{
-					p: 1.5,
-					display: 'grid',
-					gap: 1.75,
-					background: 'rgba(18, 24, 35, 0.62)',
-					border: '1px solid var(--kurio-border)',
-					borderRadius: '14px',
-					boxShadow: '0 18px 32px rgba(0, 0, 0, 0.18)'
-				}}>
-					<Box sx={{
-						display: 'flex',
-						flexDirection: 'row',
-						alignItems: 'center',
-						gap: 1.25,
-						background: 'rgba(255, 255, 255, 0.04)',
-						border: '1px solid rgba(255, 255, 255, 0.08)',
-						borderRadius: '12px',
-						padding: '8px 10px'
-					}}>
-						<FaRegCircleUser style={{ color: 'var(--kurio-text-soft)', fontSize: '1.5rem' }} />
-						<InputBase value={commentValue} onChange={(event) => setCommentValue(event.target.value)} placeholder="Anade un comentario" sx={{
-							color: 'var(--kurio-text)',
-							flex: 1,
-							'& input::placeholder': { color: 'var(--kurio-text-muted)', opacity: 1 }
-						}} />
-						<Button sx={{
-							borderRadius: '999px',
-							textTransform: 'none',
-							fontWeight: 700,
-							color: '#fff',
-							background: 'var(--kurio-accent)',
-							'&:hover': { background: 'var(--kurio-accent-hover)' }
-						}} endIcon={<IoSendOutline />}>
+				<Paper elevation={0} className="model-detail__comments-paper">
+					<Typography className="model-detail__comments-title">
+						Comentarios ({comentarios?.length ?? 0})
+					</Typography>
+
+					<Box className="model-detail__comment-input-row">
+						<InputBase
+							placeholder="Escribe tu comentario..."
+							value={commentValue}
+							onChange={(e) => setCommentValue(e.target.value)}
+							className="model-detail__comment-input"
+							fullWidth
+						/>
+						<Button className="model-detail__send-btn" variant="contained" endIcon={<IoSendOutline />} onClick={handleSendComment}>
 							Enviar
 						</Button>
 					</Box>
-
-					<Box sx={{ display: 'grid', gap: 1.5 }}>
-						{comments.map((item) => (
-							<Box key={item.id} sx={{
-								display: 'flex',
-								flexDirection: 'row',
-								gap: 1.25,
-								padding: 1.25,
-								borderRadius: '10px',
-								background: 'rgba(255, 255, 255, 0.03)'
-							}}>
-								<FaRegCircleUser style={{ color: 'var(--kurio-text-soft)', fontSize: '1.5rem' }} />
-								<Box sx={{ display: 'grid', gap: 0.5 }}>
-									<Typography sx={{ color: 'var(--kurio-text)', fontSize: '0.9rem', fontWeight: 700 }}>{item.author}</Typography>
-									<Typography sx={{ color: 'var(--kurio-text-soft)', lineHeight: 1.4 }}>{item.text}</Typography>
-								</Box>
-							</Box>
-						))}
-					</Box>
+						<Box className="model-detail__comments-list">
+							{comentarios.map((cmt, idx) => (
+                <Comment
+                  key={`${cmt.idPost}-${cmt.idUser}-${idx}`}
+                  idPost={cmt.idPost}
+					  username={cmt.username}
+                  contenido={cmt.contenido}
+									createdAt={cmt.createdAt}
+                  idComment={`${cmt.idPost}-${idx}`}
+                  />
+              ))}
+						</Box>
 				</Paper>
 			</Stack>
 		</Box>
