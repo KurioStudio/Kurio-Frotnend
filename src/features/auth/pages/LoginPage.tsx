@@ -135,8 +135,6 @@ function LoginPage() {
 						<Typography className="auth-page__subtitle">Bienvenida de nuevo</Typography>
 
 						<Box component="form" className="auth-page__form" onSubmit={handleSubmit} autoComplete="off">
-							{loginError ? <Alert severity="error">{loginError}</Alert> : null}
-
 							<TextField
 								size="small"
 								fullWidth
@@ -181,6 +179,12 @@ function LoginPage() {
 								placeholder="Tu contraseña"
 								autoComplete="off"
 							/>
+
+							{loginError ? (
+								<Box sx={{ mt: 0.4 }}>
+									<Alert severity="error">{loginError}</Alert>
+								</Box>
+							) : null}
 
 							<Button type="submit" variant="contained" className="auth-page__submit" disabled={isSubmitting}>
 								{isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Iniciar sesion'}
