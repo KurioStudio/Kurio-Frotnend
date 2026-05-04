@@ -276,6 +276,16 @@
   border-color: var(--kurio-accent) !important;
 }
 
+.model-detail__stat-btn--liked {
+  color: var(--kurio-accent) !important;
+  border-color: var(--kurio-accent) !important;
+  background: rgba(215, 164, 73, 0.16) !important;
+}
+
+.model-detail__stat-btn--liked svg {
+  color: var(--kurio-accent) !important;
+}
+
 .model-detail__stat-btn svg {
   color: inherit !important;
 }

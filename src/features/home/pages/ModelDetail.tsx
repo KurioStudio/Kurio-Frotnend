@@ -14,7 +14,7 @@ import {
 import { FaRegCircleUser } from 'react-icons/fa6'
 import Header from '../../../components/home/Header'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
-import { findAllComments, sendComment, type comentarios, getCurrentUser, getUserById, getPostById, type PostDetail } from '../../../utils/peticiones'
+import { findAllComments, sendComment, type comentarios, getCurrentUser, getUserById, getPostById, likePost, type PostDetail } from '../../../utils/peticiones'
 import Comment from '../../../components/details/Comment'
 import { useNavigate, useParams } from 'react-router-dom'
 import '../../../styles/ModelDetail.css'
@@ -29,6 +29,7 @@ type ModelPostState = {
 	descripcion: string
 	imagenes: string[]
 	likes: number
+	likedBy: string[]
 	comentarios: number
 	createdAt: string
 	authorName: string
@@ -45,37 +46,46 @@ function ModelDetail() {
 		descripcion: '',
 		imagenes: [],
 		likes: 0,
+		likedBy: [],
 		comentarios: 0,
 		createdAt: '',
 		authorName: '',
 	})
 	const [commentValue, setCommentValue] = useState('')
 	const [comentarios, setComentarios] = useState<CommentView[]>([])
+	const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 	const currentImages = postData.imagenes.length > 0 ? postData.imagenes : []
 	const currentImage = currentImages[postData.imageIndex % currentImages.length]
 	const commentCount = comentarios.length
+	const isLikedByCurrentUser = Boolean(currentUserId && postData.likedBy.includes(currentUserId))
+
+	const mapPostToState = (post: PostDetail): ModelPostState => ({
+		imageIndex: 0,
+		titulo: post.titulo,
+		descripcion: post.descripcion,
+		imagenes: post.imagenes.length > 0 ? post.imagenes : [],
+		likes: post.likedBy.length,
+		likedBy: post.likedBy,
+		comentarios: post.cantComentarios,
+		createdAt: post.createdAt,
+		authorName: post.user.username,
+	})
 
   useEffect(() => {
 		let isCancelled = false
 
 		const cargarComentarios = async () => {
 			setComentarios([])
-			await getCurrentUser()
+			const user = await getCurrentUser()
+			if (!isCancelled) {
+				setCurrentUserId(user?.id ?? null)
+			}
 
 			if (postId) {
 				try {
 					const post: PostDetail = await getPostById(postId)
 					if (!isCancelled) {
-						setPostData({
-							imageIndex: 0,
-							titulo: post.titulo,
-							descripcion: post.descripcion,
-							imagenes: post.imagenes.length > 0 ? post.imagenes : [],
-							likes: post.likes,
-							comentarios: post.cantComentarios,
-							createdAt: post.createdAt,
-							authorName: post.user.username,
-						})
+						setPostData(mapPostToState(post))
 					}
 				} catch (error) {
 					console.error('Error al cargar el post:', error)
@@ -147,6 +157,26 @@ function ModelDetail() {
 			setCommentValue('')
 		} catch (error) {
 			console.error('Error al enviar comentario:', error)
+		}
+	}
+
+	const handleLikePost = async () => {
+		if (!postId) return
+
+		const user = await getCurrentUser()
+
+		if (!user) {
+			navigate('/auth/login', { replace: true })
+			return
+		}
+
+		try {
+			await likePost(postId)
+			const updatedPost = await getPostById(postId)
+			setCurrentUserId(user.id)
+			setPostData(mapPostToState(updatedPost))
+		} catch (error) {
+			console.error('Error al dar like al post:', error)
 		}
 	}
 
@@ -236,9 +266,9 @@ function ModelDetail() {
 							{[{ icon: IoThumbsUpOutline, label: 'Me gusta', num: String(postData.likes) }, { icon: IoBookmarkOutline, label: 'Guardar', num: undefined }, { icon: IoChatbubblesOutline, label: 'Comentarios', num: String(commentCount) }, { icon: IoShareSocialOutline, label: 'Compartir', num: undefined }].map((stat) => (
 								<IconButton
 									key={stat.label}
-									className="model-detail__stat-btn"
+									className={`model-detail__stat-btn ${stat.label === 'Me gusta' && isLikedByCurrentUser ? 'model-detail__stat-btn--liked' : ''}`}
 									aria-label={stat.label}
-									onClick={stat.label === 'Comentarios' ? handleScrollToComments : undefined}
+									onClick={stat.label === 'Me gusta' ? handleLikePost : stat.label === 'Comentarios' ? handleScrollToComments : undefined}
 								>
 									<stat.icon />
 									{stat.num && <Typography component="span" className="model-detail__stat-num">{stat.num}</Typography>}
