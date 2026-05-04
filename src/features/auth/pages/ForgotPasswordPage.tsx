@@ -4,6 +4,7 @@ import { Alert, Box, Button, CircularProgress, IconButton, Link as MuiLink, Menu
 import { IoChevronDown } from 'react-icons/io5'
 import { Link as RouterLink } from 'react-router-dom'
 import kurioLogo from '../../../assets/iconos/kurioLogo.png'
+import forgotVideo from '../../../assets/img_auth/forgotpass.mp4'
 import { sendForgotPasswordEmail } from '../../../utils/peticiones'
 import '../../../styles/auth.css'
 import '../../../styles/Header.css'
@@ -209,7 +210,19 @@ function ForgotPasswordPage() {
 					</Menu>
 				</Box>
 
-				<Box component="section" className="auth-page__visual" />
+				<Box component="section" className="auth-page__visual">
+					<Box
+						component="video"
+						src={forgotVideo}
+						className="auth-page__visual-img auth-page__visual-img--zoomin"
+						autoPlay
+						loop
+						muted
+						playsInline
+						preload="metadata"
+						aria-label="Forgot password visual"
+					/>
+				</Box>
 			</Box>
 		</Box>
 	)

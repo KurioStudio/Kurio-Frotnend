@@ -4,6 +4,7 @@ import { Alert, Box, Button, CircularProgress, IconButton, InputAdornment, Link 
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { IoChevronDown, IoEyeOff, IoEye } from 'react-icons/io5'
 import kurioLogo from '../../../assets/iconos/kurioLogo.png'
+import loginVideo from '../../../assets/img_auth/login_2.mp4'
 import { hasValidSession, loginWithEmail } from '../../../utils/peticiones'
 import '../../../styles/auth.css'
 import '../../../styles/Header.css'
@@ -244,7 +245,19 @@ function LoginPage() {
 					</Menu>
 				</Box>
 
-				<Box component="section" className="auth-page__visual" />
+				<Box component="section" className="auth-page__visual">
+					<Box
+						component="video"
+						src={loginVideo}
+						className="auth-page__visual-img"
+						autoPlay
+						loop
+						muted
+						playsInline
+						preload="metadata"
+						aria-label="Login visual"
+					/>
+				</Box>
 			</Box>
 		</Box>
 	)
