@@ -77,6 +77,10 @@
   color: var(--kurio-text);
 }
 
+.header__icon--profile {
+  color: var(--kurio-white);
+}
+
 .header__menu-paper {
   margin-top: 8px;
   min-width: 190px;
@@ -130,10 +134,10 @@
 }
 
 .header__dialog-paper {
-  background: linear-gradient(180deg, var(--kurio-surface-3), var(--kurio-surface)) !important;
+  background: var(--kurio-surface) !important;
   color: var(--kurio-text) !important;
   border: 1px solid var(--kurio-border-paper);
-  border-radius: 16px !important;
+  border-radius: 8px !important;
   box-shadow: 0 22px 60px rgba(0, 0, 0, 0.45) !important;
 }
 

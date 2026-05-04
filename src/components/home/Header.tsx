@@ -1,9 +1,9 @@
-import { useState, type MouseEvent } from 'react'
+import { useEffect, useState, type MouseEvent } from 'react'
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
 import { IoSearch, IoSettingsSharp, IoChevronDown } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import { useNavigate } from 'react-router-dom'
-import { hasValidSession, logoutUser } from '../../features/auth/services/authService'
+import { hasValidSession, logoutUser, touchSessionActivity } from '../../features/auth/services/authService'
 import '../../styles/Header.css'
 
 type CountryOption = {
@@ -28,9 +28,36 @@ function Header() {
   const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null)
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+  const [hasSession, setHasSession] = useState(false)
 
   const countryMenuOpen = Boolean(countryAnchorEl)
   const settingsMenuOpen = Boolean(settingsAnchorEl)
+
+  useEffect(() => {
+    const syncSessionState = async () => {
+      const isSessionValid = await hasValidSession()
+      setHasSession(isSessionValid)
+    }
+
+    void syncSessionState()
+  }, [])
+
+  useEffect(() => {
+    const events: Array<keyof WindowEventMap> = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart']
+    const handleActivity = () => {
+      touchSessionActivity()
+    }
+
+    events.forEach((eventName) => {
+      window.addEventListener(eventName, handleActivity, { passive: true })
+    })
+
+    return () => {
+      events.forEach((eventName) => {
+        window.removeEventListener(eventName, handleActivity)
+      })
+    }
+  }, [])
 
   const handleOpenCountryMenu = (event: MouseEvent<HTMLElement>) => {
     setCountryAnchorEl(event.currentTarget)
@@ -45,16 +72,30 @@ function Header() {
     handleCloseCountryMenu()
   }
 
-  const handleEditarPerfil = () => {
+  const ensureSessionOrRedirect = async (): Promise<boolean> => {
+    const isSessionValid = await hasValidSession()
+    setHasSession(isSessionValid)
+
+    if (!isSessionValid) {
+      navigate('/auth/login')
+      return false
+    }
+
+    return true
+  }
+
+  const handleEditarPerfil = async () => {
     handleCloseSettingsMenu()
+
+    if (!(await ensureSessionOrRedirect())) {
+      return
+    }
+
     navigate('/profile/edit')
   }
 
   const handleOpenProfileMenu = async () => {
-    const isSessionValid = await hasValidSession()
-
-    if (!isSessionValid) {
-      navigate('/auth/login')
+    if (!(await ensureSessionOrRedirect())) {
       return
     }
 
@@ -72,9 +113,10 @@ function Header() {
 
   const handleLogout = async () => {
     await logoutUser()
+    setHasSession(false)
     handleCloseSettingsMenu()
     setLogoutDialogOpen(false)
-    navigate('/auth/login')
+    navigate('/')
   }
 
   const handleAskLogout = () => {
@@ -113,20 +155,22 @@ function Header() {
           <IoChevronDown className="header__icon" size={10} />
         </IconButton>
 
-          <IconButton 
-            className="header__icon-button" 
-            aria-label="Configuracion"
-            onClick={handleOpenSettingsMenu}
-            aria-controls={settingsMenuOpen ? "settings-menu" : undefined}
-            aria-expanded={settingsMenuOpen ? "true" : undefined}
-            aria-haspopup="true"
-          >
-            <IoSettingsSharp className="header__icon" size={18} />
-          </IconButton>
+          {hasSession && (
+            <IconButton 
+              className="header__icon-button" 
+              aria-label="Configuracion"
+              onClick={handleOpenSettingsMenu}
+              aria-controls={settingsMenuOpen ? "settings-menu" : undefined}
+              aria-expanded={settingsMenuOpen ? "true" : undefined}
+              aria-haspopup="true"
+            >
+              <IoSettingsSharp className="header__icon" size={18} />
+            </IconButton>
+          )}
 
           <IconButton
             className="header__icon-button"
-            onClick={handleOpenProfileMenu}
+            onClick={() => void handleOpenProfileMenu()}
             aria-haspopup="true"
             aria-label="Usuario"
           >
@@ -182,7 +226,7 @@ function Header() {
       >
         <MenuItem
           className="header__menu-item"
-          onClick={handleEditarPerfil}
+          onClick={() => void handleEditarPerfil()}
         >
           Editar perfil
         </MenuItem>

@@ -156,12 +156,17 @@
 }
 
 .auth-field__icon-button {
-  color: var(--kurio-accent);
+  color: var(--kurio-white);
   padding: 4px;
+}
+
+.MuiIconButton-root.auth-field__icon-button {
+  color: var(--kurio-white) !important;
 }
 
 .auth-field__icon {
   font-size: 18px;
+  color: var(--kurio-white);
 }
 
 .auth-page__submit,
