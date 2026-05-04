@@ -55,6 +55,7 @@ function ModelDetail() {
 	const [comentarios, setComentarios] = useState<CommentView[]>([])
 	const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 	const [loadingComments, setLoadingComments] = useState(false)
+	const [showing3D, setShowing3D] = useState(false)
 	const currentImages = postData.imagenes.length > 0 ? postData.imagenes : []
 	const currentImage = currentImages[postData.imageIndex % currentImages.length]
 	const commentCount = comentarios.length
@@ -205,39 +206,53 @@ function ModelDetail() {
 
 					<Paper elevation={0} className="model-detail__gallery-paper">
 
-						<Box className="model-detail__image-container">
-							<Box component="img" src={currentImage} alt="Modelo 3D" className="model-detail__image" />
+						<Box className="model-detail__image-container model-detail__3d-container">
+							{showing3D ? (
+								<Box className="model-detail__3d-viewer">
+									<Typography sx={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', mt: 2 }}>
+										Visualizador 3D
+									</Typography>
+								</Box>
+							) : (
+								<Box component="img" src={currentImage} alt="Modelo 3D" className="model-detail__image" />
+							)}
 
-							<Button className="model-detail__preview-btn" startIcon={<IoCubeOutline />}>
-								Vista previa en 3D
+							<Button 
+								className="model-detail__preview-btn" 
+								startIcon={<IoCubeOutline />}
+								onClick={() => setShowing3D((current) => !current)}
+								variant={showing3D ? 'contained' : 'outlined'}
+							>
+								{showing3D ? 'Ver imágenes' : 'Vista previa en 3D'}
 							</Button>
 						</Box>
 
+						{!showing3D && (
+							<Box className="model-detail__thumbnails" role="list" aria-label="Miniaturas del modelo">
+								<IconButton 
+									className="model-detail__carousel-btn model-detail__carousel-btn--prev"
+									onClick={() => setPostData((current) => ({ ...current, imageIndex: (current.imageIndex - 1 + currentImages.length) % currentImages.length }))} 
+									aria-label="Imagen anterior">
+									<IoChevronBackOutline />
+								</IconButton>
 
-						<Box className="model-detail__thumbnails" role="list" aria-label="Miniaturas del modelo">
-							<IconButton 
-								className="model-detail__carousel-btn model-detail__carousel-btn--prev"
-								onClick={() => setPostData((current) => ({ ...current, imageIndex: (current.imageIndex - 1 + currentImages.length) % currentImages.length }))} 
-								aria-label="Imagen anterior">
-								<IoChevronBackOutline />
-							</IconButton>
+								{currentImages.map((image, idx) => (
+									<ButtonBase 
+										key={`${image}-${idx}`} 
+										onClick={() => setPostData((current) => ({ ...current, imageIndex: idx }))} 
+										className={`model-detail__thumbnail ${postData.imageIndex === idx ? 'model-detail__thumbnail--active' : ''}`}>
+										<Box component="img" src={image} alt={`Miniatura ${idx + 1}`} className="model-detail__thumbnail-img" />
+									</ButtonBase>
+								))}
 
-							{currentImages.map((image, idx) => (
-								<ButtonBase 
-									key={`${image}-${idx}`} 
-									onClick={() => setPostData((current) => ({ ...current, imageIndex: idx }))} 
-									className={`model-detail__thumbnail ${postData.imageIndex === idx ? 'model-detail__thumbnail--active' : ''}`}>
-									<Box component="img" src={image} alt={`Miniatura ${idx + 1}`} className="model-detail__thumbnail-img" />
-								</ButtonBase>
-							))}
-
-							<IconButton 
-								className="model-detail__carousel-btn model-detail__carousel-btn--next"
-								onClick={() => setPostData((current) => ({ ...current, imageIndex: (current.imageIndex + 1) % currentImages.length }))} 
-								aria-label="Imagen siguiente">
-								<IoChevronForwardOutline />
-							</IconButton>
-						</Box>
+								<IconButton 
+									className="model-detail__carousel-btn model-detail__carousel-btn--next"
+									onClick={() => setPostData((current) => ({ ...current, imageIndex: (current.imageIndex + 1) % currentImages.length }))} 
+									aria-label="Imagen siguiente">
+									<IoChevronForwardOutline />
+								</IconButton>
+							</Box>
+						)}
 
 
 						<Box className="model-detail__meta-row">
