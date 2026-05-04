@@ -331,7 +331,7 @@ function ModelDetail() {
                 <Comment
                   key={`${cmt.idPost}-${cmt.idUser}-${idx}`}
                   idPost={cmt.idPost}
-					  username={cmt.username}
+									username={cmt.username}
                   contenido={cmt.contenido}
 									createdAt={cmt.createdAt}
                   idComment={`${cmt.idPost}-${idx}`}
