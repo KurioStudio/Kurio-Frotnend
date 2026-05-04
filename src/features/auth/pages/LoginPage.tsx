@@ -4,7 +4,7 @@ import { Alert, Box, Button, CircularProgress, IconButton, InputAdornment, Link 
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { IoChevronDown, IoEyeOff, IoEye } from 'react-icons/io5'
 import kurioLogo from '../../../assets/iconos/kurioLogo.png'
-import { hasValidSession, loginWithEmail } from '../services/authService'
+import { hasValidSession, loginWithEmail } from '../../../utils/peticiones'
 import '../../../styles/auth.css'
 import '../../../styles/Header.css'
 

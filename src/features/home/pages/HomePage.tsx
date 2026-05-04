@@ -4,7 +4,7 @@ import PostCard from '../../../components/home/PostCard'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
 import '../../../styles/HomePage.css'
 import { useEffect, useState } from 'react'
-import { findFollowedPosts, findRecentPosts, findTopPosts, findAllPosts, type FeedPost,  } from '../services/postService'
+import { findFollowedPosts, findRecentPosts, findTopPosts, findAllPosts, type FeedPost,  } from '../../../utils/peticiones'
 import { useNavigate } from 'react-router-dom'
 
 export type FeedFilter = 'all' |'top' | 'recientes' | 'seguidos'

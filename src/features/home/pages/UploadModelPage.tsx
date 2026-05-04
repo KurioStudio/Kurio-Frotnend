@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import Header from '../../../components/home/Header'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
 import '../../../styles/UploadModelPage.css'
-import { subirPost, type Post } from '../services/postService'
+import { subirPost, type Post } from '../../../utils/peticiones'
 
 const formatFileSize = (sizeInBytes: number): string => {
     if (sizeInBytes < 1024) {

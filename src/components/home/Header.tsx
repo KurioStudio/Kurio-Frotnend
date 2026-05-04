@@ -3,7 +3,7 @@ import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, D
 import { IoSearch, IoSettingsSharp, IoChevronDown } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import { useNavigate } from 'react-router-dom'
-import { hasValidSession, logoutUser, touchSessionActivity } from '../../features/auth/services/authService'
+import { hasValidSession, logoutUser, touchSessionActivity } from '../../utils/peticiones'
 import '../../styles/Header.css'
 
 type CountryOption = {

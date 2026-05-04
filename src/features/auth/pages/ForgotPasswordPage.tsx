@@ -4,7 +4,7 @@ import { Alert, Box, Button, CircularProgress, IconButton, Link as MuiLink, Menu
 import { IoChevronDown } from 'react-icons/io5'
 import { Link as RouterLink } from 'react-router-dom'
 import kurioLogo from '../../../assets/iconos/kurioLogo.png'
-import { sendForgotPasswordEmail } from '../services/authService'
+import { sendForgotPasswordEmail } from '../../../utils/peticiones'
 import '../../../styles/auth.css'
 import '../../../styles/Header.css'
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Box, Button, ButtonBase, IconButton, InputBase, Typography, Stack, Paper } from '@mui/material'
 import {
 	IoChevronBackOutline,
@@ -14,38 +14,72 @@ import {
 import { FaRegCircleUser } from 'react-icons/fa6'
 import Header from '../../../components/home/Header'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
-import { findAllComments, sendComment, type comentarios } from '../services/detailService'
+import { findAllComments, sendComment, type comentarios, getCurrentUser, getUserById, getPostById, type PostDetail } from '../../../utils/peticiones'
 import Comment from '../../../components/details/Comment'
-import { getCurrentUser, getUserById, type User } from '../../auth/services/authService'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import '../../../styles/ModelDetail.css'
-
-const galleryImages = [
-	'https://images.unsplash.com/photo-1618005198919-d3d4b5a92eee?auto=format&fit=crop&w=1200&q=80',
-	'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
-	'https://images.unsplash.com/photo-1615529182904-14819c35db37?auto=format&fit=crop&w=1200&q=80',
-]
 
 type CommentView = comentarios & {
 	username: string
 }
 
+type ModelPostState = {
+	imageIndex: number
+	titulo: string
+	descripcion: string
+	imagenes: string[]
+	likes: number
+	comentarios: number
+	createdAt: string
+	authorName: string
+}
+
 function ModelDetail() {
+  const navigate = useNavigate()
   const { postId } = useParams<{ postId?: string }>()
-	const [imageIndex, setImageIndex] = useState(0)
+	const sendCommentButtonRef = useRef<HTMLButtonElement | null>(null)
+	const commentInputRef = useRef<HTMLInputElement | null>(null)
+	const [postData, setPostData] = useState<ModelPostState>({
+		imageIndex: 0,
+		titulo: '',
+		descripcion: '',
+		imagenes: [],
+		likes: 0,
+		comentarios: 0,
+		createdAt: '',
+		authorName: '',
+	})
 	const [commentValue, setCommentValue] = useState('')
 	const [comentarios, setComentarios] = useState<CommentView[]>([])
-	const [currentUser, setCurrentUser] = useState<User | null>(null)
-	const currentImage = galleryImages[imageIndex]
+	const currentImages = postData.imagenes.length > 0 ? postData.imagenes : []
+	const currentImage = currentImages[postData.imageIndex % currentImages.length]
+	const commentCount = comentarios.length
 
   useEffect(() => {
 		let isCancelled = false
 
 		const cargarComentarios = async () => {
 			setComentarios([])
-			const user = await getCurrentUser()
-			if (!isCancelled) {
-				setCurrentUser(user)
+			await getCurrentUser()
+
+			if (postId) {
+				try {
+					const post: PostDetail = await getPostById(postId)
+					if (!isCancelled) {
+						setPostData({
+							imageIndex: 0,
+							titulo: post.titulo,
+							descripcion: post.descripcion,
+							imagenes: post.imagenes.length > 0 ? post.imagenes : [],
+							likes: post.likes,
+							comentarios: post.cantComentarios,
+							createdAt: post.createdAt,
+							authorName: post.user.username,
+						})
+					}
+				} catch (error) {
+					console.error('Error al cargar el post:', error)
+				}
 			}
 
 			if (!postId) return
@@ -85,9 +119,18 @@ function ModelDetail() {
   }, [postId])
 
 	const handleSendComment = async () => {
-		if (!commentValue.trim() || !postId) return
+		if (!postId) return
+
+		const user = await getCurrentUser()
+
+		if (!user) {
+			navigate('/auth/login', { replace: true })
+			return
+		}
+
+		if (!commentValue.trim()) return
 		try {
-			await sendComment(postId, currentUser?.id ?? '', currentUser?.idToken ?? '', commentValue)
+			await sendComment(postId, user.id, user.idToken, commentValue)
 			// recargar comentarios desde el backend para asegurarnos que se muestran correctamente
 			const updated = await findAllComments(postId)
 			const updatedWithUser = await Promise.all(
@@ -105,6 +148,11 @@ function ModelDetail() {
 		} catch (error) {
 			console.error('Error al enviar comentario:', error)
 		}
+	}
+
+	const handleScrollToComments = () => {
+		sendCommentButtonRef.current?.scrollIntoView({ behavior: 'auto', block: 'center' })
+		commentInputRef.current?.focus()
 	}
 
 	return (
@@ -130,23 +178,23 @@ function ModelDetail() {
 						<Box className="model-detail__thumbnails" role="list" aria-label="Miniaturas del modelo">
 							<IconButton 
 								className="model-detail__carousel-btn model-detail__carousel-btn--prev"
-								onClick={() => setImageIndex((prevIndex) => (prevIndex - 1 + galleryImages.length) % galleryImages.length)} 
+								onClick={() => setPostData((current) => ({ ...current, imageIndex: (current.imageIndex - 1 + currentImages.length) % currentImages.length }))} 
 								aria-label="Imagen anterior">
 								<IoChevronBackOutline />
 							</IconButton>
 
-							{galleryImages.map((image, idx) => (
+							{currentImages.map((image, idx) => (
 								<ButtonBase 
 									key={`${image}-${idx}`} 
-									onClick={() => setImageIndex(idx)} 
-									className={`model-detail__thumbnail ${imageIndex === idx ? 'model-detail__thumbnail--active' : ''}`}>
+									onClick={() => setPostData((current) => ({ ...current, imageIndex: idx }))} 
+									className={`model-detail__thumbnail ${postData.imageIndex === idx ? 'model-detail__thumbnail--active' : ''}`}>
 									<Box component="img" src={image} alt={`Miniatura ${idx + 1}`} className="model-detail__thumbnail-img" />
 								</ButtonBase>
 							))}
 
 							<IconButton 
 								className="model-detail__carousel-btn model-detail__carousel-btn--next"
-								onClick={() => setImageIndex((prevIndex) => (prevIndex + 1) % galleryImages.length)} 
+								onClick={() => setPostData((current) => ({ ...current, imageIndex: (current.imageIndex + 1) % currentImages.length }))} 
 								aria-label="Imagen siguiente">
 								<IoChevronForwardOutline />
 							</IconButton>
@@ -156,13 +204,13 @@ function ModelDetail() {
 						<Box className="model-detail__meta-row">
 							<Box className="model-detail__meta-group">
 								<FaRegCircleUser className="model-detail__user-icon" />
-								<Typography className="model-detail__username">{currentUser?.username ?? 'Usuario'}</Typography>
+								<Typography className="model-detail__username">{postData.authorName}</Typography>
 								<Button className="model-detail__follow-btn">Seguir</Button>
 							</Box>
 
 							<Box className="model-detail__likes-badge">
 								<IoThumbsUpOutline />
-								<Typography>12345</Typography>
+								<Typography>{postData.likes}</Typography>
 							</Box>
 						</Box>
 					</Paper>
@@ -170,13 +218,13 @@ function ModelDetail() {
 
 					<Paper elevation={0} className="model-detail__info-paper">
 						<Typography className="model-detail__info-date">
-							Fecha publicación:
+							Fecha publicación: {postData.createdAt ? new Date(postData.createdAt).toLocaleDateString() : 'Sin fecha'}
 						</Typography>
 						<Typography className="model-detail__info-title">
-							Titulo
+							{postData.titulo}
 						</Typography>
 						<Typography className="model-detail__info-desc">
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris non lorem pharetra, feugiat dolor sed, sodales dui. Fusce fermentum et nisl nec consequat. Ut a ligula viverra, euismod metus nec, dapibus elit.
+							{postData.descripcion}
 						</Typography>
 
 						<Button className="model-detail__download-btn" startIcon={<IoDownloadOutline />}>
@@ -185,8 +233,13 @@ function ModelDetail() {
 
 
 						<Box className="model-detail__stats-bar">
-							{[{ icon: IoThumbsUpOutline, label: 'Me gusta', num: '610' }, { icon: IoBookmarkOutline, label: 'Guardar', num: '1371' }, { icon: IoChatbubblesOutline, label: 'Comentarios', num: '28' }, { icon: IoShareSocialOutline, label: 'Compartir', num: undefined }].map((stat) => (
-								<IconButton key={stat.label} className="model-detail__stat-btn" aria-label={stat.label}>
+							{[{ icon: IoThumbsUpOutline, label: 'Me gusta', num: String(postData.likes) }, { icon: IoBookmarkOutline, label: 'Guardar', num: undefined }, { icon: IoChatbubblesOutline, label: 'Comentarios', num: String(commentCount) }, { icon: IoShareSocialOutline, label: 'Compartir', num: undefined }].map((stat) => (
+								<IconButton
+									key={stat.label}
+									className="model-detail__stat-btn"
+									aria-label={stat.label}
+									onClick={stat.label === 'Comentarios' ? handleScrollToComments : undefined}
+								>
 									<stat.icon />
 									{stat.num && <Typography component="span" className="model-detail__stat-num">{stat.num}</Typography>}
 								</IconButton>
@@ -198,7 +251,7 @@ function ModelDetail() {
 
 				<Paper elevation={0} className="model-detail__comments-paper">
 					<Typography className="model-detail__comments-title">
-						Comentarios ({comentarios?.length ?? 0})
+						Comentarios ({commentCount})
 					</Typography>
 
 					<Box className="model-detail__comment-input-row">
@@ -208,8 +261,9 @@ function ModelDetail() {
 							onChange={(e) => setCommentValue(e.target.value)}
 							className="model-detail__comment-input"
 							fullWidth
+							inputRef={commentInputRef}
 						/>
-						<Button className="model-detail__send-btn" variant="contained" endIcon={<IoSendOutline />} onClick={handleSendComment}>
+						<Button className="model-detail__send-btn" variant="contained" endIcon={<IoSendOutline />} onClick={handleSendComment} ref={sendCommentButtonRef}>
 							Enviar
 						</Button>
 					</Box>
