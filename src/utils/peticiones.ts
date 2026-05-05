@@ -545,6 +545,52 @@ export async function findFollowedPosts(): Promise<FeedPost[]> {
     return posts.map(mapFeedPost)
 }
 
+export async function getFollowersCount(userId: string): Promise<number> {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/${encodeURIComponent(userId)}/followers`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  })
+
+  if (!response.ok) {
+    return 0
+  }
+
+  try {
+    const data = await response.json()
+    if (Array.isArray(data)) return data.length
+    if (typeof data === 'number') return data
+    if (typeof data === 'string') return Number.parseInt(data, 10) || 0
+    return 0
+  } catch {
+    const txt = await response.text().catch(() => '')
+    const parsed = Number.parseInt(txt.trim(), 10)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+}
+
+export async function getFollowedCount(userId: string): Promise<number> {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/${encodeURIComponent(userId)}/followed`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  })
+
+  if (!response.ok) {
+    return 0
+  }
+
+  try {
+    const data = await response.json()
+    if (Array.isArray(data)) return data.length
+    if (typeof data === 'number') return data
+    if (typeof data === 'string') return Number.parseInt(data, 10) || 0
+    return 0
+  } catch {
+    const txt = await response.text().catch(() => '')
+    const parsed = Number.parseInt(txt.trim(), 10)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+}
+
 export async function findPostsByTitle(titulo: string): Promise<FeedPost[]> {
   const title = titulo.trim()
 

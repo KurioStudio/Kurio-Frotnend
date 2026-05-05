@@ -193,6 +193,15 @@
   font-size: 1.8rem;
 }
 
+.model-detail__user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+  display: block;
+}
+
 .model-detail__user-profile-btn {
   display: flex;
   flex-direction: row;
@@ -209,6 +218,39 @@
 
 .model-detail__user-profile-btn:hover {
   opacity: 0.8;
+}
+
+.model-detail__dialog-paper {
+  background: var(--kurio-surface) !important;
+  color: var(--kurio-text) !important;
+  border: 1px solid var(--kurio-border-paper);
+  border-radius: 8px !important;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.45) !important;
+}
+
+.model-detail__dialog-title {
+  color: var(--kurio-text) !important;
+  font-weight: 700 !important;
+}
+
+.model-detail__dialog-content {
+  color: var(--kurio-text-soft) !important;
+}
+
+.model-detail__dialog-description {
+  color: var(--kurio-text-soft) !important;
+}
+
+.model-detail__dialog-actions {
+  padding: 0 24px 20px;
+}
+
+.model-detail__dialog-button {
+  color: var(--kurio-text-soft) !important;
+}
+
+.model-detail__dialog-button--danger {
+  color: #ffd0d2 !important;
 }
 
 .model-detail__follow-btn {

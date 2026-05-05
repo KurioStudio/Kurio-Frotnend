@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, Button, ButtonBase, IconButton, InputBase, Typography, Stack, Paper, CircularProgress } from '@mui/material'
+import { Box, Button, ButtonBase, IconButton, InputBase, Typography, Stack, Paper, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
 import {
 	IoChevronBackOutline,
 	IoChevronForwardOutline,
@@ -50,6 +50,7 @@ type ModelPostState = {
 	createdAt: string
 	authorName: string
 	authorId: string
+	authorAvatar?: string
 	oid: string
 }
 
@@ -80,6 +81,7 @@ function ModelDetail() {
 	const [loadingSTL, setLoadingSTL] = useState(false)
 	const [isFollowing, setIsFollowing] = useState(false)
 	const [followLoading, setFollowLoading] = useState(false)
+	const [unfollowConfirmOpen, setUnfollowConfirmOpen] = useState(false)
 	const [showing3D, setShowing3D] = useState(false)
 	const currentImages = postData.imagenes.length > 0 ? postData.imagenes : []
 	const currentImage = currentImages.length > 0 ? currentImages[postData.imageIndex % currentImages.length] : ''
@@ -124,7 +126,18 @@ function ModelDetail() {
 
 				const post = await getPostById(postId)
 				if (!isCancelled) {
-					setPostData(mapPostToState(post))
+					// prefer authoritative author data by querying profile via id
+					let authorName = post.user.username
+					let authorAvatar = post.user.avatarImg ?? ''
+					try {
+						const authorProfile = await getProfileUserById(post.user.id)
+						authorName = authorProfile.username || authorName
+						authorAvatar = authorProfile.avatarImg || authorAvatar
+					} catch {
+						// ignore, fallback to post.user
+					}
+
+					setPostData({ ...mapPostToState(post), authorName, authorId: post.user.id, authorAvatar })
 				}
 
 				if (user?.id && user.id !== post.user.id) {
@@ -242,14 +255,32 @@ function ModelDetail() {
 
 		try {
 			if (isFollowing) {
-				await unfollowUser(currentUserId, postData.authorId)
-				setIsFollowing(false)
+				// ask for confirmation before unfollowing
+				setUnfollowConfirmOpen(true)
+				setFollowLoading(false)
+				return
 			} else {
 				await followUser(currentUserId, postData.authorId)
 				setIsFollowing(true)
 			}
 		} catch (error) {
 			console.error('Error al actualizar el seguimiento:', error)
+		} finally {
+			setFollowLoading(false)
+		}
+	}
+
+	const confirmUnfollow = async () => {
+		if (!currentUserId || !postData.authorId) return
+
+		setFollowLoading(true)
+		setUnfollowConfirmOpen(false)
+
+		try {
+			await unfollowUser(currentUserId, postData.authorId)
+			setIsFollowing(false)
+		} catch (error) {
+			console.error('Error al dejar de seguir:', error)
 		} finally {
 			setFollowLoading(false)
 		}
@@ -355,7 +386,11 @@ function ModelDetail() {
 											className="model-detail__user-profile-btn"
 											aria-label={`Ver perfil de ${postData.authorName}`}
 										>
-											<FaRegCircleUser className="model-detail__user-icon" />
+											{postData.authorAvatar ? (
+												<Box component="img" src={postData.authorAvatar} alt={postData.authorName} className="model-detail__user-avatar" />
+											) : (
+												<FaRegCircleUser className="model-detail__user-icon" />
+											)}
 											<Typography className="model-detail__username">{postData.authorName}</Typography>
 										</Box>
 										{canFollowAuthor && (
@@ -451,6 +486,29 @@ function ModelDetail() {
 								</Box>
 							)}
 						</Paper>
+
+							{/* Unfollow confirmation dialog */}
+							<Dialog
+								open={unfollowConfirmOpen}
+								onClose={() => setUnfollowConfirmOpen(false)}
+								aria-labelledby="unfollow-confirm-title"
+								slotProps={{
+									paper: {
+										className: 'model-detail__dialog-paper',
+									},
+								}}
+							>
+								<DialogTitle id="unfollow-confirm-title" className="model-detail__dialog-title">Dejar de seguir</DialogTitle>
+								<DialogContent className="model-detail__dialog-content">
+									<DialogContentText className="model-detail__dialog-description">
+										¿Estás seguro de que quieres dejar de seguir a {postData.authorName}?
+									</DialogContentText>
+								</DialogContent>
+								<DialogActions className="model-detail__dialog-actions">
+									<Button onClick={() => setUnfollowConfirmOpen(false)} className="model-detail__dialog-button">Cancelar</Button>
+									<Button onClick={() => void confirmUnfollow()} variant="contained" color="error" className="model-detail__dialog-button model-detail__dialog-button--danger">Dejar de seguir</Button>
+								</DialogActions>
+							</Dialog>
 					</Stack>
 				)}
 			</Box>
