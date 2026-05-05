@@ -96,6 +96,11 @@ export type comentarios = {
     createdAt?: string
 }
 
+export type FollowRequest = {
+  idFollower: string
+  idFollowed: string
+}
+
 type FeedPostResponse = {
   id: string
   titulo: string
@@ -529,7 +534,8 @@ export async function findFollowedPosts(): Promise<FeedPost[]> {
     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/follow`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${currentUser?.idToken ?? ''}`
+            'Authorization': `Bearer ${currentUser?.idToken ?? ''}`,
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             idFollower: currentUser?.id ?? ''
@@ -631,25 +637,44 @@ export async function getModelSTL(oid: string): Promise<Blob> {
 }
 
 export async function checkIfUserFollows(idFollower: string, idFollowed: string): Promise<boolean> {
+  try {
+    const requestBody: FollowRequest = {
+      idFollower,
+      idFollowed,
+    }
+
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/follow/isFollowing`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    })
+
+    if (!response.ok) {
+      return false
+    }
+
+    const responseText = await response.text()
+    const trimmedResponse = responseText.trim().toLowerCase()
+
+    if (trimmedResponse === 'true' || trimmedResponse === '1') {
+      return true
+    }
+
+    if (trimmedResponse === 'false' || trimmedResponse === '0' || !trimmedResponse) {
+      return false
+    }
+
     try {
-    const currentUser = await getCurrentUser()
-    if (!currentUser) {
-      return false
-    }
-
-    if (currentUser.id !== idFollower) {
-      return false
-    }
-
-    const profile = await getProfileUserById(idFollowed)
-    if (profile.id !== idFollowed) {
-      return false
-    }
-
-    return Boolean(profile.isFollowedByCurrentUser)
+      return Boolean(JSON.parse(responseText))
     } catch {
-        return false
+      return false
     }
+  } catch {
+    return false
+  }
 }
 
 function getFilenameFromDisposition(contentDisposition: string | null): string | null {

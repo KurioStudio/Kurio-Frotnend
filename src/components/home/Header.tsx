@@ -2,9 +2,9 @@ import { useEffect, useState, type KeyboardEvent, type MouseEvent } from 'react'
 import { Box, Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
 import { IoSearch, IoChevronDown } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
-import { getAuth } from 'firebase/auth'
+import { getAuth, onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
-import { getCurrentUser, getProfileUserById, hasValidSession, logoutUser, touchSessionActivity } from '../../utils/peticiones'
+import { getProfileUserById, hasValidSession, logoutUser, touchSessionActivity } from '../../utils/peticiones'
 import '../../styles/Header.css'
 
 type CountryOption = {
@@ -22,6 +22,35 @@ const countries: CountryOption[] = [
 ]
 
 const getFlagUrl = (countryCode: string) => `https://flagcdn.com/w40/${countryCode}.png`
+const headerProfileCacheKey = 'kurio_header_profile_cache'
+
+type HeaderProfileCache = {
+  username: string
+  avatarImg: string
+}
+
+const readCachedHeaderProfile = (): HeaderProfileCache | null => {
+  const cachedValue = localStorage.getItem(headerProfileCacheKey)
+
+  if (!cachedValue) {
+    return null
+  }
+
+  try {
+    return JSON.parse(cachedValue) as HeaderProfileCache
+  } catch {
+    localStorage.removeItem(headerProfileCacheKey)
+    return null
+  }
+}
+
+const saveCachedHeaderProfile = (profile: HeaderProfileCache): void => {
+  localStorage.setItem(headerProfileCacheKey, JSON.stringify(profile))
+}
+
+const clearCachedHeaderProfile = (): void => {
+  localStorage.removeItem(headerProfileCacheKey)
+}
 
 function Header() {
   const navigate = useNavigate()
@@ -38,34 +67,49 @@ function Header() {
 
   useEffect(() => {
     let isCancelled = false
+    const cachedProfile = readCachedHeaderProfile()
 
-    const loadProfile = async () => {
-      const currentUser = await getCurrentUser()
+    if (cachedProfile) {
+      setProfileUserName(cachedProfile.username || 'Usuario')
+      setProfileUserAvatar(cachedProfile.avatarImg || '')
+    }
 
-      if (!currentUser) {
+    const syncProfile = async (user: FirebaseUser | null) => {
+      if (!user) {
         if (!isCancelled) {
           setProfileUserName('Iniciar Sesión')
           setProfileUserAvatar('')
         }
+
+        clearCachedHeaderProfile()
         return
       }
 
       try {
-        const profile = await getProfileUserById(currentUser.id)
+        const profile = await getProfileUserById(user.uid)
 
         if (!isCancelled) {
-          setProfileUserName(profile.username || currentUser.username || 'Usuario')
-          setProfileUserAvatar(profile.avatarImg || '')
+          const nextUsername = profile.username || user.email || 'Usuario'
+          const nextAvatar = profile.avatarImg || ''
+
+          setProfileUserName(nextUsername)
+          setProfileUserAvatar(nextAvatar)
+          saveCachedHeaderProfile({
+            username: nextUsername,
+            avatarImg: nextAvatar,
+          })
         }
       } catch {
         if (!isCancelled) {
-          setProfileUserName(currentUser.username || 'Usuario')
+          setProfileUserName(user.email || 'Usuario')
           setProfileUserAvatar('')
         }
       }
     }
 
-    void loadProfile()
+    const unsubscribe = onAuthStateChanged(getAuth(), (user) => {
+      void syncProfile(user)
+    })
 
     const events: Array<keyof WindowEventMap> = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart']
     const handleActivity = () => {
@@ -78,6 +122,7 @@ function Header() {
 
     return () => {
       isCancelled = true
+      unsubscribe()
       events.forEach((eventName) => {
         window.removeEventListener(eventName, handleActivity)
       })
@@ -152,6 +197,9 @@ function Header() {
     await logoutUser()
     handleCloseProfileMenu()
     setLogoutDialogOpen(false)
+    clearCachedHeaderProfile()
+    setProfileUserName('Iniciar Sesión')
+    setProfileUserAvatar('')
     navigate('/')
   }
 
