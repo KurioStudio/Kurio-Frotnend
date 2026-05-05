@@ -532,7 +532,7 @@ export async function findFollowedPosts(): Promise<FeedPost[]> {
             'Authorization': `Bearer ${currentUser?.idToken ?? ''}`
         },
         body: JSON.stringify({
-            userId: currentUser?.id ?? ''
+            idFollower: currentUser?.id ?? ''
         })
     })
     const posts = await response.json()

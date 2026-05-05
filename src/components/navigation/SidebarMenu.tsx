@@ -7,7 +7,8 @@ import {
 	IoTrendingUpOutline,
 	IoBookmarkOutline,
 } from 'react-icons/io5'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import kurioLogo from '../../assets/iconos/kurioLogo.png'
 import { hasValidSession } from '../../utils/peticiones'
 import '../../styles/SidebarMenu.css'
@@ -44,8 +45,27 @@ function SidebarMenu({
 	onSelect
 }: SidebarMenuProps) {
 	const navigate = useNavigate()
+	const location = useLocation()
+	const [selectedItem, setSelectedItem] = useState<string>('Top publicaciones')
+
+	useEffect(() => {
+		// Map routes to sidebar item labels
+		if (location.pathname === '/subir-modelo') {
+			setSelectedItem('Subir modelo')
+		} else if (location.pathname === '/guardados') {
+			setSelectedItem('Guardados')
+		} else if (location.search.includes('filter=seguidos')) {
+			setSelectedItem('Seguidos')
+		} else if (location.search.includes('filter=recientes')) {
+			setSelectedItem('Publicaciones recientes')
+		} else if (location.pathname === '/' || location.search.includes('filter=top')) {
+			setSelectedItem('Top publicaciones')
+		}
+	}, [location])
 
 	const handleItemClick = async (item: typeof defaultItems[0]) => {
+		setSelectedItem(item.label)
+		
 		// Items that require authentication
 		const authRequiredItems = ['Seguidos', 'Guardados', 'Subir modelo', 'Inbox']
 		
@@ -66,7 +86,11 @@ function SidebarMenu({
 		}
 
 		if (item.filter) {
-			onSelect?.(item.filter)
+			if (onSelect) {
+				onSelect(item.filter)
+			} else {
+				navigate(`/?filter=${item.filter}`)
+			}
 			return
 		}
 
@@ -95,7 +119,7 @@ function SidebarMenu({
 				{items.map((item) => (
 					<ButtonBase
 						key={item.label}
-						className="sidebar-menu__item"
+						className={`sidebar-menu__item ${selectedItem === item.label ? 'sidebar-menu__item--active' : ''}`}
 						onClick={() => handleItemClick(item)}
 					>
 						<Box component="span" className="sidebar-menu__item-icon">

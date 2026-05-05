@@ -65,8 +65,9 @@
 .model-detail__image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .model-detail__preview-btn {
@@ -153,8 +154,9 @@
 .model-detail__thumbnail-img {
   width: 100%;
   aspect-ratio: 4 / 3;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .model-detail__meta-row {

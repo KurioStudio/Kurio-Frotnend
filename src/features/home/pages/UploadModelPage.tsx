@@ -215,7 +215,7 @@ function UploadModelPage() {
                                                         className="upload-page__preview-image"
                                                     />
                                                     <IconButton className="upload-page__preview-remove" size="small" onClick={() => removeImage(idx)} aria-label={`Eliminar ${preview.name}`} sx={{ color: '#ff4444' }}>
-                                                        <IoClose />
+                                                        <IoClose size={22} />
                                                     </IconButton>
                                                 </Box>
                                             ))}
