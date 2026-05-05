@@ -12,6 +12,16 @@
   min-height: calc(100vh - var(--kurio-header-height) - 56px);
 }
 
+/* Loader centered when loading the whole post */
+.model-detail__loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: calc(100vh - var(--kurio-header-height) - 56px);
+  padding: 24px;
+}
+
 .model-detail__grid {
   display: grid;
   grid-template-columns: 1fr;
