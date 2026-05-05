@@ -86,11 +86,8 @@ function SidebarMenu({
 		}
 
 		if (item.filter) {
-			if (onSelect) {
-				onSelect(item.filter)
-			} else {
-				navigate(`/?filter=${item.filter}`)
-			}
+			onSelect?.(item.filter)
+			navigate(`/?filter=${item.filter}`)
 			return
 		}
 

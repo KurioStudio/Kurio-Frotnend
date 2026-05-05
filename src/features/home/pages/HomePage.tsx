@@ -18,8 +18,14 @@ function HomePage() {
 
 	useEffect(() => {
 		const searchQuery = searchParams.get('search')
-		if (searchQuery) {
-			setSearchTitle(searchQuery)
+		const filterQuery = searchParams.get('filter')
+
+		setSearchTitle(searchQuery ?? '')
+
+		if (filterQuery === 'top' || filterQuery === 'recientes' || filterQuery === 'seguidos' || filterQuery === 'all') {
+			setFilter(filterQuery)
+		} else if (!searchQuery) {
+			setFilter('all')
 		}
 	}, [searchParams])
 

@@ -1,9 +1,10 @@
 import { useEffect, useState, type KeyboardEvent, type MouseEvent } from 'react'
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
+import { Box, Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
 import { IoSearch, IoChevronDown } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
+import { getAuth } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
-import { hasValidSession, logoutUser, touchSessionActivity } from '../../utils/peticiones'
+import { getCurrentUser, getProfileUserById, hasValidSession, logoutUser, touchSessionActivity } from '../../utils/peticiones'
 import '../../styles/Header.css'
 
 type CountryOption = {
@@ -27,6 +28,8 @@ function Header() {
   const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
   const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
   const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null)
+  const [profileUserName, setProfileUserName] = useState('Iniciar Sesión')
+  const [profileUserAvatar, setProfileUserAvatar] = useState('')
   const [searchValue, setSearchValue] = useState('')
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
@@ -34,6 +37,36 @@ function Header() {
   const profileMenuOpen = Boolean(profileAnchorEl)
 
   useEffect(() => {
+    let isCancelled = false
+
+    const loadProfile = async () => {
+      const currentUser = await getCurrentUser()
+
+      if (!currentUser) {
+        if (!isCancelled) {
+          setProfileUserName('Iniciar Sesión')
+          setProfileUserAvatar('')
+        }
+        return
+      }
+
+      try {
+        const profile = await getProfileUserById(currentUser.id)
+
+        if (!isCancelled) {
+          setProfileUserName(profile.username || currentUser.username || 'Usuario')
+          setProfileUserAvatar(profile.avatarImg || '')
+        }
+      } catch {
+        if (!isCancelled) {
+          setProfileUserName(currentUser.username || 'Usuario')
+          setProfileUserAvatar('')
+        }
+      }
+    }
+
+    void loadProfile()
+
     const events: Array<keyof WindowEventMap> = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart']
     const handleActivity = () => {
       touchSessionActivity()
@@ -44,6 +77,7 @@ function Header() {
     })
 
     return () => {
+      isCancelled = true
       events.forEach((eventName) => {
         window.removeEventListener(eventName, handleActivity)
       })
@@ -106,15 +140,7 @@ function Header() {
     navigate('/profile/edit')
   }
 
-  const handleOpenProfileMenu = async (event: MouseEvent<HTMLElement>) => {
-    const anchorElement = event.currentTarget
-    const isSessionValid = await hasValidSession()
-
-    if (!isSessionValid) {
-      navigate('/auth/login')
-      return
-    }
-
+  const handleOpenProfileMenu = (anchorElement: HTMLElement) => {
     setProfileAnchorEl(anchorElement)
   }
 
@@ -136,6 +162,17 @@ function Header() {
 
   const handleCloseLogoutDialog = () => {
     setLogoutDialogOpen(false)
+  }
+
+  const handleProfileButtonClick = async (event: MouseEvent<HTMLElement>) => {
+    const currentUser = getAuth().currentUser
+
+    if (!currentUser) {
+      navigate('/auth/login')
+      return
+    }
+
+    handleOpenProfileMenu(event.currentTarget)
   }
 
   return (
@@ -171,18 +208,33 @@ function Header() {
             <IoChevronDown className="header__icon" size={10} />
           </IconButton>
 
-          <IconButton
-            className="header__icon-button"
+          <ButtonBase
+            className="header__profile-button"
             onClick={(event) => {
-              void handleOpenProfileMenu(event)
+              void handleProfileButtonClick(event)
             }}
             aria-controls={profileMenuOpen ? 'profile-menu' : undefined}
             aria-expanded={profileMenuOpen ? 'true' : undefined}
             aria-haspopup="true"
-            aria-label="Usuario"
+            aria-label={profileUserName}
           >
-            <FaRegCircleUser className="header__icon" size={18} />
-          </IconButton>
+            {profileUserAvatar ? (
+              <Box
+                component="img"
+                src={profileUserAvatar}
+                alt={profileUserName}
+                className="header__profile-avatar"
+                loading="lazy"
+              />
+            ) : (
+              <Box className="header__profile-avatar header__profile-avatar--fallback">
+                <FaRegCircleUser className="header__icon header__icon--profile" size={18} />
+              </Box>
+            )}
+            <Typography className="header__profile-label">
+              {profileUserName}
+            </Typography>
+          </ButtonBase>
         </Box>
       </Box>
 
