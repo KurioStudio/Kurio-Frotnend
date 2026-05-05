@@ -463,16 +463,12 @@ export async function followUser(idFollower: string, idFollowed: string): Promis
 }
 
 export async function unfollowUser(idFollower: string, idFollowed: string): Promise<void> {
-  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/follow`, {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/follow?idFollower=${idFollower}&idFollowed=${idFollowed}`, {
     method: 'DELETE',
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      idFollower,
-      idFollowed
-    })
+    }
   })
 
   if (!response.ok) {
