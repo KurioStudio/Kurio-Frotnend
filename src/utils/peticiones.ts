@@ -447,7 +447,7 @@ export async function followUser(idFollower: string, idFollowed: string): Promis
   const followed = encodeURIComponent(idFollowed)
 
   const response = await fetch(
-    `${import.meta.env.VITE_BACKEND_URL}/api/follow?idFollower=${follower}&idFollowed=${followed}`,
+    `${import.meta.env.VITE_BACKEND_URL}/follow?idFollower=${follower}&idFollowed=${followed}`,
     {
       method: 'GET',
       headers: {
@@ -463,7 +463,7 @@ export async function followUser(idFollower: string, idFollowed: string): Promis
 }
 
 export async function unfollowUser(idFollower: string, idFollowed: string): Promise<void> {
-  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/follow`, {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/follow`, {
     method: 'DELETE',
     headers: {
       'Accept': 'application/json',
