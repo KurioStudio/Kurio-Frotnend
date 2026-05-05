@@ -23,7 +23,7 @@ import {
 	getCurrentUser,
 	getModelSTL,
 	getPostById,
-	getUserById,
+	getProfileUserById,
 	likePost,
 	sendComment,
 	type comentarios,
@@ -36,6 +36,7 @@ import '../../../styles/ModelDetail.css'
 
 type CommentView = comentarios & {
 	username: string
+	avatarImg: string
 }
 
 type ModelPostState = {
@@ -137,15 +138,17 @@ function ModelDetail() {
 				const comentariosConUsuario = await Promise.all(
 					response.map(async (comentario) => {
 						try {
-							const usuario = await getUserById(comentario.idUser)
+							const usuario = await getProfileUserById(comentario.idUser)
 							return {
 								...comentario,
 								username: usuario.username,
+								avatarImg: usuario.avatarImg,
 							}
 						} catch {
 							return {
 								...comentario,
 								username: comentario.idUser,
+								avatarImg: '',
 							}
 						}
 					})
@@ -190,10 +193,10 @@ function ModelDetail() {
 			const updatedWithUser = await Promise.all(
 				updated.map(async (comentario) => {
 					try {
-						const usuario = await getUserById(comentario.idUser)
-						return { ...comentario, username: usuario.username }
+						const usuario = await getProfileUserById(comentario.idUser)
+						return { ...comentario, username: usuario.username, avatarImg: usuario.avatarImg }
 					} catch {
-						return { ...comentario, username: comentario.idUser }
+						return { ...comentario, username: comentario.idUser, avatarImg: '' }
 					}
 				})
 			)
@@ -439,6 +442,7 @@ function ModelDetail() {
 											idPost={cmt.idPost}
 											idUser={cmt.idUser}
 											username={cmt.username}
+											avatarImg={cmt.avatarImg}
 											contenido={cmt.contenido}
 											createdAt={cmt.createdAt}
 											idComment={`${cmt.idPost}-${idx}`}
