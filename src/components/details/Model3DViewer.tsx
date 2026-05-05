@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, CircularProgress } from '@mui/material'
+import { Box, CircularProgress, IconButton, Typography } from '@mui/material'
+import { IoAdd, IoRemove } from 'react-icons/io5'
 import * as THREE from 'three'
 import { STLLoader, ThreeMFLoader } from 'three/examples/jsm/Addons.js'
 
@@ -17,8 +18,10 @@ export default function Model3DViewer({
   const containerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
   const animationRef = useRef<number | null>(null)
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
 
   const [localError, setLocalError] = useState('')
+  const [modelLoaded, setModelLoaded] = useState(false)
 
   useEffect(() => {
     if (!containerRef.current || !modelBlob || loading) {
@@ -26,12 +29,18 @@ export default function Model3DViewer({
     }
 
     setLocalError('')
+    setModelLoaded(false)
 
     const container = containerRef.current
 
-    // Limpiar canvas anterior
-    while (container.firstChild) {
-      container.removeChild(container.firstChild)
+    // Limpiar canvas anterior de forma segura - remover solo el canvas renderer
+    try {
+      const existingCanvas = container.querySelector('canvas')
+      if (existingCanvas && existingCanvas.parentElement === container) {
+        container.removeChild(existingCanvas)
+      }
+    } catch (e) {
+      console.warn('Error al limpiar canvas anterior:', e)
     }
 
     let scene: THREE.Scene
@@ -45,8 +54,6 @@ export default function Model3DViewer({
       y: 0,
     }
 
-    let autoRotate = 0
-
     try {
       // Scene
       scene = new THREE.Scene()
@@ -58,6 +65,7 @@ export default function Model3DViewer({
 
       camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 5000)
       camera.position.z = 150
+      cameraRef.current = camera
 
       // Renderer
       renderer = new THREE.WebGLRenderer({
@@ -133,6 +141,7 @@ export default function Model3DViewer({
           camera.lookAt(0, 0, 0)
 
           scene.add(model)
+          setModelLoaded(true)
         } catch (err) {
           console.error(err)
           setLocalError('No se pudo cargar este modelo 3D')
@@ -185,15 +194,9 @@ export default function Model3DViewer({
 
       window.addEventListener('resize', handleResize)
 
-      // Animation
+      // Animation - SIN ROTACIÓN AUTOMÁTICA
       const animate = () => {
         animationRef.current = requestAnimationFrame(animate)
-
-        if (model && !mouse.down) {
-          autoRotate += 0.003
-          model.rotation.y = autoRotate
-        }
-
         renderer.render(scene, camera)
       }
 
@@ -201,21 +204,36 @@ export default function Model3DViewer({
 
       // Cleanup
       return () => {
-        window.removeEventListener('resize', handleResize)
+        try {
+          window.removeEventListener('resize', handleResize)
 
-        renderer.domElement.removeEventListener('mousedown', onMouseDown)
-        renderer.domElement.removeEventListener('mousemove', onMouseMove)
-        renderer.domElement.removeEventListener('mouseup', onMouseUp)
-        renderer.domElement.removeEventListener('mouseleave', onMouseUp)
+          if (renderer && renderer.domElement) {
+            renderer.domElement.removeEventListener('mousedown', onMouseDown)
+            renderer.domElement.removeEventListener('mousemove', onMouseMove)
+            renderer.domElement.removeEventListener('mouseup', onMouseUp)
+            renderer.domElement.removeEventListener('mouseleave', onMouseUp)
+          }
 
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current)
-        }
+          if (animationRef.current) {
+            cancelAnimationFrame(animationRef.current)
+          }
 
-        renderer.dispose()
+          if (renderer) {
+            renderer.dispose()
+          }
 
-        while (container.firstChild) {
-          container.removeChild(container.firstChild)
+          // Remover canvas específico de forma segura
+          if (containerRef.current && renderer && renderer.domElement) {
+            try {
+              if (renderer.domElement.parentElement === containerRef.current) {
+                containerRef.current.removeChild(renderer.domElement)
+              }
+            } catch (e) {
+              console.warn('Error al remover canvas:', e)
+            }
+          }
+        } catch (err) {
+          console.warn('Error en cleanup:', err)
         }
       }
     } catch (err) {
@@ -224,31 +242,95 @@ export default function Model3DViewer({
     }
   }, [modelBlob, loading])
 
+  const handleZoom = (direction: 'in' | 'out') => {
+    if (!cameraRef.current) return
+
+    const zoomSpeed = 20
+    if (direction === 'in') {
+      cameraRef.current.position.z -= zoomSpeed
+    } else {
+      cameraRef.current.position.z += zoomSpeed
+    }
+  }
+
   return (
     <Box
       ref={containerRef}
       sx={{
         width: '100%',
-        height: '400px',
+        height: '100%',
         position: 'relative',
         backgroundColor: '#1a1a1a',
         borderRadius: '8px',
         overflow: 'hidden',
       }}
     >
-      {loading && (
+      {(loading || !modelLoaded) && (
         <Box
           sx={{
             position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(2px)',
             zIndex: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 3,
           }}
         >
-          <CircularProgress sx={{ color: '#d7a449' }} />
+          <CircularProgress sx={{ color: '#d7a449', width: '80px !important', height: '80px !important' }} />
+          <Typography sx={{ color: '#d7a449', fontSize: '1rem', fontWeight: 600 }}>
+            Cargando modelo 3D...
+          </Typography>
         </Box>
       )}
+
+      {/* Zoom Controls */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 16,
+          right: 16,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1,
+          zIndex: 5,
+        }}
+      >
+        <IconButton
+          onClick={() => handleZoom('in')}
+          sx={{
+            backgroundColor: 'rgba(215, 164, 73, 0.9)',
+            color: '#fff',
+            width: 40,
+            height: 40,
+            '&:hover': {
+              backgroundColor: 'rgba(215, 164, 73, 1)',
+            },
+          }}
+        >
+          <IoAdd />
+        </IconButton>
+        <IconButton
+          onClick={() => handleZoom('out')}
+          sx={{
+            backgroundColor: 'rgba(215, 164, 73, 0.9)',
+            color: '#fff',
+            width: 40,
+            height: 40,
+            '&:hover': {
+              backgroundColor: 'rgba(215, 164, 73, 1)',
+            },
+          }}
+        >
+          <IoRemove />
+        </IconButton>
+      </Box>
 
       {(error || localError) && (
         <Box
@@ -261,6 +343,7 @@ export default function Model3DViewer({
             textAlign: 'center',
             fontSize: '0.95rem',
             px: 2,
+            zIndex: 10,
           }}
         >
           {error || localError}

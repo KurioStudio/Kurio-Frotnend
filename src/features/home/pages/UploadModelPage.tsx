@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Alert, Box, Button, FormControlLabel, IconButton, Radio, RadioGroup, Snackbar, TextField, Typography } from '@mui/material'
-import { IoTrashOutline, IoClose } from 'react-icons/io5'
+import { IoClose } from 'react-icons/io5'
 import { useNavigate } from 'react-router-dom'
 import Header from '../../../components/home/Header'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
@@ -214,7 +214,7 @@ function UploadModelPage() {
                                                         alt={preview.name}
                                                         className="upload-page__preview-image"
                                                     />
-                                                    <IconButton className="upload-page__preview-remove" size="small" onClick={() => removeImage(idx)} aria-label={`Eliminar ${preview.name}`}>
+                                                    <IconButton className="upload-page__preview-remove" size="small" onClick={() => removeImage(idx)} aria-label={`Eliminar ${preview.name}`} sx={{ color: '#ff4444' }}>
                                                         <IoClose />
                                                     </IconButton>
                                                 </Box>
@@ -222,11 +222,6 @@ function UploadModelPage() {
                                         </Box>
                                     )}
                                     <Box className="upload-page__dropzone-controls">
-                                        {selectedImages.length > 0 && (
-                                            <IconButton className="upload-page__clear-button" onClick={clearAllImages} aria-label="Eliminar todas las imágenes">
-                                                <IoTrashOutline />
-                                            </IconButton>
-                                        )}
                                         <Button
                                             variant="contained"
                                             className="upload-page__action-button"

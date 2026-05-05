@@ -107,7 +107,15 @@ function Header() {
   }
 
   const handleOpenProfileMenu = async (event: MouseEvent<HTMLElement>) => {
-    setProfileAnchorEl(event.currentTarget)
+    const anchorElement = event.currentTarget
+    const isSessionValid = await hasValidSession()
+
+    if (!isSessionValid) {
+      navigate('/auth/login')
+      return
+    }
+
+    setProfileAnchorEl(anchorElement)
   }
 
   const handleCloseProfileMenu = () => {

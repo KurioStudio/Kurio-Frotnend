@@ -57,7 +57,7 @@ function PostCard({ title, author, likes, image, userImage, onClick }: PostCardP
 				/>
 			</Box>
 
-			<Tooltip title={title} placement="top" arrow>
+			<Tooltip title={title} placement="top-start" arrow>
 				<Typography className="post-card__title">
 					{title}
 				</Typography>
@@ -75,7 +75,7 @@ function PostCard({ title, author, likes, image, userImage, onClick }: PostCardP
 					) : (
 						<FaRegCircleUser className="post-card__icon" size={18} />
 					)}
-					<Tooltip title={author} placement="top" arrow>
+				<Tooltip title={author} placement="top-start" arrow>
 						<Typography className="post-card__meta-text post-card__meta-text--author">{author}</Typography>
 					</Tooltip>
 				</Box>
