@@ -15,7 +15,7 @@ export type FeedPost = {
     image: string,
     username: string,
     likes: number,
-    user: User
+  user: Pick<User, 'id' | 'username' | 'avatarImg' | 'email'>
 }
 
 export type PostDetail = {
@@ -28,6 +28,7 @@ export type PostDetail = {
     likedBy: string[],
     licencia: string,
     createdAt: string,
+    oid: string,
     user: {
         id: string,
         username: string,
@@ -81,12 +82,31 @@ export type User = {
   createdAt: string
 }
 
+export type ProfileUser = Pick<User, 'id' | 'username' | 'email' | 'avatarImg' | 'createdAt'> & {
+  followersCount: number
+  followingCount: number
+  isFollowedByCurrentUser?: boolean
+}
+
 export type comentarios = {
     idPost: string,
     idUser: string,
     contenido: string,
     idComment?: string,
     createdAt?: string
+}
+
+type FeedPostResponse = {
+  id: string
+  titulo: string
+  imagenes?: string[]
+  user?: {
+    id?: string
+    username?: string
+    avatarImg?: string
+    email?: string
+  }
+  likedBy?: string[]
 }
 
 // AUTH Service
@@ -321,25 +341,167 @@ export async function getUserById(id: string): Promise<User> {
     }
 }
 
+const toSafeNumber = (value: unknown): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+
+  return 0
+}
+
+export async function getProfileUserById(id: string): Promise<ProfileUser> {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/${id}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json'
+    }
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '')
+    throw new Error(errorBody || 'No se pudo cargar el perfil del usuario')
+  }
+
+  const user = await response.json()
+  const followersCount = toSafeNumber(
+    user.followersCount
+    ?? user.cantSeguidores
+    ?? user.followers
+    ?? user.seguidores
+    ?? user.followers_count
+    ?? (Array.isArray(user.followersList) ? user.followersList.length : undefined)
+    ?? (Array.isArray(user.seguidoresList) ? user.seguidoresList.length : undefined)
+  )
+  const followingCount = toSafeNumber(
+    user.followingCount
+    ?? user.cantSeguidos
+    ?? user.following
+    ?? user.seguidos
+    ?? user.following_count
+    ?? (Array.isArray(user.followingList) ? user.followingList.length : undefined)
+    ?? (Array.isArray(user.seguidosList) ? user.seguidosList.length : undefined)
+  )
+
+  return {
+    id: user.id ?? '',
+    username: user.username ?? 'Usuario desconocido',
+    email: user.email ?? '',
+    avatarImg: user.avatarImg ?? '',
+    createdAt: user.createdAt ?? '',
+    followersCount,
+    followingCount,
+    isFollowedByCurrentUser: Boolean(
+      user.isFollowedByCurrentUser
+      ?? user.followedByCurrentUser
+      ?? user.siguiendo
+      ?? user.isFollowing
+    )
+  }
+}
+
+export async function findPostsByUserId(userId: string): Promise<FeedPost[]> {
+  const trimmedUserId = userId.trim()
+
+  if (!trimmedUserId) {
+    return []
+  }
+
+  const encodedUserId = encodeURIComponent(trimmedUserId)
+  const userPostsResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/user/${encodedUserId}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json'
+    }
+  })
+
+  if (userPostsResponse.ok) {
+    const posts = await userPostsResponse.json()
+    return posts.map(mapFeedPost)
+  }
+
+  const fallbackResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json'
+    }
+  })
+
+  if (!fallbackResponse.ok) {
+    const errorBody = await fallbackResponse.text().catch(() => '')
+    throw new Error(errorBody || 'No se pudieron cargar los posts del perfil')
+  }
+
+  const posts = await fallbackResponse.json()
+  return posts
+    .filter((post: FeedPostResponse) => (post.user?.id ?? '') === trimmedUserId)
+    .map(mapFeedPost)
+}
+
+export async function followUser(idFollower: string, idFollowed: string): Promise<void> {
+  const follower = encodeURIComponent(idFollower)
+  const followed = encodeURIComponent(idFollowed)
+
+  const response = await fetch(
+    `${import.meta.env.VITE_BACKEND_URL}/api/follow?idFollower=${follower}&idFollowed=${followed}`,
+    {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      }
+    }
+  )
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '')
+    throw new Error(errorBody || 'No se pudo seguir al usuario')
+  }
+}
+
+export async function unfollowUser(idFollower: string, idFollowed: string): Promise<void> {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/follow`, {
+    method: 'DELETE',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      idFollower,
+      idFollowed
+    })
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '')
+    throw new Error(errorBody || 'No se pudo dejar de seguir al usuario')
+  }
+}
+
 //POST Service
+const mapFeedPost = (post: FeedPostResponse): FeedPost => ({
+  id: post.id,
+  titulo: post.titulo,
+  image: post.imagenes?.[0] ?? '',
+  username: post.user?.username ?? 'Usuario desconocido',
+  likes: post.likedBy?.length ?? 0,
+  user: {
+    id: post.user?.id ?? '',
+    username: post.user?.username ?? 'Usuario desconocido',
+    avatarImg: post.user?.avatarImg ?? '',
+    email: post.user?.email ?? ''
+  }
+})
+
 export async function findAllPosts(): Promise<FeedPost[]> {
     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts`, {
         method: 'GET'
     })
     const posts = await response.json()
-    return posts.map((post: any) => ({
-        id: post.id,
-        titulo: post.titulo,
-        image: post.imagenes[0] ?? '',
-        username: post.user?.username ?? 'Usuario desconocido',
-        likes: post.likedBy?.length ?? 0,
-        user: {
-            id: post.user?.id ?? '',
-            username: post.user?.username ?? 'Usuario desconocido',
-            avatarImg: post.user?.avatarImg ?? '',
-            email: post.user?.email ?? ''
-        }
-    }))
+  return posts.map(mapFeedPost)
 }
 
 export async function findRecentPosts(): Promise<FeedPost[]> {
@@ -351,19 +513,7 @@ export async function findRecentPosts(): Promise<FeedPost[]> {
         }
     })
     const posts = await response.json()
-    return posts.map((post: any) => ({
-        id: post.id,
-        titulo: post.titulo,
-        image: post.imagenes[0] ?? '',
-        username: post.user?.username ?? 'Usuario desconocido',
-        likes: post.likedBy?.length ?? 0,
-        user: {
-            id: post.user?.id ?? '',
-            username: post.user?.username ?? 'Usuario desconocido',
-            avatarImg: post.user?.avatarImg ?? '',
-            email: post.user?.email ?? ''
-        }
-    }))
+    return posts.map(mapFeedPost)
 }
 
 export async function findTopPosts(): Promise<FeedPost[]> {
@@ -375,19 +525,7 @@ export async function findTopPosts(): Promise<FeedPost[]> {
         }
     })
     const posts = await response.json()
-    return posts.map((post: any) => ({
-        id: post.id,
-        titulo: post.titulo,
-        image: post.imagenes[0] ?? '',
-        username: post.user?.username ?? 'Usuario desconocido',
-        likes: post.likedBy?.length ?? 0,
-        user: {
-            id: post.user?.id ?? '',
-            username: post.user?.username ?? 'Usuario desconocido',
-            avatarImg: post.user?.avatarImg ?? '',
-            email: post.user?.email ?? ''
-        }
-    }))
+    return posts.map(mapFeedPost)
 }
 
 export async function findFollowedPosts(): Promise<FeedPost[]> {
@@ -402,19 +540,31 @@ export async function findFollowedPosts(): Promise<FeedPost[]> {
         })
     })
     const posts = await response.json()
-    return posts.map((post: any) => ({
-        id: post.id,
-        titulo: post.titulo,
-        image: post.imagenes[0] ?? '',
-        username: post.user?.username ?? 'Usuario desconocido',
-        likes: post.likedBy?.length ?? 0,
-        user: {
-            id: post.user?.id ?? '',
-            username: post.user?.username ?? 'Usuario desconocido',
-            avatarImg: post.user?.avatarImg ?? '',
-            email: post.user?.email ?? ''
-        }
-    }))
+    return posts.map(mapFeedPost)
+}
+
+export async function findPostsByTitle(titulo: string): Promise<FeedPost[]> {
+  const title = titulo.trim()
+
+  if (!title) {
+    return []
+  }
+
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/title?title=${encodeURIComponent(title)}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => '')
+    throw new Error(errorText || 'Error buscando publicaciones por título')
+  }
+
+  const posts = await response.json()
+  return posts.map(mapFeedPost)
 }
 
 export async function subirPost(post: Omit<Post, 'id' | 'likedBy' | 'createdAt'>): Promise<void> {
@@ -468,7 +618,7 @@ export async function likePost(idPost: string): Promise<void> {
     })
 }
 
-export async function descargarFichero(oid: string): Promise<void> {
+export async function getModelSTL(oid: string): Promise<Blob> {
     const currentUser = await getCurrentUser()
     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/${oid}/descargar`, {
         method: 'GET',
@@ -477,29 +627,116 @@ export async function descargarFichero(oid: string): Promise<void> {
         }
     })
 
-      if (!response.ok) {
+    if (!response.ok) {
+        throw new Error('Error al descargar el modelo STL')
+    }
+
+    return await response.blob()
+}
+
+export async function checkIfUserFollows(idFollower: string, idFollowed: string): Promise<boolean> {
+    try {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) {
+      return false
+    }
+
+    if (currentUser.id !== idFollower) {
+      return false
+    }
+
+    const profile = await getProfileUserById(idFollowed)
+    if (profile.id !== idFollowed) {
+      return false
+    }
+
+    return Boolean(profile.isFollowedByCurrentUser)
+    } catch {
+        return false
+    }
+}
+
+function getFilenameFromDisposition(contentDisposition: string | null): string | null {
+  if (!contentDisposition) return null;
+
+  // filename*=UTF-8''archivo.3mf
+  let match = contentDisposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+  if (match) {
+    return decodeURIComponent(match[1]);
+  }
+
+  // filename="archivo.3mf" o filename=archivo.3mf
+  match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/i);
+  if (match) {
+    return match[1].replace(/['"]/g, "").trim();
+  }
+
+  return null;
+}
+
+function extensionFromMimeType(contentType: string | null): string {
+  if (!contentType) return "";
+
+  const type = contentType.toLowerCase();
+
+  if (
+    type.includes("3mf") ||
+    type.includes("3dmanufacturing") ||
+    type.includes("zip")
+  ) {
+    return ".3mf";
+  }
+
+  if (type.includes("stl")) {
+    return ".stl";
+  }
+
+  return "";
+}
+
+export async function descargarFichero(oid: string): Promise<void> {
+  const currentUser = await getCurrentUser();
+
+  const response = await fetch(
+    `${import.meta.env.VITE_BACKEND_URL}/posts/${oid}/descargar`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${currentUser?.idToken ?? ""}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
     throw new Error("Error al descargar el archivo");
   }
 
   const blob = await response.blob();
 
-  const contentDisposition = response.headers.get("content-disposition");
-  let filename = "archivo";
+  // Intentar obtener nombre desde Content-Disposition
+  let filename =
+    getFilenameFromDisposition(response.headers.get("content-disposition")) ||
+    "archivo";
 
-  if (contentDisposition) {
-    const match = contentDisposition.match(/filename="?(.+)"?/);
-    if (match) filename = match[1];
+  // Si no tiene extensión, usar Content-Type
+  if (!/\.[a-zA-Z0-9]+$/.test(filename)) {
+    const ext = extensionFromMimeType(response.headers.get("content-type"));
+    filename += ext || ".stl";
   }
+
   const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
 
-  document.body.appendChild(a);
-  a.click();
+  try {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
 
-  a.remove();
-  window.URL.revokeObjectURL(url);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } finally {
+    window.URL.revokeObjectURL(url);
+  }
 }
 
 export async function getPostById(idPost: string): Promise<PostDetail> {
@@ -515,6 +752,7 @@ export async function getPostById(idPost: string): Promise<PostDetail> {
         cantComentarios: post.cantComentarios ?? 0,
         likes: post.likedBy?.length ?? 0,
         likedBy: post.likedBy ?? [],
+        oid: post.oid ?? '',
         licencia: post.licencia ?? '',
         createdAt: post.createdAt ?? '',
         user: {

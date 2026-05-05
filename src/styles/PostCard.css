@@ -143,6 +143,16 @@
   margin-bottom: 8px;
 }
 
+.comment-item__header--clickable {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  padding: 4px 0;
+}
+
+.comment-item__header--clickable:hover {
+  opacity: 0.8;
+}
+
 /* Creation date shown below the comment */
 .comment-item__date {
   color: var(--kurio-text-soft);

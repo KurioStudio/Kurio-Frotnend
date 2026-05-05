@@ -13,8 +13,23 @@ import {
 } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import Header from '../../../components/home/Header'
+import Model3DViewer from '../../../components/details/Model3DViewer'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
-import { findAllComments, sendComment, type comentarios, getCurrentUser, getUserById, getPostById, likePost, type PostDetail } from '../../../utils/peticiones'
+import {
+	checkIfUserFollows,
+	descargarFichero,
+	findAllComments,
+	followUser,
+	getCurrentUser,
+	getModelSTL,
+	getPostById,
+	getUserById,
+	likePost,
+	sendComment,
+	type comentarios,
+	type PostDetail,
+	unfollowUser,
+} from '../../../utils/peticiones'
 import Comment from '../../../components/details/Comment'
 import { useNavigate, useParams } from 'react-router-dom'
 import '../../../styles/ModelDetail.css'
@@ -33,6 +48,8 @@ type ModelPostState = {
 	comentarios: number
 	createdAt: string
 	authorName: string
+	authorId: string
+	oid: string
 }
 
 function ModelDetail() {
@@ -50,16 +67,24 @@ function ModelDetail() {
 		comentarios: 0,
 		createdAt: '',
 		authorName: '',
+		authorId: '',
+		oid: '',
 	})
 	const [commentValue, setCommentValue] = useState('')
 	const [comentarios, setComentarios] = useState<CommentView[]>([])
 	const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+	const [loadingPost, setLoadingPost] = useState(true)
 	const [loadingComments, setLoadingComments] = useState(false)
+	const [stlBlob, setStlBlob] = useState<Blob | undefined>()
+	const [loadingSTL, setLoadingSTL] = useState(false)
+	const [isFollowing, setIsFollowing] = useState(false)
+	const [followLoading, setFollowLoading] = useState(false)
 	const [showing3D, setShowing3D] = useState(false)
 	const currentImages = postData.imagenes.length > 0 ? postData.imagenes : []
-	const currentImage = currentImages[postData.imageIndex % currentImages.length]
+	const currentImage = currentImages.length > 0 ? currentImages[postData.imageIndex % currentImages.length] : ''
 	const commentCount = comentarios.length
 	const isLikedByCurrentUser = Boolean(currentUserId && postData.likedBy.includes(currentUserId))
+	const canFollowAuthor = Boolean(currentUserId && postData.authorId && currentUserId !== postData.authorId)
 
 	const mapPostToState = (post: PostDetail): ModelPostState => ({
 		imageIndex: 0,
@@ -71,35 +96,43 @@ function ModelDetail() {
 		comentarios: post.cantComentarios,
 		createdAt: post.createdAt,
 		authorName: post.user.username,
+		authorId: post.user.id,
+		oid: post.oid,
 	})
 
   useEffect(() => {
 		let isCancelled = false
 
-		const cargarComentarios = async () => {
-			setComentarios([])
+		const loadPost = async () => {
+			setLoadingPost(true)
 			setLoadingComments(true)
-			const user = await getCurrentUser()
-			if (!isCancelled) {
-				setCurrentUserId(user?.id ?? null)
-			}
+			setComentarios([])
+			setShowing3D(false)
+			setStlBlob(undefined)
+			setIsFollowing(false)
 
-			if (postId) {
-				try {
-					const post: PostDetail = await getPostById(postId)
-					if (!isCancelled) {
-						setPostData(mapPostToState(post))
-					}
-				} catch (error) {
-					console.error('Error al cargar el post:', error)
-				}
-			}
-
-			if (!postId) {
-				setLoadingComments(false)
-				return
-			}
 			try {
+				const user = await getCurrentUser()
+				if (!isCancelled) {
+					setCurrentUserId(user?.id ?? null)
+				}
+
+				if (!postId) {
+					return
+				}
+
+				const post = await getPostById(postId)
+				if (!isCancelled) {
+					setPostData(mapPostToState(post))
+				}
+
+				if (user?.id && user.id !== post.user.id) {
+					const follows = await checkIfUserFollows(user.id, post.user.id)
+					if (!isCancelled) {
+						setIsFollowing(follows)
+					}
+				}
+
 				const response = await findAllComments(postId)
 				const comentariosConUsuario = await Promise.all(
 					response.map(async (comentario) => {
@@ -117,19 +150,21 @@ function ModelDetail() {
 						}
 					})
 				)
+
 				if (!isCancelled) {
 					setComentarios(comentariosConUsuario)
-					setLoadingComments(false)
 				}
 			} catch (error) {
+				console.error('Error al cargar el post:', error)
+			} finally {
 				if (!isCancelled) {
-					setComentarios([])
+					setLoadingPost(false)
 					setLoadingComments(false)
 				}
-				console.error('Error al cargar comentarios:', error)
 			}
 		}
-		cargarComentarios()
+
+		void loadPost()
 
 		return () => {
 			isCancelled = true
@@ -195,152 +230,226 @@ function ModelDetail() {
 		commentInputRef.current?.focus()
 	}
 
+	const handleToggleFollow = async () => {
+		if (!canFollowAuthor || !currentUserId) {
+			return
+		}
+
+		setFollowLoading(true)
+
+		try {
+			if (isFollowing) {
+				await unfollowUser(currentUserId, postData.authorId)
+				setIsFollowing(false)
+			} else {
+				await followUser(currentUserId, postData.authorId)
+				setIsFollowing(true)
+			}
+		} catch (error) {
+			console.error('Error al actualizar el seguimiento:', error)
+		} finally {
+			setFollowLoading(false)
+		}
+	}
+
+	const handleDownload = async () => {
+		if (!postData.oid) {
+			return
+		}
+
+		try {
+			await descargarFichero(postData.oid)
+		} catch (error) {
+			console.error('Error descargando archivo:', error)
+		}
+	}
+
+	const handleToggleModel = async () => {
+		if (!showing3D && !stlBlob && postData.oid) {
+			setLoadingSTL(true)
+			try {
+				const blob = await getModelSTL(postData.oid)
+				setStlBlob(blob)
+			} catch (error) {
+				console.error('Error loading STL:', error)
+			} finally {
+				setLoadingSTL(false)
+			}
+		}
+
+		setShowing3D((current) => !current)
+	}
+
 	return (
 		<Box className="model-detail">
 			<SidebarMenu />
-			<Header />
+			<Box className="model-detail__content">
+				<Header />
 
-			<Stack spacing={2} className="model-detail__container">
+				{loadingPost ? (
+					<Box className="model-detail__loader">
+						<CircularProgress />
+					</Box>
+				) : (
+					<Stack spacing={2} className="model-detail__container">
+						<Box className="model-detail__grid">
+							<Paper elevation={0} className="model-detail__gallery-paper">
+								<Box className="model-detail__image-container model-detail__3d-container">
+									{showing3D ? (
+										<Model3DViewer modelBlob={stlBlob} loading={loadingSTL} />
+									) : (
+										<Box component="img" src={currentImage} alt={postData.titulo || 'Modelo 3D'} className="model-detail__image" />
+									)}
 
-				<Box className="model-detail__grid">
+									<Button
+										className="model-detail__preview-btn"
+										startIcon={<IoCubeOutline />}
+										onClick={() => void handleToggleModel()}
+										variant={showing3D ? 'contained' : 'outlined'}
+										disabled={loadingSTL}
+									>
+										{showing3D ? 'Ver imágenes' : 'Vista previa en 3D'}
+									</Button>
+								</Box>
 
-					<Paper elevation={0} className="model-detail__gallery-paper">
+								{!showing3D && (
+									<Box className="model-detail__thumbnails" role="list" aria-label="Miniaturas del modelo">
+										<IconButton
+											className="model-detail__carousel-btn model-detail__carousel-btn--prev"
+											onClick={() => setPostData((current) => ({ ...current, imageIndex: (current.imageIndex - 1 + currentImages.length) % currentImages.length }))}
+											aria-label="Imagen anterior"
+											disabled={currentImages.length === 0}
+										>
+											<IoChevronBackOutline />
+										</IconButton>
 
-						<Box className="model-detail__image-container model-detail__3d-container">
-							{showing3D ? (
-								<Box className="model-detail__3d-viewer">
-									<Typography sx={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', mt: 2 }}>
-										Visualizador 3D
-									</Typography>
+										{currentImages.map((image, idx) => (
+											<ButtonBase
+												key={`${image}-${idx}`}
+												onClick={() => setPostData((current) => ({ ...current, imageIndex: idx }))}
+												className={`model-detail__thumbnail ${postData.imageIndex === idx ? 'model-detail__thumbnail--active' : ''}`}
+											>
+												<Box component="img" src={image} alt={`Miniatura ${idx + 1}`} className="model-detail__thumbnail-img" />
+											</ButtonBase>
+										))}
+
+										<IconButton
+											className="model-detail__carousel-btn model-detail__carousel-btn--next"
+											onClick={() => setPostData((current) => ({ ...current, imageIndex: (current.imageIndex + 1) % currentImages.length }))}
+											aria-label="Imagen siguiente"
+											disabled={currentImages.length === 0}
+										>
+											<IoChevronForwardOutline />
+										</IconButton>
+									</Box>
+								)}
+
+								<Box className="model-detail__meta-row">
+									<Box className="model-detail__meta-group">
+										<Box
+											component="button"
+											onClick={() => navigate(`/profile/${postData.authorId}`)}
+											className="model-detail__user-profile-btn"
+											aria-label={`Ver perfil de ${postData.authorName}`}
+										>
+											<FaRegCircleUser className="model-detail__user-icon" />
+											<Typography className="model-detail__username">{postData.authorName}</Typography>
+										</Box>
+										{canFollowAuthor && (
+											<Button
+												className="model-detail__follow-btn"
+												onClick={() => void handleToggleFollow()}
+												disabled={followLoading}
+											>
+												{followLoading ? 'Procesando...' : isFollowing ? 'Siguiendo' : 'Seguir'}
+											</Button>
+										)}
+									</Box>
+
+									<Box className="model-detail__likes-badge">
+										<IoThumbsUpOutline />
+										<Typography>{postData.likes}</Typography>
+									</Box>
+								</Box>
+							</Paper>
+
+							<Paper elevation={0} className="model-detail__info-paper">
+								<Typography className="model-detail__info-date">
+									Fecha publicación: {postData.createdAt ? new Date(postData.createdAt).toLocaleDateString() : 'Sin fecha'}
+								</Typography>
+								<Typography className="model-detail__info-title">
+									{postData.titulo}
+								</Typography>
+								<Typography className="model-detail__info-desc">
+									{postData.descripcion}
+								</Typography>
+
+								<Button className="model-detail__download-btn" startIcon={<IoDownloadOutline />} onClick={() => void handleDownload()}>
+									Descargar
+								</Button>
+
+								<Box className="model-detail__stats-bar">
+									{[
+										{ icon: IoThumbsUpOutline, label: 'Me gusta', num: String(postData.likes) },
+										{ icon: IoBookmarkOutline, label: 'Guardar', num: undefined },
+										{ icon: IoChatbubblesOutline, label: 'Comentarios', num: String(commentCount) },
+										{ icon: IoShareSocialOutline, label: 'Compartir', num: undefined },
+									].map((stat) => (
+										<IconButton
+											key={stat.label}
+											className={`model-detail__stat-btn ${stat.label === 'Me gusta' && isLikedByCurrentUser ? 'model-detail__stat-btn--liked' : ''}`}
+											aria-label={stat.label}
+											onClick={stat.label === 'Me gusta' ? handleLikePost : stat.label === 'Comentarios' ? handleScrollToComments : undefined}
+										>
+											<stat.icon />
+											{stat.num && <Typography component="span" className="model-detail__stat-num">{stat.num}</Typography>}
+										</IconButton>
+									))}
+								</Box>
+							</Paper>
+						</Box>
+
+						<Paper elevation={0} className="model-detail__comments-paper">
+							<Typography className="model-detail__comments-title">
+								Comentarios ({commentCount})
+							</Typography>
+
+							<Box className="model-detail__comment-input-row">
+								<InputBase
+									placeholder="Escribe tu comentario..."
+									value={commentValue}
+									onChange={(e) => setCommentValue(e.target.value)}
+									className="model-detail__comment-input"
+									fullWidth
+									inputRef={commentInputRef}
+								/>
+								<Button className="model-detail__send-btn" variant="contained" endIcon={<IoSendOutline />} onClick={handleSendComment} ref={sendCommentButtonRef}>
+									Enviar
+								</Button>
+							</Box>
+							{loadingComments ? (
+								<Box className="model-detail__comments-loader">
+									<CircularProgress />
 								</Box>
 							) : (
-								<Box component="img" src={currentImage} alt="Modelo 3D" className="model-detail__image" />
+								<Box className="model-detail__comments-list">
+									{comentarios.map((cmt, idx) => (
+										<Comment
+											key={`${cmt.idPost}-${cmt.idUser}-${idx}`}
+											idPost={cmt.idPost}
+											idUser={cmt.idUser}
+											username={cmt.username}
+											contenido={cmt.contenido}
+											createdAt={cmt.createdAt}
+											idComment={`${cmt.idPost}-${idx}`}
+										/>
+									))}
+								</Box>
 							)}
-
-							<Button 
-								className="model-detail__preview-btn" 
-								startIcon={<IoCubeOutline />}
-								onClick={() => setShowing3D((current) => !current)}
-								variant={showing3D ? 'contained' : 'outlined'}
-							>
-								{showing3D ? 'Ver imágenes' : 'Vista previa en 3D'}
-							</Button>
-						</Box>
-
-						{!showing3D && (
-							<Box className="model-detail__thumbnails" role="list" aria-label="Miniaturas del modelo">
-								<IconButton 
-									className="model-detail__carousel-btn model-detail__carousel-btn--prev"
-									onClick={() => setPostData((current) => ({ ...current, imageIndex: (current.imageIndex - 1 + currentImages.length) % currentImages.length }))} 
-									aria-label="Imagen anterior">
-									<IoChevronBackOutline />
-								</IconButton>
-
-								{currentImages.map((image, idx) => (
-									<ButtonBase 
-										key={`${image}-${idx}`} 
-										onClick={() => setPostData((current) => ({ ...current, imageIndex: idx }))} 
-										className={`model-detail__thumbnail ${postData.imageIndex === idx ? 'model-detail__thumbnail--active' : ''}`}>
-										<Box component="img" src={image} alt={`Miniatura ${idx + 1}`} className="model-detail__thumbnail-img" />
-									</ButtonBase>
-								))}
-
-								<IconButton 
-									className="model-detail__carousel-btn model-detail__carousel-btn--next"
-									onClick={() => setPostData((current) => ({ ...current, imageIndex: (current.imageIndex + 1) % currentImages.length }))} 
-									aria-label="Imagen siguiente">
-									<IoChevronForwardOutline />
-								</IconButton>
-							</Box>
-						)}
-
-
-						<Box className="model-detail__meta-row">
-							<Box className="model-detail__meta-group">
-								<FaRegCircleUser className="model-detail__user-icon" />
-								<Typography className="model-detail__username">{postData.authorName}</Typography>
-								<Button className="model-detail__follow-btn">Seguir</Button>
-							</Box>
-
-							<Box className="model-detail__likes-badge">
-								<IoThumbsUpOutline />
-								<Typography>{postData.likes}</Typography>
-							</Box>
-						</Box>
-					</Paper>
-
-
-					<Paper elevation={0} className="model-detail__info-paper">
-						<Typography className="model-detail__info-date">
-							Fecha publicación: {postData.createdAt ? new Date(postData.createdAt).toLocaleDateString() : 'Sin fecha'}
-						</Typography>
-						<Typography className="model-detail__info-title">
-							{postData.titulo}
-						</Typography>
-						<Typography className="model-detail__info-desc">
-							{postData.descripcion}
-						</Typography>
-
-						<Button className="model-detail__download-btn" startIcon={<IoDownloadOutline />}>
-							Descargar
-						</Button>
-
-
-						<Box className="model-detail__stats-bar">
-							{[{ icon: IoThumbsUpOutline, label: 'Me gusta', num: String(postData.likes) }, { icon: IoBookmarkOutline, label: 'Guardar', num: undefined }, { icon: IoChatbubblesOutline, label: 'Comentarios', num: String(commentCount) }, { icon: IoShareSocialOutline, label: 'Compartir', num: undefined }].map((stat) => (
-								<IconButton
-									key={stat.label}
-									className={`model-detail__stat-btn ${stat.label === 'Me gusta' && isLikedByCurrentUser ? 'model-detail__stat-btn--liked' : ''}`}
-									aria-label={stat.label}
-									onClick={stat.label === 'Me gusta' ? handleLikePost : stat.label === 'Comentarios' ? handleScrollToComments : undefined}
-								>
-									<stat.icon />
-									{stat.num && <Typography component="span" className="model-detail__stat-num">{stat.num}</Typography>}
-								</IconButton>
-							))}
-						</Box>
-					</Paper>
-				</Box>
-
-
-				<Paper elevation={0} className="model-detail__comments-paper">
-					<Typography className="model-detail__comments-title">
-						Comentarios ({commentCount})
-					</Typography>
-
-					<Box className="model-detail__comment-input-row">
-						<InputBase
-							placeholder="Escribe tu comentario..."
-							value={commentValue}
-							onChange={(e) => setCommentValue(e.target.value)}
-							className="model-detail__comment-input"
-							fullWidth
-							inputRef={commentInputRef}
-						/>
-						<Button className="model-detail__send-btn" variant="contained" endIcon={<IoSendOutline />} onClick={handleSendComment} ref={sendCommentButtonRef}>
-							Enviar
-						</Button>
-					</Box>
-					{loadingComments ? (
-						<Box className="model-detail__comments-loader">
-							<CircularProgress />
-						</Box>
-					) : (
-						<Box className="model-detail__comments-list">
-							{comentarios.map((cmt, idx) => (
-                <Comment
-                  key={`${cmt.idPost}-${cmt.idUser}-${idx}`}
-                  idPost={cmt.idPost}
-									username={cmt.username}
-                  contenido={cmt.contenido}
-									createdAt={cmt.createdAt}
-                  idComment={`${cmt.idPost}-${idx}`}
-                  />
-              ))}
-						</Box>
-					)}
-				</Paper>
-			</Stack>
+						</Paper>
+					</Stack>
+				)}
+			</Box>
 		</Box>
 	)
 }

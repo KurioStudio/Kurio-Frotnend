@@ -4,15 +4,24 @@ import PostCard from '../../../components/home/PostCard'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
 import '../../../styles/HomePage.css'
 import { useEffect, useState } from 'react'
-import { findFollowedPosts, findRecentPosts, findTopPosts, findAllPosts, type FeedPost,  } from '../../../utils/peticiones'
-import { useNavigate } from 'react-router-dom'
+import { findFollowedPosts, findRecentPosts, findTopPosts, findAllPosts, findPostsByTitle, type FeedPost,  } from '../../../utils/peticiones'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 export type FeedFilter = 'all' |'top' | 'recientes' | 'seguidos'
 
 function HomePage() {
 	const navigate = useNavigate()
+	const [searchParams] = useSearchParams()
 	const [filter, setFilter] = useState<FeedFilter>('all')
+	const [searchTitle, setSearchTitle] = useState('')
 	const [posts, setPosts] = useState<FeedPost[]>([])
+
+	useEffect(() => {
+		const searchQuery = searchParams.get('search')
+		if (searchQuery) {
+			setSearchTitle(searchQuery)
+		}
+	}, [searchParams])
 
 	useEffect(() => {
 		let isCancelled = false
@@ -22,20 +31,25 @@ function HomePage() {
 
 			try {
 				let response: FeedPost[] = []
+				const trimmedSearchTitle = searchTitle.trim()
 
-				switch (filter) {
-					case 'all':
-						response = await findAllPosts()
-						break
-					case 'top':
-						response = await findTopPosts()
-						break
-					case 'recientes':
-						response = await findRecentPosts()
-						break
-					case 'seguidos':
-						response = await findFollowedPosts()
-						break
+				if (trimmedSearchTitle) {
+					response = await findPostsByTitle(trimmedSearchTitle)
+				} else {
+					switch (filter) {
+						case 'all':
+							response = await findAllPosts()
+							break
+						case 'top':
+							response = await findTopPosts()
+							break
+						case 'recientes':
+							response = await findRecentPosts()
+							break
+						case 'seguidos':
+							response = await findFollowedPosts()
+							break
+					}
 				}
 
 				if (!isCancelled) {
@@ -54,7 +68,9 @@ function HomePage() {
 		return () => {
 			isCancelled = true
 		}
-	}, [filter])
+	}, [filter, searchTitle])
+
+
 
 	return (
 		<Box className="home-page">
