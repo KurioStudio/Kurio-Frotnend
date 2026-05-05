@@ -288,7 +288,7 @@ function ModelDetail() {
 
 				{loadingPost ? (
 					<Box className="model-detail__loader">
-						<CircularProgress />
+						<CircularProgress size={72} thickness={5} />
 					</Box>
 				) : (
 					<Stack spacing={2} className="model-detail__container">
@@ -429,7 +429,7 @@ function ModelDetail() {
 							</Box>
 							{loadingComments ? (
 								<Box className="model-detail__comments-loader">
-									<CircularProgress />
+									<CircularProgress size={56} thickness={5} />
 								</Box>
 							) : (
 								<Box className="model-detail__comments-list">

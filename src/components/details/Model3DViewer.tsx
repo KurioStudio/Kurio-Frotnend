@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, CircularProgress, IconButton, Typography } from '@mui/material'
+import { Box, IconButton, Typography } from '@mui/material'
 import { IoAdd, IoRemove } from 'react-icons/io5'
 import * as THREE from 'three'
 import { STLLoader, ThreeMFLoader } from 'three/examples/jsm/Addons.js'
@@ -283,7 +283,21 @@ export default function Model3DViewer({
             gap: 3,
           }}
         >
-          <CircularProgress sx={{ color: '#d7a449', width: '80px !important', height: '80px !important' }} />
+          <Box
+            sx={{
+              width: 140,
+              height: 140,
+              border: '8px solid transparent',
+              borderTopColor: '#d7a449',
+              borderRightColor: '#d7a449',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              '@keyframes spin': {
+                '0%': { transform: 'rotate(0deg)' },
+                '100%': { transform: 'rotate(360deg)' }
+              }
+            }}
+          />
           <Typography sx={{ color: '#d7a449', fontSize: '1rem', fontWeight: 600 }}>
             Cargando modelo 3D...
           </Typography>
