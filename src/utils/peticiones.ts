@@ -3,7 +3,6 @@ import {
   signInWithEmailAndPassword,
   signOut,
   getAuth,
-  onAuthStateChanged,
   type User as FirebaseUser
 } from 'firebase/auth'
 import { auth } from '../lib/firebase'
@@ -289,45 +288,42 @@ export async function getCurrentUser() : Promise<User | null> {
 }
 
 export async function registerWithEmail(payload: RegisterPayload): Promise<LoginResult> {
-    if (apiBaseUrl) {
-      const response = await fetch(`${apiBaseUrl}/api/users/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: payload.username,
-          email: payload.email,
-          password: payload.password,
-        }),
-      })
-      
-      const body = (await response.text()).trim()
-      
-      if (!response.ok || body !== '0') {
-        throw new Error(body || 'No se pudo registrar el usuario en el backend')
-      }
-    }
+  if (!apiBaseUrl) {
+    throw new Error('Backend URL no está configurado')
+  }
 
-    let userID: string | undefined = undefined
-    let idToken: string | undefined = undefined
-    onAuthStateChanged(getAuth(), (user) => {
-      userID = user?.uid
-      user?.getIdToken().then(token => {
-        idToken = token
-      })
-    })
+  const response = await fetch(`${apiBaseUrl}/api/users/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      username: payload.username,
+      email: payload.email,
+      password: payload.password,
+    }),
+  })
 
-    saveCachedSession({
-      uid: userID ?? '',
-      idToken: idToken ?? '',
-    })
-    sessionManager.touch()
+  const body = (await response.text()).trim()
 
-    return {
-      uid: userID ?? '',
-      idToken: idToken ?? ''
-    }
+  if (!response.ok || body !== '0') {
+    throw new Error(body || 'No se pudo registrar el usuario en el backend')
+  }
+
+  // After backend registration, sign in with Firebase using the credentials
+  const credential = await signInWithEmailAndPassword(auth, payload.email, payload.password)
+  const idToken = await credential.user.getIdToken()
+
+  saveCachedSession({
+    uid: credential.user.uid,
+    idToken,
+  })
+  sessionManager.touch()
+
+  return {
+    uid: credential.user.uid,
+    idToken,
+  }
 }
 
 export async function getUserById(id: string): Promise<User> {
