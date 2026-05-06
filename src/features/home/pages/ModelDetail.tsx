@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, Button, ButtonBase, IconButton, InputBase, Typography, Stack, Paper, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
+import { Box, Button, ButtonBase, IconButton, InputBase, Typography, Stack, Paper, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar, Alert } from '@mui/material'
 import {
 	IoChevronBackOutline,
 	IoChevronForwardOutline,
@@ -12,6 +12,7 @@ import {
 	IoBookmark,
 	IoBookmarkOutline,
 } from 'react-icons/io5'
+import { IoClose } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import Header from '../../../components/home/Header'
 import Model3DViewer from '../../../components/details/Model3DViewer'
@@ -88,6 +89,10 @@ function ModelDetail() {
 	const [followLoading, setFollowLoading] = useState(false)
 	const [unfollowConfirmOpen, setUnfollowConfirmOpen] = useState(false)
 	const [showing3D, setShowing3D] = useState(false)
+	const [shareFeedbackOpen, setShareFeedbackOpen] = useState(false)
+	const [shareFeedbackType, setShareFeedbackType] = useState<'success' | 'error'>('success')
+	const [shareFeedbackMessage, setShareFeedbackMessage] = useState('')
+	const shareFeedbackTimerRef = useRef<number | null>(null)
 	const currentImages = postData.imagenes.length > 0 ? postData.imagenes : []
 	const currentImage = currentImages.length > 0 ? currentImages[postData.imageIndex % currentImages.length] : ''
 	const commentCount = comentarios.length
@@ -107,6 +112,20 @@ function ModelDetail() {
 		authorId: post.user.id,
 		oid: post.oid,
 	})
+
+	const openShareFeedback = (type: 'success' | 'error', message: string) => {
+		if (shareFeedbackTimerRef.current) {
+			window.clearTimeout(shareFeedbackTimerRef.current)
+		}
+
+		setShareFeedbackType(type)
+		setShareFeedbackMessage(message)
+		setShareFeedbackOpen(true)
+
+		shareFeedbackTimerRef.current = window.setTimeout(() => {
+			setShareFeedbackOpen(false)
+		}, 10000)
+	}
 
   useEffect(() => {
 		let isCancelled = false
@@ -201,6 +220,9 @@ function ModelDetail() {
 
 		return () => {
 			isCancelled = true
+			if (shareFeedbackTimerRef.current) {
+				window.clearTimeout(shareFeedbackTimerRef.current)
+			}
 		}
   }, [postId])
 
@@ -252,7 +274,19 @@ function ModelDetail() {
 			await likePost(postId)
 			const updatedPost = await getPostById(postId)
 			setCurrentUserId(user.id)
-			setPostData(mapPostToState(updatedPost))
+			
+			// Preserve author avatar and name by querying profile
+			let authorName = updatedPost.user.username
+			let authorAvatar = updatedPost.user.avatarImg ?? ''
+			try {
+				const authorProfile = await getProfileUserById(updatedPost.user.id)
+				authorName = authorProfile.username || authorName
+				authorAvatar = authorProfile.avatarImg || authorAvatar
+			} catch {
+				// ignore, fallback to post.user
+			}
+			
+			setPostData({ ...mapPostToState(updatedPost), authorName, authorAvatar })
 		} catch (error) {
 			console.error('Error al dar like al post:', error)
 		}
@@ -306,6 +340,22 @@ function ModelDetail() {
 				await savePost(postId, user.id)
 				setIsSaved(true)
 			}
+			
+			// Reload post data to ensure author info is preserved
+			const updatedPost = await getPostById(postId)
+			
+			// Preserve author avatar and name by querying profile
+			let authorName = updatedPost.user.username
+			let authorAvatar = updatedPost.user.avatarImg ?? ''
+			try {
+				const authorProfile = await getProfileUserById(updatedPost.user.id)
+				authorName = authorProfile.username || authorName
+				authorAvatar = authorProfile.avatarImg || authorAvatar
+			} catch {
+				// ignore, fallback to post.user
+			}
+			
+			setPostData({ ...mapPostToState(updatedPost), authorName, authorAvatar })
 		} catch (error) {
 			console.error('Error al actualizar guardado:', error)
 		}
@@ -353,6 +403,21 @@ function ModelDetail() {
 		}
 
 		setShowing3D((current) => !current)
+	}
+
+	const handleSharePost = async () => {
+		if (!postId) {
+			openShareFeedback('error', 'No se pudo copiar el enlace del post.')
+			return
+		}
+
+		try {
+			await navigator.clipboard.writeText(window.location.href)
+			openShareFeedback('success', 'Enlace copiado al portapapeles.')
+		} catch (error) {
+			console.error('Error al copiar el enlace del post:', error)
+			openShareFeedback('error', 'No se pudo copiar el enlace del post.')
+		}
 	}
 
 	return (
@@ -478,7 +543,7 @@ function ModelDetail() {
 											key={stat.label}
 											className={`model-detail__stat-btn ${stat.label === 'Me gusta' && isLikedByCurrentUser ? 'model-detail__stat-btn--liked' : ''} ${stat.label === 'Guardar' && isSaved ? 'model-detail__stat-btn--saved' : ''}`}
 											aria-label={stat.label}
-											onClick={stat.label === 'Me gusta' ? handleLikePost : stat.label === 'Comentarios' ? handleScrollToComments : stat.label === 'Guardar' ? handleToggleSave : undefined}
+											onClick={stat.label === 'Me gusta' ? handleLikePost : stat.label === 'Comentarios' ? handleScrollToComments : stat.label === 'Guardar' ? handleToggleSave : stat.label === 'Compartir' ? handleSharePost : undefined}
 										>
 											<stat.icon />
 											{stat.num && <Typography component="span" className="model-detail__stat-num">{stat.num}</Typography>}
@@ -550,6 +615,39 @@ function ModelDetail() {
 									<Button onClick={() => void confirmUnfollow()} variant="contained" color="error" className="model-detail__dialog-button model-detail__dialog-button--danger">Dejar de seguir</Button>
 								</DialogActions>
 							</Dialog>
+
+							<Snackbar
+								open={shareFeedbackOpen}
+								anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+								onClose={(_, reason) => {
+									if (reason === 'clickaway') {
+										return
+									}
+									setShareFeedbackOpen(false)
+								}}
+							>
+								<Alert
+									icon={false}
+									severity={shareFeedbackType === 'success' ? 'success' : 'error'}
+									variant="filled"
+									className={`model-detail__feedback-toast model-detail__feedback-toast--${shareFeedbackType}`}
+									action={
+										<IconButton
+											size="small"
+											className="model-detail__feedback-close"
+											aria-label="Cerrar mensaje"
+											onClick={() => setShareFeedbackOpen(false)}
+										>
+											<IoClose />
+										</IconButton>
+									}
+								>
+									<Typography className="model-detail__feedback-title">
+										{shareFeedbackType === 'success' ? 'Enlace copiado' : 'Error al compartir'}
+									</Typography>
+									<Typography className="model-detail__feedback-text">{shareFeedbackMessage}</Typography>
+								</Alert>
+							</Snackbar>
 					</Stack>
 				)}
 			</Box>
