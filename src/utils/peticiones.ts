@@ -789,11 +789,11 @@ export async function checkIfUserFollows(idFollower: string, idFollowed: string)
     const responseText = await response.text()
     const trimmedResponse = responseText.trim().toLowerCase()
 
-    if (trimmedResponse === 'true' || trimmedResponse === '1') {
+    if (trimmedResponse === 'true' || trimmedResponse === '0') {
       return true
     }
 
-    if (trimmedResponse === 'false' || trimmedResponse === '0' || !trimmedResponse) {
+    if (trimmedResponse === 'false' || trimmedResponse === '-1' || !trimmedResponse) {
       return false
     }
 
