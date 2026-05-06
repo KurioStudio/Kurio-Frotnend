@@ -666,6 +666,94 @@ export async function likePost(idPost: string): Promise<void> {
     })
 }
 
+export async function savePost(idPost: string, idUser: string): Promise<void> {
+  const currentUser = await getCurrentUser()
+
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/guardar`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${currentUser?.idToken ?? ''}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ idPost, idUser }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '')
+    throw new Error(errorBody || 'No se pudo guardar la publicación')
+  }
+}
+
+export async function unsavePost(idPost: string, idUser: string): Promise<void> {
+  const currentUser = await getCurrentUser()
+
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/guardar`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${currentUser?.idToken ?? ''}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ idPost, idUser }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '')
+    throw new Error(errorBody || 'No se pudo eliminar el guardado')
+  }
+}
+
+export async function findSavedPostsByUser(idUser: string): Promise<FeedPost[]> {
+  const trimmed = idUser.trim()
+  if (!trimmed) return []
+
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/${encodeURIComponent(trimmed)}/guardados`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '')
+    throw new Error(errorBody || 'No se pudieron cargar los posts guardados')
+  }
+
+  const posts = await response.json()
+  return posts.map(mapFeedPost)
+}
+
+export async function isPostSaved(idPost: string, idUser: string): Promise<boolean> {
+  try {
+    const currentUser = await getCurrentUser()
+
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/isGuardado`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${currentUser?.idToken ?? ''}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ idPost, idUser }),
+    })
+
+    if (!response.ok) {
+      return false
+    }
+
+    const text = await response.text()
+    const trimmed = text.trim().toLowerCase()
+
+    if (trimmed === 'true' || trimmed === '1') return true
+    if (trimmed === 'false' || trimmed === '0' || !trimmed) return false
+
+    try {
+      return Boolean(JSON.parse(text))
+    } catch {
+      return false
+    }
+  } catch {
+    return false
+  }
+}
+
 export async function getModelSTL(oid: string): Promise<Blob> {
     const currentUser = await getCurrentUser()
     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/${oid}/descargar`, {

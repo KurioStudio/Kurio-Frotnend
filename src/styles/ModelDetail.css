@@ -253,6 +253,11 @@
   color: #ffd0d2 !important;
 }
 
+.model-detail__stat-btn--saved {
+  color: var(--kurio-accent) !important;
+  background: rgba(215, 164, 73, 0.08) !important;
+}
+
 .model-detail__follow-btn {
   min-width: 92px !important;
   height: 32px !important;

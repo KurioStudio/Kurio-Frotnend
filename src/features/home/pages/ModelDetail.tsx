@@ -9,6 +9,7 @@ import {
 	IoThumbsUpOutline,
 	IoChatbubblesOutline,
 	IoShareSocialOutline,
+	IoBookmark,
 	IoBookmarkOutline,
 } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
@@ -25,6 +26,9 @@ import {
 	getPostById,
 	getProfileUserById,
 	likePost,
+	savePost,
+	unsavePost,
+	isPostSaved,
 	sendComment,
 	type comentarios,
 	type PostDetail,
@@ -80,6 +84,7 @@ function ModelDetail() {
 	const [stlBlob, setStlBlob] = useState<Blob | undefined>()
 	const [loadingSTL, setLoadingSTL] = useState(false)
 	const [isFollowing, setIsFollowing] = useState(false)
+	const [isSaved, setIsSaved] = useState(false)
 	const [followLoading, setFollowLoading] = useState(false)
 	const [unfollowConfirmOpen, setUnfollowConfirmOpen] = useState(false)
 	const [showing3D, setShowing3D] = useState(false)
@@ -145,6 +150,18 @@ function ModelDetail() {
 					if (!isCancelled) {
 						setIsFollowing(follows)
 					}
+				}
+
+				// check saved state for current user using isPostSaved endpoint
+				try {
+					if (user?.id && postId) {
+						const saved = await isPostSaved(postId, user.id)
+						if (!isCancelled) {
+							setIsSaved(Boolean(saved))
+						}
+					}
+				} catch {
+					// ignore errors determining saved state
 				}
 
 				const response = await findAllComments(postId)
@@ -267,6 +284,30 @@ function ModelDetail() {
 			console.error('Error al actualizar el seguimiento:', error)
 		} finally {
 			setFollowLoading(false)
+		}
+	}
+
+	const handleToggleSave = async () => {
+		if (!postId) return
+
+		const user = await getCurrentUser()
+
+		if (!user) {
+			localStorage.setItem('kurio_post_login_redirect', window.location.pathname)
+			navigate('/auth/login', { replace: true })
+			return
+		}
+
+		try {
+			if (isSaved) {
+				await unsavePost(postId, user.id)
+				setIsSaved(false)
+			} else {
+				await savePost(postId, user.id)
+				setIsSaved(true)
+			}
+		} catch (error) {
+			console.error('Error al actualizar guardado:', error)
 		}
 	}
 
@@ -429,15 +470,15 @@ function ModelDetail() {
 								<Box className="model-detail__stats-bar">
 									{[
 										{ icon: IoThumbsUpOutline, label: 'Me gusta', num: String(postData.likes) },
-										{ icon: IoBookmarkOutline, label: 'Guardar', num: undefined },
+										{ icon: isSaved ? IoBookmark : IoBookmarkOutline, label: 'Guardar', num: undefined },
 										{ icon: IoChatbubblesOutline, label: 'Comentarios', num: String(commentCount) },
 										{ icon: IoShareSocialOutline, label: 'Compartir', num: undefined },
 									].map((stat) => (
 										<IconButton
 											key={stat.label}
-											className={`model-detail__stat-btn ${stat.label === 'Me gusta' && isLikedByCurrentUser ? 'model-detail__stat-btn--liked' : ''}`}
+											className={`model-detail__stat-btn ${stat.label === 'Me gusta' && isLikedByCurrentUser ? 'model-detail__stat-btn--liked' : ''} ${stat.label === 'Guardar' && isSaved ? 'model-detail__stat-btn--saved' : ''}`}
 											aria-label={stat.label}
-											onClick={stat.label === 'Me gusta' ? handleLikePost : stat.label === 'Comentarios' ? handleScrollToComments : undefined}
+											onClick={stat.label === 'Me gusta' ? handleLikePost : stat.label === 'Comentarios' ? handleScrollToComments : stat.label === 'Guardar' ? handleToggleSave : undefined}
 										>
 											<stat.icon />
 											{stat.num && <Typography component="span" className="model-detail__stat-num">{stat.num}</Typography>}
