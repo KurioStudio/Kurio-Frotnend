@@ -279,7 +279,7 @@ export async function getCurrentUser() : Promise<User | null> {
 
   return {
     id: user.uid,
-    username: user.email ?? 'Usuario desconocido',
+    username: user.displayName ?? 'Usuario desconocido',
     email: user.email ?? '',
     avatarImg: '',
     idToken: idToken,
@@ -650,6 +650,47 @@ export async function subirPost(post: Omit<Post, 'id' | 'likedBy' | 'createdAt'>
         },
         body: formData
     })
+}
+
+export async function updateProfile(userId: string, username: string, file?: File | null): Promise<any> {
+  const currentUser = await getCurrentUser()
+
+  const formData = new FormData()
+
+  formData.append(
+    'request',
+    new Blob([
+      JSON.stringify({
+        id: userId ?? '',
+        username: username ?? ''
+      })
+    ], { type: 'application/json' })
+  )
+
+  if (file) {
+    formData.append('file', file)
+  }
+
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${currentUser?.idToken ?? ''}`
+    },
+    body: formData
+  })
+
+  if (!response.ok) {
+    const err = await response.text().catch(() => '')
+    throw new Error(err || 'No se pudo actualizar el perfil')
+  }
+
+  // Try to parse json response; if not JSON, return text
+  const text = await response.text()
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
 }
 
 export async function likePost(idPost: string): Promise<void> {
