@@ -88,11 +88,6 @@ function UploadModelPage() {
     const removeImage = (index: number) => {
         setSelectedImages((prev) => prev.filter((_, i) => i !== index))
     }
-
-    const clearAllImages = () => {
-        setSelectedImages([])
-    }
-
     const handleSelectModelFile = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0] ?? null
         setModelFile(file)

@@ -29,21 +29,6 @@ type HeaderProfileCache = {
   avatarImg: string
 }
 
-const readCachedHeaderProfile = (): HeaderProfileCache | null => {
-  const cachedValue = localStorage.getItem(headerProfileCacheKey)
-
-  if (!cachedValue) {
-    return null
-  }
-
-  try {
-    return JSON.parse(cachedValue) as HeaderProfileCache
-  } catch {
-    localStorage.removeItem(headerProfileCacheKey)
-    return null
-  }
-}
-
 const saveCachedHeaderProfile = (profile: HeaderProfileCache): void => {
   localStorage.setItem(headerProfileCacheKey, JSON.stringify(profile))
 }
