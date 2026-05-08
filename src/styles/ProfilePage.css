@@ -208,9 +208,15 @@
 .MuiTypography-root.profile-page__member-since {
   width: 100%;
   text-align: left;
+<<<<<<< HEAD
   color: var(--kurio-text-soft);
   font-size: 1.05rem;
   font-weight: 600;
+=======
+  color: var(--kurio-accent);
+  font-size: 1.3rem;
+  font-weight: 700;
+>>>>>>> 95dcd074f88a01fb9813e7bb69654d3b4c129c02
 }
 
 .profile-page__posts-area {
@@ -265,6 +271,39 @@
   width: 100%;
   color: #ffb8b8;
   font-size: 0.94rem;
+}
+
+.profile-page__dialog-paper {
+  background: var(--kurio-surface) !important;
+  color: var(--kurio-text) !important;
+  border: 1px solid var(--kurio-border-paper);
+  border-radius: 8px !important;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.45) !important;
+}
+
+.profile-page__dialog-title {
+  color: var(--kurio-text) !important;
+  font-weight: 700 !important;
+}
+
+.profile-page__dialog-content {
+  color: var(--kurio-text-soft) !important;
+}
+
+.profile-page__dialog-description {
+  color: var(--kurio-text-soft) !important;
+}
+
+.profile-page__dialog-actions {
+  padding: 0 24px 20px;
+}
+
+.profile-page__dialog-button {
+  color: var(--kurio-text-soft) !important;
+}
+
+.profile-page__dialog-button--danger {
+  color: #ffd0d2 !important;
 }
 
 @media (max-width: 1400px) {

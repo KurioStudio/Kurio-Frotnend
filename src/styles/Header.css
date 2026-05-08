@@ -57,6 +57,20 @@
   margin-left: auto;
 }
 
+.header__profile-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--kurio-text);
+  border-radius: 999px;
+  padding: 4px 10px 4px 6px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.header__profile-button:hover {
+  background: var(--kurio-accent-hover);
+}
+
 .header__icon-button {
   color: var(--kurio-text);
   border-radius: 4px;
@@ -86,6 +100,29 @@
 
 .header__icon--profile {
   color: var(--kurio-white);
+}
+
+.header__profile-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.header__profile-avatar--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header__profile-label {
+  color: var(--kurio-text);
+  font-size: 0.92rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .header__menu-paper {

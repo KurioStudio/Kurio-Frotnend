@@ -6,12 +6,13 @@ interface CommentProps {
   idPost?: string
   idUser?: string
   username?: string
+  avatarImg?: string
   contenido?: string
   idComment?: string
   createdAt?: string
 }
 
-export default function Comment({ idPost, idUser, username, contenido, idComment, createdAt }: CommentProps) {
+export default function Comment({ idPost, idUser, username, avatarImg, contenido, idComment, createdAt }: CommentProps) {
   const navigate = useNavigate()
   
   const handleUserClick = () => {
@@ -34,7 +35,13 @@ export default function Comment({ idPost, idUser, username, contenido, idComment
         }}
         aria-label={`Ver perfil de ${username}`}
       >
-        <FaRegCircleUser className="post-card__icon" size={16} />
+        {avatarImg ? (
+          <Box component="img" src={avatarImg} alt={username ?? 'Usuario'} className="comment-item__avatar" loading="lazy" />
+        ) : (
+          <Box className="comment-item__avatar comment-item__avatar--fallback">
+            <FaRegCircleUser className="post-card__icon" size={16} />
+          </Box>
+        )}
         <Typography className="comment-item__username">{username ?? 'Usuario'}</Typography>
       </Box>
 

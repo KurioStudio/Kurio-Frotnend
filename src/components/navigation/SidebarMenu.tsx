@@ -1,6 +1,7 @@
 import { Box, ButtonBase, Typography } from '@mui/material'
 import {
 	IoCloudUploadOutline,
+	IoGridOutline,
 	IoMailOutline,
 	IoPeopleOutline,
 	IoTimeOutline,
@@ -31,10 +32,11 @@ const defaultItems: {
 	filter?: FeedFilter;
 	path?: string;
 }[] = [
+		{ label: 'Todas las publicaciones', icon: <IoGridOutline />, filter: 'all' },
 		{ label: 'Top publicaciones', icon: <IoTrendingUpOutline />, filter: 'top' },
 		{ label: 'Publicaciones recientes', icon: <IoTimeOutline />, filter: 'recientes' },
 		{ label: 'Seguidos', icon: <IoPeopleOutline />, filter: 'seguidos' },
-		{ label: 'Guardados', icon: <IoBookmarkOutline />, path: '/guardados' },
+		{ label: 'Guardados', icon: <IoBookmarkOutline />, filter: 'guardados' },
 		{ label: 'Subir modelo', icon: <IoCloudUploadOutline />, path: '/subir-modelo' },
 		{ label: 'Inbox', icon: <IoMailOutline /> },
 	]
@@ -52,7 +54,11 @@ function SidebarMenu({
 		// Map routes to sidebar item labels
 		if (location.pathname === '/subir-modelo') {
 			setSelectedItem('Subir modelo')
-		} else if (location.pathname === '/guardados') {
+		} else if (location.search.includes('search=')) {
+			setSelectedItem('')
+		} else if (location.search.includes('filter=all')) {
+			setSelectedItem('Todas las publicaciones')
+		} else if (location.search.includes('filter=guardados')) {
 			setSelectedItem('Guardados')
 		} else if (location.search.includes('filter=seguidos')) {
 			setSelectedItem('Seguidos')
@@ -86,11 +92,8 @@ function SidebarMenu({
 		}
 
 		if (item.filter) {
-			if (onSelect) {
-				onSelect(item.filter)
-			} else {
-				navigate(`/?filter=${item.filter}`)
-			}
+			onSelect?.(item.filter)
+			navigate(`/?filter=${item.filter}`)
 			return
 		}
 

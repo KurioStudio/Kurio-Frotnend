@@ -138,6 +138,21 @@
   gap: 8px;
 }
 
+.comment-item__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.comment-item__avatar--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .comment-item__username {
   color: var(--kurio-text-soft);
   font-size: 0.92rem;

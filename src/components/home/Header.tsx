@@ -1,9 +1,10 @@
 import { useEffect, useState, type KeyboardEvent, type MouseEvent } from 'react'
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
+import { Box, Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
 import { IoSearch, IoChevronDown } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
+import { getAuth, onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
-import { hasValidSession, logoutUser, touchSessionActivity } from '../../utils/peticiones'
+import { getProfileUserById, hasValidSession, logoutUser, touchSessionActivity } from '../../utils/peticiones'
 import '../../styles/Header.css'
 
 type CountryOption = {
@@ -21,12 +22,43 @@ const countries: CountryOption[] = [
 ]
 
 const getFlagUrl = (countryCode: string) => `https://flagcdn.com/w40/${countryCode}.png`
+const headerProfileCacheKey = 'kurio_header_profile_cache'
+
+type HeaderProfileCache = {
+  username: string
+  avatarImg: string
+}
+
+const readCachedHeaderProfile = (): HeaderProfileCache | null => {
+  const cachedValue = localStorage.getItem(headerProfileCacheKey)
+
+  if (!cachedValue) {
+    return null
+  }
+
+  try {
+    return JSON.parse(cachedValue) as HeaderProfileCache
+  } catch {
+    localStorage.removeItem(headerProfileCacheKey)
+    return null
+  }
+}
+
+const saveCachedHeaderProfile = (profile: HeaderProfileCache): void => {
+  localStorage.setItem(headerProfileCacheKey, JSON.stringify(profile))
+}
+
+const clearCachedHeaderProfile = (): void => {
+  localStorage.removeItem(headerProfileCacheKey)
+}
 
 function Header() {
   const navigate = useNavigate()
   const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
   const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
   const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null)
+  const [profileUserName, setProfileUserName] = useState('Iniciar Sesión')
+  const [profileUserAvatar, setProfileUserAvatar] = useState('')
   const [searchValue, setSearchValue] = useState('')
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
@@ -34,6 +66,51 @@ function Header() {
   const profileMenuOpen = Boolean(profileAnchorEl)
 
   useEffect(() => {
+    let isCancelled = false
+    const cachedProfile = readCachedHeaderProfile()
+
+    if (cachedProfile) {
+      setProfileUserName(cachedProfile.username || 'Usuario')
+      setProfileUserAvatar(cachedProfile.avatarImg || '')
+    }
+
+    const syncProfile = async (user: FirebaseUser | null) => {
+      if (!user) {
+        if (!isCancelled) {
+          setProfileUserName('Iniciar Sesión')
+          setProfileUserAvatar('')
+        }
+
+        clearCachedHeaderProfile()
+        return
+      }
+
+      try {
+        const profile = await getProfileUserById(user.uid)
+
+        if (!isCancelled) {
+          const nextUsername = profile.username || user.email || 'Usuario'
+          const nextAvatar = profile.avatarImg || ''
+
+          setProfileUserName(nextUsername)
+          setProfileUserAvatar(nextAvatar)
+          saveCachedHeaderProfile({
+            username: nextUsername,
+            avatarImg: nextAvatar,
+          })
+        }
+      } catch {
+        if (!isCancelled) {
+          setProfileUserName(user.email || 'Usuario')
+          setProfileUserAvatar('')
+        }
+      }
+    }
+
+    const unsubscribe = onAuthStateChanged(getAuth(), (user) => {
+      void syncProfile(user)
+    })
+
     const events: Array<keyof WindowEventMap> = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart']
     const handleActivity = () => {
       touchSessionActivity()
@@ -44,6 +121,8 @@ function Header() {
     })
 
     return () => {
+      isCancelled = true
+      unsubscribe()
       events.forEach((eventName) => {
         window.removeEventListener(eventName, handleActivity)
       })
@@ -96,6 +175,7 @@ function Header() {
     navigate('/profile')
   }
 
+<<<<<<< HEAD
   const handleOpenProfileMenu = async (event: MouseEvent<HTMLElement>) => {
     const anchorElement = event.currentTarget
     const isSessionValid = await hasValidSession()
@@ -105,6 +185,19 @@ function Header() {
       return
     }
 
+=======
+  const handleEditProfile = async () => {
+    handleCloseProfileMenu()
+
+    if (!(await ensureSessionOrRedirect())) {
+      return
+    }
+
+    navigate('/profile/edit')
+  }
+
+  const handleOpenProfileMenu = (anchorElement: HTMLElement) => {
+>>>>>>> 95dcd074f88a01fb9813e7bb69654d3b4c129c02
     setProfileAnchorEl(anchorElement)
   }
 
@@ -116,6 +209,9 @@ function Header() {
     await logoutUser()
     handleCloseProfileMenu()
     setLogoutDialogOpen(false)
+    clearCachedHeaderProfile()
+    setProfileUserName('Iniciar Sesión')
+    setProfileUserAvatar('')
     navigate('/')
   }
 
@@ -126,6 +222,17 @@ function Header() {
 
   const handleCloseLogoutDialog = () => {
     setLogoutDialogOpen(false)
+  }
+
+  const handleProfileButtonClick = async (event: MouseEvent<HTMLElement>) => {
+    const currentUser = getAuth().currentUser
+
+    if (!currentUser) {
+      navigate('/auth/login')
+      return
+    }
+
+    handleOpenProfileMenu(event.currentTarget)
   }
 
   return (
@@ -161,18 +268,33 @@ function Header() {
             <IoChevronDown className="header__icon" size={10} />
           </IconButton>
 
-          <IconButton
-            className="header__icon-button"
+          <ButtonBase
+            className="header__profile-button"
             onClick={(event) => {
-              void handleOpenProfileMenu(event)
+              void handleProfileButtonClick(event)
             }}
             aria-controls={profileMenuOpen ? 'profile-menu' : undefined}
             aria-expanded={profileMenuOpen ? 'true' : undefined}
             aria-haspopup="true"
-            aria-label="Usuario"
+            aria-label={profileUserName}
           >
-            <FaRegCircleUser className="header__icon" size={18} />
-          </IconButton>
+            {profileUserAvatar ? (
+              <Box
+                component="img"
+                src={profileUserAvatar}
+                alt={profileUserName}
+                className="header__profile-avatar"
+                loading="lazy"
+              />
+            ) : (
+              <Box className="header__profile-avatar header__profile-avatar--fallback">
+                <FaRegCircleUser className="header__icon header__icon--profile" size={18} />
+              </Box>
+            )}
+            <Typography className="header__profile-label">
+              {profileUserName}
+            </Typography>
+          </ButtonBase>
         </Box>
       </Box>
 

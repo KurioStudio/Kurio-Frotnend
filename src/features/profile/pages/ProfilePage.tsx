@@ -1,17 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Typography,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-} from '@mui/material'
-import { FaPen } from 'react-icons/fa6'
+import { useEffect, useMemo, useState } from 'react'
+import { Box, Button, CircularProgress, Typography } from '@mui/material'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import { useNavigate, useParams } from 'react-router-dom'
 import Header from '../../../components/home/Header'
@@ -27,6 +15,8 @@ import {
   type FeedPost,
   type ProfileUser,
   unfollowUser,
+  getFollowersCount,
+  getFollowedCount,
 } from '../../../utils/peticiones'
 import '../../../styles/ProfilePage.css'
 
@@ -40,6 +30,7 @@ function ProfilePage() {
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [loadingPosts, setLoadingPosts] = useState(true)
   const [followLoading, setFollowLoading] = useState(false)
+  const [unfollowConfirmOpen, setUnfollowConfirmOpen] = useState(false)
   const [error, setError] = useState('')
   const [isEditingUsername, setIsEditingUsername] = useState(false)
   const [usernameDraft, setUsernameDraft] = useState('')
@@ -107,6 +98,19 @@ function ProfilePage() {
 
         if (!isCancelled) {
           setCurrentUserId(currentUser.id)
+          // ensure follower/followed counts are fresh
+          try {
+            const [followersCount, followingCount] = await Promise.all([
+              getFollowersCount(targetUserId),
+              getFollowedCount(targetUserId),
+            ])
+
+            profile.followersCount = followersCount
+            profile.followingCount = followingCount
+          } catch {
+            // ignore and keep backend values
+          }
+
           setProfileUser(profile)
           setPosts(userPosts)
           setIsFollowing(followsCurrentUser)
@@ -137,18 +141,9 @@ function ProfilePage() {
 
     try {
       if (isFollowing) {
-        await unfollowUser(currentUserId, profileUser.id)
-        setIsFollowing(false)
-        setProfileUser((current) => {
-          if (!current) {
-            return current
-          }
-
-          return {
-            ...current,
-            followersCount: Math.max(0, current.followersCount - 1),
-          }
-        })
+        // ask for confirmation instead of immediate unfollow
+        setUnfollowConfirmOpen(true)
+        return
       } else {
         await followUser(currentUserId, profileUser.id)
         setIsFollowing(true)
@@ -163,6 +158,26 @@ function ProfilePage() {
           }
         })
       }
+    } catch {
+      setError('No se pudo actualizar el seguimiento.')
+    } finally {
+      setFollowLoading(false)
+    }
+  }
+
+  const confirmUnfollow = async () => {
+    if (!profileUser || !currentUserId) return
+
+    setFollowLoading(true)
+    setUnfollowConfirmOpen(false)
+
+    try {
+      await unfollowUser(currentUserId, profileUser.id)
+      setIsFollowing(false)
+      setProfileUser((current) => {
+        if (!current) return current
+        return { ...current, followersCount: Math.max(0, current.followersCount - 1) }
+      })
     } catch {
       setError('No se pudo actualizar el seguimiento.')
     } finally {
@@ -397,6 +412,29 @@ function ProfilePage() {
           </Box>
         )}
       </Box>
+
+      {/* Unfollow confirmation dialog */}
+      <Dialog
+        open={unfollowConfirmOpen}
+        onClose={() => setUnfollowConfirmOpen(false)}
+        aria-labelledby="unfollow-confirm-title"
+        slotProps={{
+          paper: {
+            className: 'profile-page__dialog-paper',
+          },
+        }}
+      >
+        <DialogTitle id="unfollow-confirm-title" className="profile-page__dialog-title">Dejar de seguir</DialogTitle>
+        <DialogContent className="profile-page__dialog-content">
+          <DialogContentText className="profile-page__dialog-description">
+            ¿Estás seguro de que quieres dejar de seguir a {profileUser?.username ?? 'este usuario'}?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions className="profile-page__dialog-actions">
+          <Button onClick={() => setUnfollowConfirmOpen(false)} className="profile-page__dialog-button">Cancelar</Button>
+          <Button onClick={() => void confirmUnfollow()} variant="contained" color="error" className="profile-page__dialog-button profile-page__dialog-button--danger">Dejar de seguir</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }

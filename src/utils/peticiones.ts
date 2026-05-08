@@ -3,7 +3,6 @@ import {
   signInWithEmailAndPassword,
   signOut,
   getAuth,
-  onAuthStateChanged,
   type User as FirebaseUser
 } from 'firebase/auth'
 import { auth } from '../lib/firebase'
@@ -94,6 +93,11 @@ export type comentarios = {
     contenido: string,
     idComment?: string,
     createdAt?: string
+}
+
+export type FollowRequest = {
+  idFollower: string
+  idFollowed: string
 }
 
 type FeedPostResponse = {
@@ -275,7 +279,7 @@ export async function getCurrentUser() : Promise<User | null> {
 
   return {
     id: user.uid,
-    username: user.email ?? 'Usuario desconocido',
+    username: user.displayName ?? 'Usuario desconocido',
     email: user.email ?? '',
     avatarImg: '',
     idToken: idToken,
@@ -284,45 +288,42 @@ export async function getCurrentUser() : Promise<User | null> {
 }
 
 export async function registerWithEmail(payload: RegisterPayload): Promise<LoginResult> {
-    if (apiBaseUrl) {
-      const response = await fetch(`${apiBaseUrl}/api/users/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: payload.username,
-          email: payload.email,
-          password: payload.password,
-        }),
-      })
-      
-      const body = (await response.text()).trim()
-      
-      if (!response.ok || body !== '0') {
-        throw new Error(body || 'No se pudo registrar el usuario en el backend')
-      }
-    }
+  if (!apiBaseUrl) {
+    throw new Error('Backend URL no está configurado')
+  }
 
-    let userID: string | undefined = undefined
-    let idToken: string | undefined = undefined
-    onAuthStateChanged(getAuth(), (user) => {
-      userID = user?.uid
-      user?.getIdToken().then(token => {
-        idToken = token
-      })
-    })
+  const response = await fetch(`${apiBaseUrl}/api/users/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      username: payload.username,
+      email: payload.email,
+      password: payload.password,
+    }),
+  })
 
-    saveCachedSession({
-      uid: userID ?? '',
-      idToken: idToken ?? '',
-    })
-    sessionManager.touch()
+  const body = (await response.text()).trim()
 
-    return {
-      uid: userID ?? '',
-      idToken: idToken ?? ''
-    }
+  if (!response.ok || body !== '0') {
+    throw new Error(body || 'No se pudo registrar el usuario en el backend')
+  }
+
+  // After backend registration, sign in with Firebase using the credentials
+  const credential = await signInWithEmailAndPassword(auth, payload.email, payload.password)
+  const idToken = await credential.user.getIdToken()
+
+  saveCachedSession({
+    uid: credential.user.uid,
+    idToken,
+  })
+  sessionManager.touch()
+
+  return {
+    uid: credential.user.uid,
+    idToken,
+  }
 }
 
 export async function getUserById(id: string): Promise<User> {
@@ -529,7 +530,8 @@ export async function findFollowedPosts(): Promise<FeedPost[]> {
     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/follow`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${currentUser?.idToken ?? ''}`
+            'Authorization': `Bearer ${currentUser?.idToken ?? ''}`,
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             idFollower: currentUser?.id ?? ''
@@ -537,6 +539,52 @@ export async function findFollowedPosts(): Promise<FeedPost[]> {
     })
     const posts = await response.json()
     return posts.map(mapFeedPost)
+}
+
+export async function getFollowersCount(userId: string): Promise<number> {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/${encodeURIComponent(userId)}/followers`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  })
+
+  if (!response.ok) {
+    return 0
+  }
+
+  try {
+    const data = await response.json()
+    if (Array.isArray(data)) return data.length
+    if (typeof data === 'number') return data
+    if (typeof data === 'string') return Number.parseInt(data, 10) || 0
+    return 0
+  } catch {
+    const txt = await response.text().catch(() => '')
+    const parsed = Number.parseInt(txt.trim(), 10)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+}
+
+export async function getFollowedCount(userId: string): Promise<number> {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/${encodeURIComponent(userId)}/followed`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  })
+
+  if (!response.ok) {
+    return 0
+  }
+
+  try {
+    const data = await response.json()
+    if (Array.isArray(data)) return data.length
+    if (typeof data === 'number') return data
+    if (typeof data === 'string') return Number.parseInt(data, 10) || 0
+    return 0
+  } catch {
+    const txt = await response.text().catch(() => '')
+    const parsed = Number.parseInt(txt.trim(), 10)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
 }
 
 export async function findPostsByTitle(titulo: string): Promise<FeedPost[]> {
@@ -604,6 +652,47 @@ export async function subirPost(post: Omit<Post, 'id' | 'likedBy' | 'createdAt'>
     })
 }
 
+export async function updateProfile(userId: string, username: string, file?: File | null): Promise<any> {
+  const currentUser = await getCurrentUser()
+
+  const formData = new FormData()
+
+  formData.append(
+    'request',
+    new Blob([
+      JSON.stringify({
+        id: userId ?? '',
+        username: username ?? ''
+      })
+    ], { type: 'application/json' })
+  )
+
+  if (file) {
+    formData.append('file', file)
+  }
+
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${currentUser?.idToken ?? ''}`
+    },
+    body: formData
+  })
+
+  if (!response.ok) {
+    const err = await response.text().catch(() => '')
+    throw new Error(err || 'No se pudo actualizar el perfil')
+  }
+
+  // Try to parse json response; if not JSON, return text
+  const text = await response.text()
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
+}
+
 export async function likePost(idPost: string): Promise<void> {
     const currentUser = await getCurrentUser()
     await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/${idPost}/like`, {
@@ -612,6 +701,94 @@ export async function likePost(idPost: string): Promise<void> {
             'Authorization': `Bearer ${currentUser?.idToken ?? ''}`
         }
     })
+}
+
+export async function savePost(idPost: string, idUser: string): Promise<void> {
+  const currentUser = await getCurrentUser()
+
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/guardar`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${currentUser?.idToken ?? ''}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ idPost, idUser }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '')
+    throw new Error(errorBody || 'No se pudo guardar la publicación')
+  }
+}
+
+export async function unsavePost(idPost: string, idUser: string): Promise<void> {
+  const currentUser = await getCurrentUser()
+
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/guardar`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${currentUser?.idToken ?? ''}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ idPost, idUser }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '')
+    throw new Error(errorBody || 'No se pudo eliminar el guardado')
+  }
+}
+
+export async function findSavedPostsByUser(idUser: string): Promise<FeedPost[]> {
+  const trimmed = idUser.trim()
+  if (!trimmed) return []
+
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/${encodeURIComponent(trimmed)}/guardados`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '')
+    throw new Error(errorBody || 'No se pudieron cargar los posts guardados')
+  }
+
+  const posts = await response.json()
+  return posts.map(mapFeedPost)
+}
+
+export async function isPostSaved(idPost: string, idUser: string): Promise<boolean> {
+  try {
+    const currentUser = await getCurrentUser()
+
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/isGuardado`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${currentUser?.idToken ?? ''}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ idPost, idUser }),
+    })
+
+    if (!response.ok) {
+      return false
+    }
+
+    const text = await response.text()
+    const trimmed = text.trim().toLowerCase()
+
+    if (trimmed === 'true' || trimmed === '1') return true
+    if (trimmed === 'false' || trimmed === '0' || !trimmed) return false
+
+    try {
+      return Boolean(JSON.parse(text))
+    } catch {
+      return false
+    }
+  } catch {
+    return false
+  }
 }
 
 export async function getModelSTL(oid: string): Promise<Blob> {
@@ -631,25 +808,44 @@ export async function getModelSTL(oid: string): Promise<Blob> {
 }
 
 export async function checkIfUserFollows(idFollower: string, idFollowed: string): Promise<boolean> {
+  try {
+    const requestBody: FollowRequest = {
+      idFollower,
+      idFollowed,
+    }
+
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/follow/isFollowing`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    })
+
+    if (!response.ok) {
+      return false
+    }
+
+    const responseText = await response.text()
+    const trimmedResponse = responseText.trim().toLowerCase()
+
+    if (trimmedResponse === 'true' || trimmedResponse === '0') {
+      return true
+    }
+
+    if (trimmedResponse === 'false' || trimmedResponse === '-1' || !trimmedResponse) {
+      return false
+    }
+
     try {
-    const currentUser = await getCurrentUser()
-    if (!currentUser) {
-      return false
-    }
-
-    if (currentUser.id !== idFollower) {
-      return false
-    }
-
-    const profile = await getProfileUserById(idFollowed)
-    if (profile.id !== idFollowed) {
-      return false
-    }
-
-    return Boolean(profile.isFollowedByCurrentUser)
+      return Boolean(JSON.parse(responseText))
     } catch {
-        return false
+      return false
     }
+  } catch {
+    return false
+  }
 }
 
 function getFilenameFromDisposition(contentDisposition: string | null): string | null {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, Button, ButtonBase, IconButton, InputBase, Typography, Stack, Paper, CircularProgress } from '@mui/material'
+import { Box, Button, ButtonBase, IconButton, InputBase, Typography, Stack, Paper, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar, Alert } from '@mui/material'
 import {
 	IoChevronBackOutline,
 	IoChevronForwardOutline,
@@ -9,8 +9,10 @@ import {
 	IoThumbsUpOutline,
 	IoChatbubblesOutline,
 	IoShareSocialOutline,
+	IoBookmark,
 	IoBookmarkOutline,
 } from 'react-icons/io5'
+import { IoClose } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import Header from '../../../components/home/Header'
 import Model3DViewer from '../../../components/details/Model3DViewer'
@@ -23,8 +25,11 @@ import {
 	getCurrentUser,
 	getModelSTL,
 	getPostById,
-	getUserById,
+	getProfileUserById,
 	likePost,
+	savePost,
+	unsavePost,
+	isPostSaved,
 	sendComment,
 	type comentarios,
 	type PostDetail,
@@ -36,6 +41,7 @@ import '../../../styles/ModelDetail.css'
 
 type CommentView = comentarios & {
 	username: string
+	avatarImg: string
 }
 
 type ModelPostState = {
@@ -49,6 +55,7 @@ type ModelPostState = {
 	createdAt: string
 	authorName: string
 	authorId: string
+	authorAvatar?: string
 	oid: string
 }
 
@@ -78,8 +85,14 @@ function ModelDetail() {
 	const [stlBlob, setStlBlob] = useState<Blob | undefined>()
 	const [loadingSTL, setLoadingSTL] = useState(false)
 	const [isFollowing, setIsFollowing] = useState(false)
+	const [isSaved, setIsSaved] = useState(false)
 	const [followLoading, setFollowLoading] = useState(false)
+	const [unfollowConfirmOpen, setUnfollowConfirmOpen] = useState(false)
 	const [showing3D, setShowing3D] = useState(false)
+	const [shareFeedbackOpen, setShareFeedbackOpen] = useState(false)
+	const [shareFeedbackType, setShareFeedbackType] = useState<'success' | 'error'>('success')
+	const [shareFeedbackMessage, setShareFeedbackMessage] = useState('')
+	const shareFeedbackTimerRef = useRef<number | null>(null)
 	const currentImages = postData.imagenes.length > 0 ? postData.imagenes : []
 	const currentImage = currentImages.length > 0 ? currentImages[postData.imageIndex % currentImages.length] : ''
 	const commentCount = comentarios.length
@@ -99,6 +112,20 @@ function ModelDetail() {
 		authorId: post.user.id,
 		oid: post.oid,
 	})
+
+	const openShareFeedback = (type: 'success' | 'error', message: string) => {
+		if (shareFeedbackTimerRef.current) {
+			window.clearTimeout(shareFeedbackTimerRef.current)
+		}
+
+		setShareFeedbackType(type)
+		setShareFeedbackMessage(message)
+		setShareFeedbackOpen(true)
+
+		shareFeedbackTimerRef.current = window.setTimeout(() => {
+			setShareFeedbackOpen(false)
+		}, 10000)
+	}
 
   useEffect(() => {
 		let isCancelled = false
@@ -123,7 +150,18 @@ function ModelDetail() {
 
 				const post = await getPostById(postId)
 				if (!isCancelled) {
-					setPostData(mapPostToState(post))
+					// prefer authoritative author data by querying profile via id
+					let authorName = post.user.username
+					let authorAvatar = post.user.avatarImg ?? ''
+					try {
+						const authorProfile = await getProfileUserById(post.user.id)
+						authorName = authorProfile.username || authorName
+						authorAvatar = authorProfile.avatarImg || authorAvatar
+					} catch {
+						// ignore, fallback to post.user
+					}
+
+					setPostData({ ...mapPostToState(post), authorName, authorId: post.user.id, authorAvatar })
 				}
 
 				if (user?.id && user.id !== post.user.id) {
@@ -133,19 +171,33 @@ function ModelDetail() {
 					}
 				}
 
+				// check saved state for current user using isPostSaved endpoint
+				try {
+					if (user?.id && postId) {
+						const saved = await isPostSaved(postId, user.id)
+						if (!isCancelled) {
+							setIsSaved(Boolean(saved))
+						}
+					}
+				} catch {
+					// ignore errors determining saved state
+				}
+
 				const response = await findAllComments(postId)
 				const comentariosConUsuario = await Promise.all(
 					response.map(async (comentario) => {
 						try {
-							const usuario = await getUserById(comentario.idUser)
+							const usuario = await getProfileUserById(comentario.idUser)
 							return {
 								...comentario,
 								username: usuario.username,
+								avatarImg: usuario.avatarImg,
 							}
 						} catch {
 							return {
 								...comentario,
 								username: comentario.idUser,
+								avatarImg: '',
 							}
 						}
 					})
@@ -168,6 +220,9 @@ function ModelDetail() {
 
 		return () => {
 			isCancelled = true
+			if (shareFeedbackTimerRef.current) {
+				window.clearTimeout(shareFeedbackTimerRef.current)
+			}
 		}
   }, [postId])
 
@@ -190,10 +245,10 @@ function ModelDetail() {
 			const updatedWithUser = await Promise.all(
 				updated.map(async (comentario) => {
 					try {
-						const usuario = await getUserById(comentario.idUser)
-						return { ...comentario, username: usuario.username }
+						const usuario = await getProfileUserById(comentario.idUser)
+						return { ...comentario, username: usuario.username, avatarImg: usuario.avatarImg }
 					} catch {
-						return { ...comentario, username: comentario.idUser }
+						return { ...comentario, username: comentario.idUser, avatarImg: '' }
 					}
 				})
 			)
@@ -219,7 +274,19 @@ function ModelDetail() {
 			await likePost(postId)
 			const updatedPost = await getPostById(postId)
 			setCurrentUserId(user.id)
-			setPostData(mapPostToState(updatedPost))
+			
+			// Preserve author avatar and name by querying profile
+			let authorName = updatedPost.user.username
+			let authorAvatar = updatedPost.user.avatarImg ?? ''
+			try {
+				const authorProfile = await getProfileUserById(updatedPost.user.id)
+				authorName = authorProfile.username || authorName
+				authorAvatar = authorProfile.avatarImg || authorAvatar
+			} catch {
+				// ignore, fallback to post.user
+			}
+			
+			setPostData({ ...mapPostToState(updatedPost), authorName, authorAvatar })
 		} catch (error) {
 			console.error('Error al dar like al post:', error)
 		}
@@ -239,14 +306,72 @@ function ModelDetail() {
 
 		try {
 			if (isFollowing) {
-				await unfollowUser(currentUserId, postData.authorId)
-				setIsFollowing(false)
+				// ask for confirmation before unfollowing
+				setUnfollowConfirmOpen(true)
+				setFollowLoading(false)
+				return
 			} else {
 				await followUser(currentUserId, postData.authorId)
 				setIsFollowing(true)
 			}
 		} catch (error) {
 			console.error('Error al actualizar el seguimiento:', error)
+		} finally {
+			setFollowLoading(false)
+		}
+	}
+
+	const handleToggleSave = async () => {
+		if (!postId) return
+
+		const user = await getCurrentUser()
+
+		if (!user) {
+			localStorage.setItem('kurio_post_login_redirect', window.location.pathname)
+			navigate('/auth/login', { replace: true })
+			return
+		}
+
+		try {
+			if (isSaved) {
+				await unsavePost(postId, user.id)
+				setIsSaved(false)
+			} else {
+				await savePost(postId, user.id)
+				setIsSaved(true)
+			}
+			
+			// Reload post data to ensure author info is preserved
+			const updatedPost = await getPostById(postId)
+			
+			// Preserve author avatar and name by querying profile
+			let authorName = updatedPost.user.username
+			let authorAvatar = updatedPost.user.avatarImg ?? ''
+			try {
+				const authorProfile = await getProfileUserById(updatedPost.user.id)
+				authorName = authorProfile.username || authorName
+				authorAvatar = authorProfile.avatarImg || authorAvatar
+			} catch {
+				// ignore, fallback to post.user
+			}
+			
+			setPostData({ ...mapPostToState(updatedPost), authorName, authorAvatar })
+		} catch (error) {
+			console.error('Error al actualizar guardado:', error)
+		}
+	}
+
+	const confirmUnfollow = async () => {
+		if (!currentUserId || !postData.authorId) return
+
+		setFollowLoading(true)
+		setUnfollowConfirmOpen(false)
+
+		try {
+			await unfollowUser(currentUserId, postData.authorId)
+			setIsFollowing(false)
+		} catch (error) {
+			console.error('Error al dejar de seguir:', error)
 		} finally {
 			setFollowLoading(false)
 		}
@@ -278,6 +403,21 @@ function ModelDetail() {
 		}
 
 		setShowing3D((current) => !current)
+	}
+
+	const handleSharePost = async () => {
+		if (!postId) {
+			openShareFeedback('error', 'No se pudo copiar el enlace del post.')
+			return
+		}
+
+		try {
+			await navigator.clipboard.writeText(window.location.href)
+			openShareFeedback('success', 'Enlace copiado al portapapeles.')
+		} catch (error) {
+			console.error('Error al copiar el enlace del post:', error)
+			openShareFeedback('error', 'No se pudo copiar el enlace del post.')
+		}
 	}
 
 	return (
@@ -352,7 +492,11 @@ function ModelDetail() {
 											className="model-detail__user-profile-btn"
 											aria-label={`Ver perfil de ${postData.authorName}`}
 										>
-											<FaRegCircleUser className="model-detail__user-icon" />
+											{postData.authorAvatar ? (
+												<Box component="img" src={postData.authorAvatar} alt={postData.authorName} className="model-detail__user-avatar" />
+											) : (
+												<FaRegCircleUser className="model-detail__user-icon" />
+											)}
 											<Typography className="model-detail__username">{postData.authorName}</Typography>
 										</Box>
 										{canFollowAuthor && (
@@ -391,15 +535,15 @@ function ModelDetail() {
 								<Box className="model-detail__stats-bar">
 									{[
 										{ icon: IoThumbsUpOutline, label: 'Me gusta', num: String(postData.likes) },
-										{ icon: IoBookmarkOutline, label: 'Guardar', num: undefined },
+										{ icon: isSaved ? IoBookmark : IoBookmarkOutline, label: 'Guardar', num: undefined },
 										{ icon: IoChatbubblesOutline, label: 'Comentarios', num: String(commentCount) },
 										{ icon: IoShareSocialOutline, label: 'Compartir', num: undefined },
 									].map((stat) => (
 										<IconButton
 											key={stat.label}
-											className={`model-detail__stat-btn ${stat.label === 'Me gusta' && isLikedByCurrentUser ? 'model-detail__stat-btn--liked' : ''}`}
+											className={`model-detail__stat-btn ${stat.label === 'Me gusta' && isLikedByCurrentUser ? 'model-detail__stat-btn--liked' : ''} ${stat.label === 'Guardar' && isSaved ? 'model-detail__stat-btn--saved' : ''}`}
 											aria-label={stat.label}
-											onClick={stat.label === 'Me gusta' ? handleLikePost : stat.label === 'Comentarios' ? handleScrollToComments : undefined}
+											onClick={stat.label === 'Me gusta' ? handleLikePost : stat.label === 'Comentarios' ? handleScrollToComments : stat.label === 'Guardar' ? handleToggleSave : stat.label === 'Compartir' ? handleSharePost : undefined}
 										>
 											<stat.icon />
 											{stat.num && <Typography component="span" className="model-detail__stat-num">{stat.num}</Typography>}
@@ -439,6 +583,7 @@ function ModelDetail() {
 											idPost={cmt.idPost}
 											idUser={cmt.idUser}
 											username={cmt.username}
+											avatarImg={cmt.avatarImg}
 											contenido={cmt.contenido}
 											createdAt={cmt.createdAt}
 											idComment={`${cmt.idPost}-${idx}`}
@@ -447,6 +592,62 @@ function ModelDetail() {
 								</Box>
 							)}
 						</Paper>
+
+							{/* Unfollow confirmation dialog */}
+							<Dialog
+								open={unfollowConfirmOpen}
+								onClose={() => setUnfollowConfirmOpen(false)}
+								aria-labelledby="unfollow-confirm-title"
+								slotProps={{
+									paper: {
+										className: 'model-detail__dialog-paper',
+									},
+								}}
+							>
+								<DialogTitle id="unfollow-confirm-title" className="model-detail__dialog-title">Dejar de seguir</DialogTitle>
+								<DialogContent className="model-detail__dialog-content">
+									<DialogContentText className="model-detail__dialog-description">
+										¿Estás seguro de que quieres dejar de seguir a {postData.authorName}?
+									</DialogContentText>
+								</DialogContent>
+								<DialogActions className="model-detail__dialog-actions">
+									<Button onClick={() => setUnfollowConfirmOpen(false)} className="model-detail__dialog-button">Cancelar</Button>
+									<Button onClick={() => void confirmUnfollow()} variant="contained" color="error" className="model-detail__dialog-button model-detail__dialog-button--danger">Dejar de seguir</Button>
+								</DialogActions>
+							</Dialog>
+
+							<Snackbar
+								open={shareFeedbackOpen}
+								anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+								onClose={(_, reason) => {
+									if (reason === 'clickaway') {
+										return
+									}
+									setShareFeedbackOpen(false)
+								}}
+							>
+								<Alert
+									icon={false}
+									severity={shareFeedbackType === 'success' ? 'success' : 'error'}
+									variant="filled"
+									className={`model-detail__feedback-toast model-detail__feedback-toast--${shareFeedbackType}`}
+									action={
+										<IconButton
+											size="small"
+											className="model-detail__feedback-close"
+											aria-label="Cerrar mensaje"
+											onClick={() => setShareFeedbackOpen(false)}
+										>
+											<IoClose />
+										</IconButton>
+									}
+								>
+									<Typography className="model-detail__feedback-title">
+										{shareFeedbackType === 'success' ? 'Enlace copiado' : 'Error al compartir'}
+									</Typography>
+									<Typography className="model-detail__feedback-text">{shareFeedbackMessage}</Typography>
+								</Alert>
+							</Snackbar>
 					</Stack>
 				)}
 			</Box>
