@@ -1,10 +1,16 @@
 .sidebar-menu {
-  width: 260px;
+  width: var(--kurio-sidebar-width);
   height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 45;
   display: flex;
   flex-direction: column;
   background: var(--kurio-surface);
   border: 1px solid var(--kurio-hover-soft);
+  overflow-y: auto;
 }
 
 .sidebar-menu__brand {
@@ -71,6 +77,17 @@
   background: var(--kurio-hover-soft);
 }
 
+.sidebar-menu__item--active {
+  background: rgba(215, 164, 73, 0.25) !important;
+  color: #d7a449 !important;
+  border-left: 3px solid #d7a449;
+  padding-left: 8px;
+}
+
+.sidebar-menu__item--active .sidebar-menu__item-icon {
+  color: #d7a449;
+}
+
 .sidebar-menu__item-icon {
   display: inline-flex;
   font-size: 1.12rem;
@@ -89,4 +106,35 @@
   color: var(--kurio-text-soft);
   font-size: 0.95rem;
   text-align: center;
+}
+
+@media (max-width: 900px) {
+  .sidebar-menu {
+    width: 100%;
+    height: auto;
+    position: static;
+    z-index: auto;
+  }
+
+  .sidebar-menu__brand {
+    padding: 14px;
+  }
+
+  .sidebar-menu__logo {
+    width: 70px;
+    height: 70px;
+  }
+
+  .sidebar-menu__items {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 10px;
+    gap: 6px;
+  }
+
+  .sidebar-menu__item,
+  .MuiButtonBase-root.sidebar-menu__item {
+    justify-content: center;
+    padding: 10px;
+    font-size: 0.92rem;
+  }
 }

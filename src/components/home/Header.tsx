@@ -1,9 +1,10 @@
-import { useState, type MouseEvent } from 'react'
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
-import { IoSearch, IoSettingsSharp, IoChevronDown } from 'react-icons/io5'
+import { useEffect, useState, type KeyboardEvent, type MouseEvent } from 'react'
+import { Box, Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
+import { IoSearch, IoChevronDown } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
+import { getAuth, onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
-import { hasValidSession, logoutUser } from '../../features/auth/services/authService'
+import { getProfileUserById, hasValidSession, logoutUser, touchSessionActivity } from '../../utils/peticiones'
 import '../../styles/Header.css'
 
 type CountryOption = {
@@ -21,16 +22,98 @@ const countries: CountryOption[] = [
 ]
 
 const getFlagUrl = (countryCode: string) => `https://flagcdn.com/w40/${countryCode}.png`
+const headerProfileCacheKey = 'kurio_header_profile_cache'
+
+type HeaderProfileCache = {
+  username: string
+  avatarImg: string
+}
+
+const saveCachedHeaderProfile = (profile: HeaderProfileCache): void => {
+  localStorage.setItem(headerProfileCacheKey, JSON.stringify(profile))
+}
+
+const clearCachedHeaderProfile = (): void => {
+  localStorage.removeItem(headerProfileCacheKey)
+}
 
 function Header() {
   const navigate = useNavigate()
   const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
   const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
-  const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null)
+  const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null)
+  const [profileUserName, setProfileUserName] = useState('Iniciar Sesión')
+  const [profileUserAvatar, setProfileUserAvatar] = useState('')
+  const [searchValue, setSearchValue] = useState('')
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
   const countryMenuOpen = Boolean(countryAnchorEl)
-  const settingsMenuOpen = Boolean(settingsAnchorEl)
+  const profileMenuOpen = Boolean(profileAnchorEl)
+
+  useEffect(() => {
+    let isCancelled = false
+    const auth = getAuth()
+
+    const applyProfile = (user: FirebaseUser | null) => {
+      if (!user) {
+        setProfileUserName('Iniciar Sesión')
+        setProfileUserAvatar('')
+        clearCachedHeaderProfile()
+        return
+      }
+
+      return getProfileUserById(user.uid).then((profile) => {
+        if (isCancelled) return
+
+        const nextUsername = profile.username || user.email || 'Usuario'
+        const nextAvatar = profile.avatarImg || ''
+
+        setProfileUserName(nextUsername)
+        setProfileUserAvatar(nextAvatar)
+
+        saveCachedHeaderProfile({
+          username: nextUsername,
+          avatarImg: nextAvatar,
+        })
+      })
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      void applyProfile(user)
+    })
+
+    const handleProfileUpdate = () => {
+      const user = auth.currentUser
+      if (user) {
+        void applyProfile(user)
+      }
+    }
+
+    window.addEventListener('profile-updated', handleProfileUpdate)
+
+    const events: Array<keyof WindowEventMap> = [
+      'click',
+      'keydown',
+      'mousemove',
+      'scroll',
+      'touchstart',
+    ]
+
+    const handleActivity = () => touchSessionActivity()
+
+    events.forEach((eventName) => {
+      window.addEventListener(eventName, handleActivity, { passive: true })
+    })
+
+    return () => {
+      isCancelled = true
+      unsubscribe()
+      window.removeEventListener('profile-updated', handleProfileUpdate)
+      events.forEach((eventName) => {
+        window.removeEventListener(eventName, handleActivity)
+      })
+    }
+  }, [])
 
   const handleOpenCountryMenu = (event: MouseEvent<HTMLElement>) => {
     setCountryAnchorEl(event.currentTarget)
@@ -45,12 +128,40 @@ function Header() {
     handleCloseCountryMenu()
   }
 
-  const handleEditarPerfil = () => {
-    handleCloseSettingsMenu()
-    navigate('/profile/edit')
+  const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Enter') {
+      return
+    }
+
+    event.preventDefault()
+    const trimmedSearch = searchValue.trim()
+    if (trimmedSearch) {
+      navigate(`/?search=${encodeURIComponent(trimmedSearch)}`)
+    }
   }
 
-  const handleOpenProfileMenu = async () => {
+  const ensureSessionOrRedirect = async (): Promise<boolean> => {
+    const isSessionValid = await hasValidSession()
+
+    if (!isSessionValid) {
+      navigate('/auth/login')
+      return false
+    }
+
+    return true
+  }
+
+  const handleViewProfile = async () => {
+    handleCloseProfileMenu()
+
+    if (!(await ensureSessionOrRedirect())) {
+      return
+    }
+
+    navigate('/profile')
+  }
+
+  const handleOpenProfileMenu = async (anchorElement: HTMLElement) => {
     const isSessionValid = await hasValidSession()
 
     if (!isSessionValid) {
@@ -58,27 +169,25 @@ function Header() {
       return
     }
 
-    navigate('/profile')
+    setProfileAnchorEl(anchorElement)
   }
 
-
-  const handleOpenSettingsMenu = (event: MouseEvent<HTMLElement>) => {
-    setSettingsAnchorEl(event.currentTarget)
-  }
-
-  const handleCloseSettingsMenu = () => {
-    setSettingsAnchorEl(null)
+  const handleCloseProfileMenu = () => {
+    setProfileAnchorEl(null)
   }
 
   const handleLogout = async () => {
     await logoutUser()
-    handleCloseSettingsMenu()
+    handleCloseProfileMenu()
     setLogoutDialogOpen(false)
-    navigate('/auth/login')
+    clearCachedHeaderProfile()
+    setProfileUserName('Iniciar Sesión')
+    setProfileUserAvatar('')
+    navigate('/')
   }
 
   const handleAskLogout = () => {
-    handleCloseSettingsMenu()
+    handleCloseProfileMenu()
     setLogoutDialogOpen(true)
   }
 
@@ -86,52 +195,77 @@ function Header() {
     setLogoutDialogOpen(false)
   }
 
+  const handleProfileButtonClick = async (event: MouseEvent<HTMLElement>) => {
+    const currentUser = getAuth().currentUser
+
+    if (!currentUser) {
+      navigate('/auth/login')
+      return
+    }
+
+    await handleOpenProfileMenu(event.currentTarget)
+  }
+
   return (
     <>
       <Box className="header">
         <Box className="header__search">
           <IoSearch className="header__search-icon" size={15} />
-          <InputBase placeholder="Buscar" className="header__search-input" />
+          <InputBase
+            placeholder="Buscar"
+            className="header__search-input"
+            value={searchValue}
+            onChange={(event) => setSearchValue(event.target.value)}
+            onKeyDown={handleSearchKeyDown}
+          />
         </Box>
 
         <Box className="header__actions">
-        <IconButton
-          className="header__icon-button header__country-button"
-          onClick={handleOpenCountryMenu}
-          aria-controls={countryMenuOpen ? "country-menu" : undefined}
-          aria-expanded={countryMenuOpen ? "true" : undefined}
-          aria-haspopup="true"
-          aria-label="Seleccionar pais"
-        >
-          <Box
-            component="img"
-            src={getFlagUrl(selectedCountry.code)}
-            alt={selectedCountry.name}
-            className="header__country-flag-image"
-            loading="lazy"
-          />
-          <IoChevronDown className="header__icon" size={10} />
-        </IconButton>
-
-          <IconButton 
-            className="header__icon-button" 
-            aria-label="Configuracion"
-            onClick={handleOpenSettingsMenu}
-            aria-controls={settingsMenuOpen ? "settings-menu" : undefined}
-            aria-expanded={settingsMenuOpen ? "true" : undefined}
-            aria-haspopup="true"
-          >
-            <IoSettingsSharp className="header__icon" size={18} />
-          </IconButton>
-
           <IconButton
-            className="header__icon-button"
-            onClick={handleOpenProfileMenu}
+            className="header__icon-button header__country-button"
+            onClick={handleOpenCountryMenu}
+            aria-controls={countryMenuOpen ? 'country-menu' : undefined}
+            aria-expanded={countryMenuOpen ? 'true' : undefined}
             aria-haspopup="true"
-            aria-label="Usuario"
+            aria-label="Seleccionar pais"
           >
-            <FaRegCircleUser className="header__icon" size={18} />
+            <Box
+              component="img"
+              src={getFlagUrl(selectedCountry.code)}
+              alt={selectedCountry.name}
+              className="header__country-flag-image"
+              loading="lazy"
+            />
+            <IoChevronDown className="header__icon" size={10} />
           </IconButton>
+
+          <ButtonBase
+            className="header__profile-button"
+            onClick={(event) => {
+              void handleProfileButtonClick(event)
+            }}
+            aria-controls={profileMenuOpen ? 'profile-menu' : undefined}
+            aria-expanded={profileMenuOpen ? 'true' : undefined}
+            aria-haspopup="true"
+            aria-label={profileUserName}
+          >
+            {profileUserAvatar ? (
+              <Box
+                component="img"
+                src={profileUserAvatar}
+                alt={profileUserName}
+                className="header__profile-avatar"
+                loading="lazy"
+              />
+            ) : (
+              <Box className="header__profile-avatar header__profile-avatar--fallback">
+                <FaRegCircleUser className="header__icon header__icon--profile" size={18} />
+              </Box>
+            )}
+            <Typography className="header__profile-label">
+              {profileUserName}
+            </Typography>
+          </ButtonBase>
         </Box>
       </Box>
 
@@ -168,12 +302,12 @@ function Header() {
       </Menu>
 
       <Menu
-        id="settings-menu"
-        anchorEl={settingsAnchorEl}
-        open={settingsMenuOpen}
-        onClose={handleCloseSettingsMenu}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        id="profile-menu"
+        anchorEl={profileAnchorEl}
+        open={profileMenuOpen}
+        onClose={handleCloseProfileMenu}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         slotProps={{
           paper: {
             className: 'header__menu-paper',
@@ -182,9 +316,9 @@ function Header() {
       >
         <MenuItem
           className="header__menu-item"
-          onClick={handleEditarPerfil}
+          onClick={() => void handleViewProfile()}
         >
-          Editar perfil
+          Ver perfil
         </MenuItem>
         <MenuItem
           className="header__menu-item header__menu-item--danger"

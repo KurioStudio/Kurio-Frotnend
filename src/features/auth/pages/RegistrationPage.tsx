@@ -4,7 +4,8 @@ import { Alert, Box, Button, CircularProgress, IconButton, InputAdornment, Link 
 import { IoChevronDown, IoEye, IoEyeOff } from 'react-icons/io5'
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import kurioLogo from '../../../assets/iconos/kurioLogo.png'
-import { registerWithEmail } from '../services/authService'
+import registerVideo from '../../../assets/img_auth/register.mp4'
+import { registerWithEmail } from '../../../utils/peticiones'
 import '../../../styles/auth.css'
 import '../../../styles/Header.css'
 
@@ -99,7 +100,14 @@ function RegistrationPage() {
 			})
 
 			setRegisterSuccess('Cuenta creada correctamente')
-			navigate('/', { replace: true })
+			// Check if there's a redirect path saved
+			const redirectPath = localStorage.getItem('kurio_post_login_redirect')
+			if (redirectPath) {
+				localStorage.removeItem('kurio_post_login_redirect')
+				navigate(redirectPath, { replace: true })
+			} else {
+				navigate('/', { replace: true })
+			}
 		} catch (error) {
 			setRegisterError(getRegisterErrorMessage(error))
 		} finally {
@@ -277,7 +285,19 @@ function RegistrationPage() {
 					</Menu>
 				</Box>
 
-				<Box component="section" className="auth-page__visual" />
+				<Box component="section" className="auth-page__visual">
+					<Box
+						component="video"
+						src={registerVideo}
+						className="auth-page__visual-img auth-page__visual-img--zoomin"
+						autoPlay
+						loop
+						muted
+						playsInline
+						preload="metadata"
+						aria-label="Registration visual"
+					/>
+				</Box>
 			</Box>
 		</Box>
 	)

@@ -10,6 +10,7 @@ type PostCardProps = {
 	likes: number
 	image: string
 	userImage: string
+	onClick?: () => void
 }
 
 const formatLikes = (likes: number): string => {
@@ -28,7 +29,7 @@ const formatLikes = (likes: number): string => {
 	return `${Math.round(likes / 1000000000)}B`
 }
 
-function PostCard({ title, author, likes, image, userImage }: PostCardProps) {
+function PostCard({ title, author, likes, image, userImage, onClick }: PostCardProps) {
 	const [imageLoading, setImageLoading] = useState(true)
 
 	useEffect(() => {
@@ -36,7 +37,10 @@ function PostCard({ title, author, likes, image, userImage }: PostCardProps) {
 	}, [image])
 
 	return (
-		<Box className="post-card">
+		<Box
+			className={`post-card ${onClick ? 'post-card--clickable' : ''}`}
+			onClick={onClick}
+		>
 			<Box className="post-card__image-wrapper">
 				{imageLoading && (
 					<Box className="post-card__image-loader" aria-label="Cargando imagen">
@@ -53,7 +57,7 @@ function PostCard({ title, author, likes, image, userImage }: PostCardProps) {
 				/>
 			</Box>
 
-			<Tooltip title={title} placement="top" arrow>
+			<Tooltip title={title} placement="top-start" arrow>
 				<Typography className="post-card__title">
 					{title}
 				</Typography>
@@ -71,7 +75,7 @@ function PostCard({ title, author, likes, image, userImage }: PostCardProps) {
 					) : (
 						<FaRegCircleUser className="post-card__icon" size={18} />
 					)}
-					<Tooltip title={author} placement="top" arrow>
+				<Tooltip title={author} placement="top-start" arrow>
 						<Typography className="post-card__meta-text post-card__meta-text--author">{author}</Typography>
 					</Tooltip>
 				</Box>

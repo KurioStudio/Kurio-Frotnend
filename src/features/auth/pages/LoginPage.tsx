@@ -4,7 +4,8 @@ import { Alert, Box, Button, CircularProgress, IconButton, InputAdornment, Link 
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { IoChevronDown, IoEyeOff, IoEye } from 'react-icons/io5'
 import kurioLogo from '../../../assets/iconos/kurioLogo.png'
-import { hasValidSession, loginWithEmail } from '../services/authService'
+import loginVideo from '../../../assets/img_auth/login_2.mp4'
+import { hasValidSession, loginWithEmail } from '../../../utils/peticiones'
 import '../../../styles/auth.css'
 import '../../../styles/Header.css'
 
@@ -105,7 +106,14 @@ function LoginPage() {
 
 		try {
 			await loginWithEmail(email.trim(), password)
-			navigate('/', { replace: true })
+			// Check if there's a redirect path saved
+			const redirectPath = localStorage.getItem('kurio_post_login_redirect')
+			if (redirectPath) {
+				localStorage.removeItem('kurio_post_login_redirect')
+				navigate(redirectPath, { replace: true })
+			} else {
+				navigate('/', { replace: true })
+			}
 		} catch (error) {
 			setLoginError(getLoginErrorMessage(error))
 		} finally {
@@ -127,8 +135,6 @@ function LoginPage() {
 						<Typography className="auth-page__subtitle">Bienvenida de nuevo</Typography>
 
 						<Box component="form" className="auth-page__form" onSubmit={handleSubmit} autoComplete="off">
-							{loginError ? <Alert severity="error">{loginError}</Alert> : null}
-
 							<TextField
 								size="small"
 								fullWidth
@@ -173,6 +179,12 @@ function LoginPage() {
 								placeholder="Tu contraseña"
 								autoComplete="off"
 							/>
+
+							{loginError ? (
+								<Box sx={{ mt: 0.4 }}>
+									<Alert severity="error">{loginError}</Alert>
+								</Box>
+							) : null}
 
 							<Button type="submit" variant="contained" className="auth-page__submit" disabled={isSubmitting}>
 								{isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Iniciar sesion'}
@@ -244,7 +256,19 @@ function LoginPage() {
 					</Menu>
 				</Box>
 
-				<Box component="section" className="auth-page__visual" />
+				<Box component="section" className="auth-page__visual">
+					<Box
+						component="video"
+						src={loginVideo}
+						className="auth-page__visual-img"
+						autoPlay
+						loop
+						muted
+						playsInline
+						preload="metadata"
+						aria-label="Login visual"
+					/>
+				</Box>
 			</Box>
 		</Box>
 	)

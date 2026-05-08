@@ -1,32 +1,20 @@
 .upload-page {
   height: 100vh;
-  display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   overflow: hidden;
   background: var(--kurio-bg);
-}
-
-.upload-page .sidebar-menu {
-  position: sticky;
-  top: 0;
-  align-self: flex-start;
 }
 
 .upload-page__content {
   flex: 1;
   height: 100vh;
+  margin-left: var(--kurio-sidebar-width);
   min-width: 0;
   display: grid;
   gap: 14px;
-  padding: 12px;
+  padding: 74px 12px 12px;
   grid-template-rows: auto 1fr;
   overflow: hidden;
-}
-
-.upload-page__content .header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
 }
 
 .upload-page__workspace {
@@ -103,7 +91,7 @@
 }
 
 .upload-page__dropzone {
-  min-height: 118px;
+  min-height: 180px;
   background: var(--kurio-surface-2);
   border-radius: 0;
   padding: 16px 20px;
@@ -116,7 +104,7 @@
 }
 
 .upload-page__dropzone--filled {
-  min-height: 158px;
+  min-height: 380px;
 }
 
 .upload-page__dropzone--error {
@@ -149,28 +137,29 @@
 }
 
 .upload-page__preview-image {
-  width: 148px;
-  height: 108px;
+  width: 280px;
+  height: 280px;
   border-radius: 6px;
-  object-fit: cover;
+  object-fit: contain;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .upload-page__preview-remove {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(0,0,0,0.6);
-  color: #ffffff;
-  width: 30px;
-  height: 30px;
+  top: -265px;
+  right: 35px;
+  background: rgba(0,0,0,0.88);
+  color: #ff4444;
+  width: 46px;
+  height: 46px;
   padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   z-index: 5;
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.12);
 }
 
 .upload-page__model-file-remove {
@@ -191,7 +180,12 @@
 }
 
 .upload-page__preview-remove:hover {
-  background: rgba(0,0,0,0.75);
+  background: rgba(0,0,0,0.95);
+}
+
+.upload-page__preview-remove svg {
+  width: 28px;
+  height: 28px;
 }
 
 .upload-page__error-text {
@@ -368,24 +362,15 @@
 @media (max-width: 900px) {
   .upload-page {
     height: auto;
-    flex-direction: column;
     overflow: visible;
-  }
-
-  .upload-page .sidebar-menu {
-    position: static;
-    width: 100%;
-    height: auto;
   }
 
   .upload-page__content {
     height: auto;
+    margin-left: 0;
     padding: 10px;
+    padding-top: 72px;
     overflow: visible;
-  }
-
-  .upload-page__content .header {
-    position: static;
   }
 
   .upload-page__workspace {

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Alert, Box, Button, FormControlLabel, IconButton, Radio, RadioGroup, Snackbar, TextField, Typography } from '@mui/material'
-import { IoTrashOutline, IoClose } from 'react-icons/io5'
+import { IoClose } from 'react-icons/io5'
 import { useNavigate } from 'react-router-dom'
 import Header from '../../../components/home/Header'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
 import '../../../styles/UploadModelPage.css'
-import { subirPost, type Post } from '../services/postService'
+import { subirPost, type Post } from '../../../utils/peticiones'
 
 const formatFileSize = (sizeInBytes: number): string => {
     if (sizeInBytes < 1024) {
@@ -88,11 +88,6 @@ function UploadModelPage() {
     const removeImage = (index: number) => {
         setSelectedImages((prev) => prev.filter((_, i) => i !== index))
     }
-
-    const clearAllImages = () => {
-        setSelectedImages([])
-    }
-
     const handleSelectModelFile = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0] ?? null
         setModelFile(file)
@@ -129,7 +124,6 @@ function UploadModelPage() {
                 file: modelFile ? modelFile : new File([], ''),
                 createdAt: ""
             }
-            console.log("Post: " + JSON.stringify(post))
             subirPost(post).then(() => {
                 setTitle('')
                 setDescription('')
@@ -214,19 +208,14 @@ function UploadModelPage() {
                                                         alt={preview.name}
                                                         className="upload-page__preview-image"
                                                     />
-                                                    <IconButton className="upload-page__preview-remove" size="small" onClick={() => removeImage(idx)} aria-label={`Eliminar ${preview.name}`}>
-                                                        <IoClose />
+                                                    <IconButton className="upload-page__preview-remove" size="small" onClick={() => removeImage(idx)} aria-label={`Eliminar ${preview.name}`} sx={{ color: '#ff4444' }}>
+                                                        <IoClose size={22} />
                                                     </IconButton>
                                                 </Box>
                                             ))}
                                         </Box>
                                     )}
                                     <Box className="upload-page__dropzone-controls">
-                                        {selectedImages.length > 0 && (
-                                            <IconButton className="upload-page__clear-button" onClick={clearAllImages} aria-label="Eliminar todas las imágenes">
-                                                <IoTrashOutline />
-                                            </IconButton>
-                                        )}
                                         <Button
                                             variant="contained"
                                             className="upload-page__action-button"

@@ -4,7 +4,8 @@ import { Alert, Box, Button, CircularProgress, IconButton, Link as MuiLink, Menu
 import { IoChevronDown } from 'react-icons/io5'
 import { Link as RouterLink } from 'react-router-dom'
 import kurioLogo from '../../../assets/iconos/kurioLogo.png'
-import { sendForgotPasswordEmail } from '../services/authService'
+import forgotVideo from '../../../assets/img_auth/forgotpass.mp4'
+import { sendForgotPasswordEmail } from '../../../utils/peticiones'
 import '../../../styles/auth.css'
 import '../../../styles/Header.css'
 
@@ -49,7 +50,6 @@ function ForgotPasswordPage() {
 	const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
 	const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
 	const [email, setEmail] = useState('')
-	const [code, setCode] = useState('')
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [forgotError, setForgotError] = useState<string | null>(null)
 	const [forgotSuccess, setForgotSuccess] = useState<string | null>(null)
@@ -69,7 +69,8 @@ function ForgotPasswordPage() {
 		handleCloseCountryMenu()
 	}
 
-	const handleSendCode = async () => {
+	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
 		setForgotError(null)
 		setForgotSuccess(null)
 
@@ -83,17 +84,11 @@ function ForgotPasswordPage() {
 		try {
 			await sendForgotPasswordEmail(email.trim())
 			setForgotSuccess('Te enviamos un enlace de recuperación a tu correo')
-			setCode('')
 		} catch (error) {
 			setForgotError(getForgotErrorMessage(error))
 		} finally {
 			setIsSubmitting(false)
 		}
-	}
-
-	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault()
-		void handleSendCode()
 	}
 
 	return (
@@ -107,7 +102,7 @@ function ForgotPasswordPage() {
 
 					<Box className="auth-page__content auth-page__content--forgot">
 						<Typography className="auth-page__title auth-page__title--forgot">Restablecer contraseña</Typography>
-						<Typography className="auth-page__subtitle auth-page__subtitle--forgot">Ingresa tu correo y el código recibido</Typography>
+						<Typography className="auth-page__subtitle auth-page__subtitle--forgot">Introduce tu correo</Typography>
 
 						<Box component="form" className="auth-page__form" onSubmit={handleSubmit} autoComplete="off">
 							{forgotError ? <Alert severity="error">{forgotError}</Alert> : null}
@@ -125,25 +120,6 @@ function ForgotPasswordPage() {
 								placeholder="usuario@correo.com"
 								autoComplete="off"
 							/>
-
-							<Box className="auth-page__code-row">
-								<TextField
-									size="small"
-									fullWidth
-									variant="outlined"
-									label="Código"
-									className="auth-field"
-									value={code}
-									onChange={(event) => setCode(event.target.value)}
-									disabled={isSubmitting}
-									placeholder="Código de verificación"
-									autoComplete="off"
-								/>
-
-								<Button type="button" variant="contained" className="auth-page__code-button" onClick={() => void handleSendCode()} disabled={isSubmitting}>
-									{isSubmitting ? <CircularProgress size={18} color="inherit" /> : 'Enviar código'}
-								</Button>
-							</Box>
 
 							<Button type="submit" variant="contained" className="auth-page__submit" disabled={isSubmitting}>
 								{isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Restablecer'}
@@ -209,7 +185,19 @@ function ForgotPasswordPage() {
 					</Menu>
 				</Box>
 
-				<Box component="section" className="auth-page__visual" />
+				<Box component="section" className="auth-page__visual">
+					<Box
+						component="video"
+						src={forgotVideo}
+						className="auth-page__visual-img auth-page__visual-img--zoomin"
+						autoPlay
+						loop
+						muted
+						playsInline
+						preload="metadata"
+						aria-label="Forgot password visual"
+					/>
+				</Box>
 			</Box>
 		</Box>
 	)
