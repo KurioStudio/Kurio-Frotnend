@@ -11,7 +11,7 @@ import {
   followUser,
   getCurrentUser,
   getProfileUserById,
-  updateUsername,
+  updateProfile,
   type FeedPost,
   type ProfileUser,
   unfollowUser,
@@ -195,7 +195,7 @@ function ProfilePage() {
     setError('')
 
     try {
-      await updateUsername(usernameDraft, null)
+      await updateProfile(profileUser.id, usernameDraft, null)
       setProfileUser((p) => p ? { ...p, username: usernameDraft } : p)
       setIsEditingUsername(false)
       setUsernameConfirmDialogOpen(false)
@@ -213,7 +213,7 @@ function ProfilePage() {
     setError('')
 
     try {
-      await updateUsername(profileUser?.username || '', selectedAvatarFile)
+      await updateProfile(profileUser?.id || '', profileUser?.username || '', selectedAvatarFile)
       setProfileUser((p) => p ? { ...p, avatarImg: avatarPreview || '' } : p)
       setAvatarDialogOpen(false)
       setSelectedAvatarFile(null)
