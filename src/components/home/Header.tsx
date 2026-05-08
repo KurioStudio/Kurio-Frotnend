@@ -175,9 +175,7 @@ function Header() {
     navigate('/profile')
   }
 
-<<<<<<< HEAD
-  const handleOpenProfileMenu = async (event: MouseEvent<HTMLElement>) => {
-    const anchorElement = event.currentTarget
+  const handleOpenProfileMenu = async (anchorElement: HTMLElement) => {
     const isSessionValid = await hasValidSession()
 
     if (!isSessionValid) {
@@ -185,19 +183,6 @@ function Header() {
       return
     }
 
-=======
-  const handleEditProfile = async () => {
-    handleCloseProfileMenu()
-
-    if (!(await ensureSessionOrRedirect())) {
-      return
-    }
-
-    navigate('/profile/edit')
-  }
-
-  const handleOpenProfileMenu = (anchorElement: HTMLElement) => {
->>>>>>> 95dcd074f88a01fb9813e7bb69654d3b4c129c02
     setProfileAnchorEl(anchorElement)
   }
 
@@ -232,7 +217,7 @@ function Header() {
       return
     }
 
-    handleOpenProfileMenu(event.currentTarget)
+    await handleOpenProfileMenu(event.currentTarget)
   }
 
   return (

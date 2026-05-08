@@ -129,7 +129,6 @@ function UploadModelPage() {
                 file: modelFile ? modelFile : new File([], ''),
                 createdAt: ""
             }
-            console.log("Post: " + JSON.stringify(post))
             subirPost(post).then(() => {
                 setTitle('')
                 setDescription('')

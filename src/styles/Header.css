@@ -68,7 +68,7 @@
 }
 
 .header__profile-button:hover {
-  background: var(--kurio-accent-hover);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .header__icon-button {

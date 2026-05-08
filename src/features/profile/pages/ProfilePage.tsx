@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Box, Button, CircularProgress, Typography } from '@mui/material'
-import { FaRegCircleUser } from 'react-icons/fa6'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
+import { Box, Button, CircularProgress, Typography, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, DialogContentText } from '@mui/material'
+import { FaPen, FaRegCircleUser } from 'react-icons/fa6'
 import { useNavigate, useParams } from 'react-router-dom'
 import Header from '../../../components/home/Header'
 import PostCard from '../../../components/home/PostCard'
@@ -286,8 +286,8 @@ function ProfilePage() {
                     <TextField
                       size="small"
                       value={usernameDraft}
-                      onChange={(e) => setUsernameDraft(e.target.value)}
-                      onKeyDown={(e) => {
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setUsernameDraft(e.target.value)}
+                      onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
                         if (e.key === 'Escape') setIsEditingUsername(false)
                       }}
                       autoFocus

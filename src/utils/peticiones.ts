@@ -331,7 +331,6 @@ export async function getUserById(id: string): Promise<User> {
         method: 'GET',
     })
     const user = await response.json()
-    console.log('Usuario recibido:', user)
     return {
         id: user.id,
         username: user.username,
@@ -968,7 +967,6 @@ export async function findAllComments(idPost: string): Promise<comentarios[]> {
         body: JSON.stringify({ idPost })
     })
     const comentarios = await response.json()
-    console.log('Comentarios recibidos:', comentarios)
     return comentarios.map((comentario: any) => ({
         idPost: comentario.idPost,
         idUser: comentario.idUser,

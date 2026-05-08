@@ -208,15 +208,9 @@
 .MuiTypography-root.profile-page__member-since {
   width: 100%;
   text-align: left;
-<<<<<<< HEAD
   color: var(--kurio-text-soft);
   font-size: 1.05rem;
   font-weight: 600;
-=======
-  color: var(--kurio-accent);
-  font-size: 1.3rem;
-  font-weight: 700;
->>>>>>> 95dcd074f88a01fb9813e7bb69654d3b4c129c02
 }
 
 .profile-page__posts-area {

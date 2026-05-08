@@ -109,7 +109,6 @@ function SidebarMenu({
 					component="img"
 					src={kurioLogo}
 					onClick={() => window.location.href = '/'}
-					onSelect={() => onSelect?.('all')}
 					alt={title}
 					className="sidebar-menu__logo"
 				/>
