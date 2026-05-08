@@ -661,14 +661,13 @@ export async function updateProfile(userId: string, username: string, file?: Fil
     new Blob([
       JSON.stringify({
         id: userId ?? '',
-        username: username ?? ''
+        username: username ?? '',
+        email: currentUser?.email ?? ''
       })
     ], { type: 'application/json' })
   )
 
-  if (file) {
-    formData.append('file', file)
-  }
+  formData.append('file', file? file : new Blob())
 
   const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users`, {
     method: 'PUT',

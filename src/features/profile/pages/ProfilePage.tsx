@@ -196,6 +196,9 @@ function ProfilePage() {
 
     try {
       await updateProfile(profileUser.id, usernameDraft, null)
+
+      window.dispatchEvent(new CustomEvent('profile-updated'))
+
       setProfileUser((p) => p ? { ...p, username: usernameDraft } : p)
       setIsEditingUsername(false)
       setUsernameConfirmDialogOpen(false)
@@ -214,6 +217,9 @@ function ProfilePage() {
 
     try {
       await updateProfile(profileUser?.id || '', profileUser?.username || '', selectedAvatarFile)
+
+      window.dispatchEvent(new CustomEvent('profile-updated'))
+
       setProfileUser((p) => p ? { ...p, avatarImg: avatarPreview || '' } : p)
       setAvatarDialogOpen(false)
       setSelectedAvatarFile(null)

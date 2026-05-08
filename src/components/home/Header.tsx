@@ -67,54 +67,54 @@ function Header() {
 
   useEffect(() => {
     let isCancelled = false
-    const cachedProfile = readCachedHeaderProfile()
+    const auth = getAuth()
 
-    if (cachedProfile) {
-      setProfileUserName(cachedProfile.username || 'Usuario')
-      setProfileUserAvatar(cachedProfile.avatarImg || '')
-    }
-
-    const syncProfile = async (user: FirebaseUser | null) => {
+    const applyProfile = (user: FirebaseUser | null) => {
       if (!user) {
-        if (!isCancelled) {
-          setProfileUserName('Iniciar Sesión')
-          setProfileUserAvatar('')
-        }
-
+        setProfileUserName('Iniciar Sesión')
+        setProfileUserAvatar('')
         clearCachedHeaderProfile()
         return
       }
 
-      try {
-        const profile = await getProfileUserById(user.uid)
+      return getProfileUserById(user.uid).then((profile) => {
+        if (isCancelled) return
 
-        if (!isCancelled) {
-          const nextUsername = profile.username || user.email || 'Usuario'
-          const nextAvatar = profile.avatarImg || ''
+        const nextUsername = profile.username || user.email || 'Usuario'
+        const nextAvatar = profile.avatarImg || ''
 
-          setProfileUserName(nextUsername)
-          setProfileUserAvatar(nextAvatar)
-          saveCachedHeaderProfile({
-            username: nextUsername,
-            avatarImg: nextAvatar,
-          })
-        }
-      } catch {
-        if (!isCancelled) {
-          setProfileUserName(user.email || 'Usuario')
-          setProfileUserAvatar('')
-        }
+        setProfileUserName(nextUsername)
+        setProfileUserAvatar(nextAvatar)
+
+        saveCachedHeaderProfile({
+          username: nextUsername,
+          avatarImg: nextAvatar,
+        })
+      })
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      void applyProfile(user)
+    })
+
+    const handleProfileUpdate = () => {
+      const user = auth.currentUser
+      if (user) {
+        void applyProfile(user)
       }
     }
 
-    const unsubscribe = onAuthStateChanged(getAuth(), (user) => {
-      void syncProfile(user)
-    })
+    window.addEventListener('profile-updated', handleProfileUpdate)
 
-    const events: Array<keyof WindowEventMap> = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart']
-    const handleActivity = () => {
-      touchSessionActivity()
-    }
+    const events: Array<keyof WindowEventMap> = [
+      'click',
+      'keydown',
+      'mousemove',
+      'scroll',
+      'touchstart',
+    ]
+
+    const handleActivity = () => touchSessionActivity()
 
     events.forEach((eventName) => {
       window.addEventListener(eventName, handleActivity, { passive: true })
@@ -123,6 +123,7 @@ function Header() {
     return () => {
       isCancelled = true
       unsubscribe()
+      window.removeEventListener('profile-updated', handleProfileUpdate)
       events.forEach((eventName) => {
         window.removeEventListener(eventName, handleActivity)
       })
