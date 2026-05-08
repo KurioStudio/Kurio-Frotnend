@@ -12,7 +12,6 @@ import {
 	IoBookmark,
 	IoBookmarkOutline,
 } from 'react-icons/io5'
-import { IoClose } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import Header from '../../../components/home/Header'
 import Model3DViewer from '../../../components/details/Model3DViewer'
@@ -38,6 +37,7 @@ import {
 import Comment from '../../../components/details/Comment'
 import { useNavigate, useParams } from 'react-router-dom'
 import '../../../styles/ModelDetail.css'
+import { useTranslation } from 'react-i18next'
 
 type CommentView = comentarios & {
 	username: string
@@ -60,8 +60,9 @@ type ModelPostState = {
 }
 
 function ModelDetail() {
-  const navigate = useNavigate()
-  const { postId } = useParams<{ postId?: string }>()
+	const { t } = useTranslation()
+  	const navigate = useNavigate()
+  	const { postId } = useParams<{ postId?: string }>()
 	const sendCommentButtonRef = useRef<HTMLButtonElement | null>(null)
 	const commentInputRef = useRef<HTMLInputElement | null>(null)
 	const [postData, setPostData] = useState<ModelPostState>({
@@ -380,15 +381,15 @@ function ModelDetail() {
 
 	const handleSharePost = async () => {
 		if (!postId) {
-			openShareFeedback('error', 'Could not copy post link.')
+			openShareFeedback('error', t('post.share.error'))
 			return
 		}
 
 		try {
 			await navigator.clipboard.writeText(window.location.href)
-			openShareFeedback('success', 'Link copied to clipboard.')
+			openShareFeedback('success', t('post.share.success'))
 		} catch {
-			openShareFeedback('error', 'Could not copy post link.')
+			openShareFeedback('error', t('post.share.error'))
 		}
 	}
 
@@ -410,7 +411,7 @@ function ModelDetail() {
 									{showing3D ? (
 										<Model3DViewer modelBlob={stlBlob} loading={loadingSTL} />
 									) : (
-										<Box component="img" src={currentImage} alt={postData.titulo || '3D model'} className="model-detail__image" />
+										<Box component="img" src={currentImage} alt={postData.titulo || t('post.image.alt')} className="model-detail__image" />
 									)}
 
 									<Button
@@ -420,7 +421,7 @@ function ModelDetail() {
 										variant={showing3D ? 'contained' : 'outlined'}
 										disabled={loadingSTL}
 									>
-										{showing3D ? 'View images' : '3D preview'}
+										{showing3D ? t('post.viewimages') : t('post.view3d')}
 									</Button>
 								</Box>
 
@@ -429,7 +430,7 @@ function ModelDetail() {
 										<IconButton
 											className="model-detail__carousel-btn model-detail__carousel-btn--prev"
 											onClick={() => setPostData((c) => ({ ...c, imageIndex: (c.imageIndex - 1 + currentImages.length) % currentImages.length }))}
-											aria-label="Previous image"
+											aria-label={t('post.thumbnails.previous')}
 											disabled={currentImages.length === 0}
 										>
 											<IoChevronBackOutline />
@@ -448,7 +449,7 @@ function ModelDetail() {
 										<IconButton
 											className="model-detail__carousel-btn model-detail__carousel-btn--next"
 											onClick={() => setPostData((c) => ({ ...c, imageIndex: (c.imageIndex + 1) % currentImages.length }))}
-											aria-label="Next image"
+											aria-label={t('post.thumbnails.next')}
 											disabled={currentImages.length === 0}
 										>
 											<IoChevronForwardOutline />
@@ -462,7 +463,7 @@ function ModelDetail() {
 											component="button"
 											onClick={() => navigate(`/profile/${postData.authorId}`)}
 											className="model-detail__user-profile-btn"
-											aria-label={`View profile of ${postData.authorName}`}
+											aria-label={t('post.user.profile', { username: postData.authorName })}
 										>
 											{postData.authorAvatar ? (
 												<Box component="img" src={postData.authorAvatar} alt={postData.authorName} className="model-detail__user-avatar" />
@@ -478,7 +479,7 @@ function ModelDetail() {
 												onClick={() => void handleToggleFollow()}
 												disabled={followLoading}
 											>
-												{followLoading ? 'Processing...' : isFollowing ? 'Following' : 'Follow'}
+												{followLoading ? t('post.follow.processing') : isFollowing ? t('post.following') : t('post.follow')}
 											</Button>
 										)}
 									</Box>
@@ -492,7 +493,7 @@ function ModelDetail() {
 
 							<Paper elevation={0} className="model-detail__info-paper">
 								<Typography className="model-detail__info-date">
-									Publication date: {postData.createdAt ? new Date(postData.createdAt).toLocaleDateString() : 'No date'}
+									{t('post.date.label')} {postData.createdAt ? new Date(postData.createdAt).toLocaleDateString() : t('post.date.unknown')}
 								</Typography>
 
 								<Typography className="model-detail__info-title">{postData.titulo}</Typography>
@@ -500,7 +501,7 @@ function ModelDetail() {
 								<Typography className="model-detail__info-desc">{postData.descripcion}</Typography>
 
 								<Button className="model-detail__download-btn" startIcon={<IoDownloadOutline />} onClick={() => void handleDownload()}>
-									Download
+									{t('post.download')}
 								</Button>
 
 								<Box className="model-detail__stats-bar">
@@ -536,12 +537,12 @@ function ModelDetail() {
 
 						<Paper elevation={0} className="model-detail__comments-paper">
 							<Typography className="model-detail__comments-title">
-								Comments ({commentCount})
+								{t('post.comments.title')} ({commentCount})
 							</Typography>
 
 							<Box className="model-detail__comment-input-row">
 								<InputBase
-									placeholder="Write your comment..."
+									placeholder={t('post.comment.placeholder')}
 									value={commentValue}
 									onChange={(e) => setCommentValue(e.target.value)}
 									className="model-detail__comment-input"
@@ -550,7 +551,7 @@ function ModelDetail() {
 								/>
 
 								<Button className="model-detail__send-btn" variant="contained" endIcon={<IoSendOutline />} onClick={handleSendComment} ref={sendCommentButtonRef}>
-									Send
+									{t('post.comment.send')}
 								</Button>
 							</Box>
 
@@ -580,19 +581,24 @@ function ModelDetail() {
 							open={unfollowConfirmOpen}
 							onClose={() => setUnfollowConfirmOpen(false)}
 							aria-labelledby="unfollow-confirm-title"
+							slotProps={{
+								paper: {
+									className: 'model-detail__dialog-paper',
+								}
+							}}
 						>
-							<DialogTitle id="unfollow-confirm-title">Unfollow</DialogTitle>
+							<DialogTitle id="unfollow-confirm-title">{t('post.unfollow.title')}</DialogTitle>
 
 							<DialogContent>
-								<DialogContentText>
-									Are you sure you want to unfollow {postData.authorName}?
+								<DialogContentText className="model-detail__dialog-description">
+									{t('post.unfollow.message')} {postData.authorName} {'?'}
 								</DialogContentText>
 							</DialogContent>
 
 							<DialogActions>
-								<Button onClick={() => setUnfollowConfirmOpen(false)}>Cancel</Button>
+								<Button onClick={() => setUnfollowConfirmOpen(false)}>{t('post.unfollow.cancel')}</Button>
 								<Button onClick={() => void confirmUnfollow()} variant="contained" color="error">
-									Unfollow
+									{t('post.unfollow.confirm')}
 								</Button>
 							</DialogActions>
 						</Dialog>
@@ -610,7 +616,7 @@ function ModelDetail() {
 								variant="filled"
 							>
 								<Typography>
-									{shareFeedbackType === 'success' ? 'Link copied' : 'Error sharing'}
+									{shareFeedbackType === 'success' ? t('post.share.success') : t('post.share.error')}
 								</Typography>
 
 								<Typography>{shareFeedbackMessage}</Typography>
