@@ -96,16 +96,6 @@ function Header() {
     navigate('/profile')
   }
 
-  const handleEditProfile = async () => {
-    handleCloseProfileMenu()
-
-    if (!(await ensureSessionOrRedirect())) {
-      return
-    }
-
-    navigate('/profile/edit')
-  }
-
   const handleOpenProfileMenu = async (event: MouseEvent<HTMLElement>) => {
     const anchorElement = event.currentTarget
     const isSessionValid = await hasValidSession()
@@ -236,12 +226,6 @@ function Header() {
           onClick={() => void handleViewProfile()}
         >
           Ver perfil
-        </MenuItem>
-        <MenuItem
-          className="header__menu-item"
-          onClick={() => void handleEditProfile()}
-        >
-          Editar perfil
         </MenuItem>
         <MenuItem
           className="header__menu-item header__menu-item--danger"

@@ -800,3 +800,35 @@ export const sendComment = async (idPost: string, idUser: string, idToken: strin
     
     return data;
 }
+
+//EDITAR PERFIL Service
+export async function updateUsername(username: string, imagen?: File | null): Promise<void> {
+    const currentUser = await getCurrentUser()
+    
+    let avatarImg = ''
+    if (imagen) {
+        avatarImg = await new Promise<string>((res, rej) => {
+            const reader = new FileReader()
+            reader.onload = () => res(String(reader.result || ''))
+            reader.onerror = () => rej(new Error('No se pudo leer la imagen'))
+            reader.readAsDataURL(imagen)
+        })
+    }
+    
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/users/${currentUser?.id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser?.idToken ?? ''}`
+        },
+        body: JSON.stringify({
+            username,
+            avatarImg
+        })
+    })
+    
+    if (!response.ok) {
+        const errorText = await response.text().catch(() => '')
+        throw new Error(errorText || 'Error al actualizar el perfil')
+    }
+}

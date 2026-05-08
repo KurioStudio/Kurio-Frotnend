@@ -6,32 +6,33 @@
 .profile-page__content {
   margin-left: var(--kurio-sidebar-width);
   min-width: 0;
-  padding: 74px 12px 12px;
+  padding: 74px 14px 14px;
 }
 
 .profile-page__layout {
   min-height: calc(100vh - 96px);
-  background: rgba(31, 42, 61, 0.86);
-  border-radius: 4px;
-  padding: 24px;
+  background: rgba(22, 32, 49, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 16px;
   display: grid;
-  grid-template-columns: 380px minmax(0, 1fr);
-  gap: 22px;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 16px;
 }
 
 .profile-page__user-panel {
   background: rgba(18, 27, 41, 0.38);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 10px;
-  padding: 18px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .profile-page__avatar-wrap {
-  width: min(100%, 330px);
+  width: min(100%, 220px);
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   overflow: hidden;
@@ -39,6 +40,7 @@
   align-items: center;
   justify-content: center;
   background: #000;
+  position: relative;
 }
 
 .profile-page__avatar-image {
@@ -48,8 +50,40 @@
 }
 
 .profile-page__avatar-icon {
-  font-size: clamp(180px, 18vw, 290px);
+  font-size: clamp(120px, 12vw, 180px);
   color: #1f2f45;
+}
+
+.profile-page__avatar-wrap:hover {
+  cursor: default;
+}
+
+.profile-page__avatar-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--kurio-accent);
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 160ms ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  z-index: 10;
+}
+
+.profile-page__avatar-wrap:hover .profile-page__avatar-overlay {
+  opacity: 1;
+}
+
+.profile-page__avatar-overlay-icon {
+  font-size: 1rem;
+  color: #fff;
 }
 
 .profile-page__username,
@@ -57,18 +91,102 @@
   width: 100%;
   text-align: left;
   color: var(--kurio-accent);
-  font-size: 2rem;
-  font-weight: 500;
-  line-height: 1.1;
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.profile-page__username-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-page__edit-username {
+  color: #fff !important;
+}
+
+.profile-page__edit-icon {
+  font-size: 1rem;
+  color: #fff;
+}
+
+.profile-page__username-edit-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-page__username-edit-field {
+  flex: 1;
+}
+
+.profile-page__username-edit-field .MuiOutlinedInput-root {
+  border-color: var(--kurio-accent) !important;
+}
+
+.profile-page__username-edit-field .MuiOutlinedInput-notchedOutline {
+  border-color: var(--kurio-accent) !important;
+}
+
+.profile-page__username-edit-field .MuiInputBase-input {
+  color: var(--kurio-white);
+}
+
+.profile-page__username-edit-field .MuiInputBase-input::placeholder {
+  color: rgba(255,255,255,0.5);
+  opacity: 1;
+}
+
+.profile-page__username-confirm-btn {
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  padding: 6px 12px !important;
+  background: var(--kurio-accent) !important;
+  color: #fff !important;
+}
+
+/* Dialog theme colors */
+.profile-dialog .MuiDialog-paper {
+  background: rgba(22, 32, 49, 0.95);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.profile-dialog .MuiDialogTitle-root {
+  color: var(--kurio-accent);
+  font-weight: 700;
+}
+
+.profile-dialog .MuiTypography-root {
+  color: var(--kurio-white);
+}
+
+.profile-dialog .MuiButton-root {
+  text-transform: uppercase;
+}
+
+.profile-dialog .MuiDialogActions-root .MuiButton-outlined {
+  color: var(--kurio-white);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.profile-dialog .MuiDialogActions-root .MuiButton-outlined:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.3);
+}
+
+.profile-dialog .MuiDialogActions-root .MuiButton-contained {
+  background: var(--kurio-accent) !important;
+  color: #fff !important;
 }
 
 .profile-page__follow-button.MuiButton-root {
   width: 100%;
-  border-radius: 16px;
-  min-height: 48px;
+  border-radius: 12px;
+  min-height: 40px;
   text-transform: none;
-  font-size: 1.08rem;
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 600;
   background: var(--kurio-card-accent);
   color: #fff;
 }
@@ -82,42 +200,45 @@
   width: 100%;
   text-align: left;
   color: var(--kurio-white);
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .profile-page__member-since,
 .MuiTypography-root.profile-page__member-since {
   width: 100%;
   text-align: left;
-  color: var(--kurio-accent);
-  font-size: 2rem;
-  font-weight: 700;
+  color: var(--kurio-text-soft);
+  font-size: 1.05rem;
+  font-weight: 600;
 }
 
 .profile-page__posts-area {
   min-width: 0;
   display: grid;
   align-content: start;
-  gap: 14px;
+  gap: 10px;
 }
 
 .profile-page__posts-title,
 .MuiTypography-root.profile-page__posts-title {
   text-align: center;
   color: var(--kurio-accent);
-  font-size: 2.15rem;
+  font-size: 1.85rem;
   font-weight: 700;
 }
 
 .profile-page__posts-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
+  gap: 10px;
+  justify-content: start;
   align-content: start;
-  max-height: calc(100vh - 170px);
+  max-height: calc(100vh - 190px);
   overflow: auto;
 }
+
+/* Use global PostCard styles for cards inside profile page */
 
 .profile-page__loader {
   min-height: calc(100vh - 96px);
@@ -147,20 +268,24 @@
 }
 
 @media (max-width: 1400px) {
-  .profile-page__member-since,
-  .MuiTypography-root.profile-page__member-since {
-    font-size: 1.5rem;
-  }
-
   .profile-page__posts-title,
   .MuiTypography-root.profile-page__posts-title {
-    font-size: 1.8rem;
+    font-size: 1.55rem;
   }
 }
 
 @media (max-width: 1100px) {
   .profile-page__layout {
     grid-template-columns: 1fr;
+  }
+
+  .profile-page__avatar-wrap {
+    width: min(100%, 180px);
+  }
+
+  .profile-page__username,
+  .MuiTypography-root.profile-page__username {
+    font-size: 1.4rem;
   }
 
   .profile-page__posts-grid {
@@ -175,15 +300,17 @@
   }
 
   .profile-page__layout {
-    padding: 12px;
+    padding: 10px;
   }
 
   .profile-page__member-since,
   .MuiTypography-root.profile-page__member-since {
-    font-size: 1.15rem;
+    font-size: 0.95rem;
   }
 
   .profile-page__posts-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
+
+  /* rely on global PostCard sizing on small screens */
 }

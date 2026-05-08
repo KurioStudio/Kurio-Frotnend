@@ -1,5 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Box, Button, CircularProgress, Typography } from '@mui/material'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Typography,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+} from '@mui/material'
+import { FaPen } from 'react-icons/fa6'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import { useNavigate, useParams } from 'react-router-dom'
 import Header from '../../../components/home/Header'
@@ -11,6 +23,7 @@ import {
   followUser,
   getCurrentUser,
   getProfileUserById,
+  updateUsername,
   type FeedPost,
   type ProfileUser,
   unfollowUser,
@@ -28,6 +41,16 @@ function ProfilePage() {
   const [loadingPosts, setLoadingPosts] = useState(true)
   const [followLoading, setFollowLoading] = useState(false)
   const [error, setError] = useState('')
+  const [isEditingUsername, setIsEditingUsername] = useState(false)
+  const [usernameDraft, setUsernameDraft] = useState('')
+  const [usernameSaving, setUsernameSaving] = useState(false)
+  const [usernameConfirmDialogOpen, setUsernameConfirmDialogOpen] = useState(false)
+
+  const [avatarDialogOpen, setAvatarDialogOpen] = useState(false)
+  const [avatarPreview, setAvatarPreview] = useState('')
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null)
+  const [avatarSaving, setAvatarSaving] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const isOwnProfile = useMemo(() => {
     return Boolean(currentUserId && profileUser?.id && currentUserId === profileUser.id)
@@ -51,9 +74,17 @@ function ProfilePage() {
     let isCancelled = false
 
     const loadProfile = async () => {
+      // Reset edit states when changing profiles
+      setIsEditingUsername(false)
+      setUsernameDraft('')
+      setUsernameConfirmDialogOpen(false)
+      setAvatarDialogOpen(false)
+      setAvatarPreview('')
+      setSelectedAvatarFile(null)
+      setError('')
+
       setLoadingProfile(true)
       setLoadingPosts(true)
-      setError('')
 
       try {
         const currentUser = await getCurrentUser()
@@ -84,7 +115,6 @@ function ProfilePage() {
         }
       } catch (loadError) {
         if (!isCancelled) {
-          setError('No se pudo cargar el perfil.')
           setLoadingProfile(false)
           setLoadingPosts(false)
         }
@@ -140,6 +170,47 @@ function ProfilePage() {
     }
   }
 
+  const handleConfirmUsername = async () => {
+    if (!profileUser) return
+    if (!usernameDraft.trim()) {
+      setError('El nombre de usuario no puede estar vacío')
+      return
+    }
+    setUsernameSaving(true)
+    setError('')
+
+    try {
+      await updateUsername(usernameDraft, null)
+      setProfileUser((p) => p ? { ...p, username: usernameDraft } : p)
+      setIsEditingUsername(false)
+      setUsernameConfirmDialogOpen(false)
+    } catch (err: any) {
+      console.error(err)
+      setError(err?.message || 'No se pudo cambiar el nombre')
+    } finally {
+      setUsernameSaving(false)
+    }
+  }
+
+  const handleConfirmAvatar = async () => {
+    if (!selectedAvatarFile) return
+    setAvatarSaving(true)
+    setError('')
+
+    try {
+      await updateUsername(profileUser?.username || '', selectedAvatarFile)
+      setProfileUser((p) => p ? { ...p, avatarImg: avatarPreview || '' } : p)
+      setAvatarDialogOpen(false)
+      setSelectedAvatarFile(null)
+      setAvatarPreview('')
+    } catch (err: any) {
+      console.error(err)
+      setError(err?.message || 'No se pudo actualizar la foto')
+    } finally {
+      setAvatarSaving(false)
+    }
+  }
+
   return (
     <Box className="profile-page">
       <SidebarMenu />
@@ -164,11 +235,79 @@ function ProfilePage() {
                 ) : (
                   <FaRegCircleUser className="profile-page__avatar-icon" />
                 )}
+                {isOwnProfile && (
+                  <Box
+                    className="profile-page__avatar-overlay"
+                    onClick={() => fileInputRef.current?.click()}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={() => fileInputRef.current?.click()}
+                  >
+                    <FaPen className="profile-page__avatar-overlay-icon" />
+                  </Box>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    if (!f) return
+                    setSelectedAvatarFile(f)
+                    const reader = new FileReader()
+                    reader.onload = () => setAvatarPreview(String(reader.result || ''))
+                    reader.readAsDataURL(f)
+                    setAvatarDialogOpen(true)
+                    // clear input value to allow re-select same file later
+                    e.currentTarget.value = ''
+                  }}
+                />
               </Box>
 
-              <Typography className="profile-page__username">
-                {profileUser?.username ?? 'Usuario'}
-              </Typography>
+              <Box className="profile-page__username-row">
+                {isEditingUsername ? (
+                  <Box className="profile-page__username-edit-wrap">
+                    <TextField
+                      size="small"
+                      value={usernameDraft}
+                      onChange={(e) => setUsernameDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') setIsEditingUsername(false)
+                      }}
+                      autoFocus
+                      className="profile-page__username-edit-field"
+                    />
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => setUsernameConfirmDialogOpen(true)}
+                      className="profile-page__username-confirm-btn"
+                    >
+                      Confirmar
+                    </Button>
+                  </Box>
+                ) : (
+                  <>
+                    <Typography className="profile-page__username">
+                      {profileUser?.username ?? 'Usuario'}
+                    </Typography>
+
+                    {isOwnProfile && (
+                      <IconButton
+                        size="small"
+                        className="profile-page__edit-username"
+                        onClick={() => {
+                          setUsernameDraft(profileUser?.username || '')
+                          setIsEditingUsername(true)
+                        }}
+                      >
+                        <FaPen className="profile-page__edit-icon" />
+                      </IconButton>
+                    )}
+                  </>
+                )}
+              </Box>
 
               {!isOwnProfile && (
                 <Button
@@ -195,6 +334,34 @@ function ProfilePage() {
                 </Typography>
               )}
             </Box>
+
+            {/* Username confirmation dialog */}
+            <Dialog open={usernameConfirmDialogOpen} onClose={() => setUsernameConfirmDialogOpen(false)} className="profile-dialog">
+              <DialogTitle>¿Cambiar nombre de usuario?</DialogTitle>
+              <DialogContent>
+                <Typography>Nuevo nombre: <strong>{usernameDraft}</strong></Typography>
+              </DialogContent>
+              <DialogActions>
+                <Button variant="outlined" onClick={() => { setUsernameConfirmDialogOpen(false); setIsEditingUsername(false) }}>Cancelar</Button>
+                <Button onClick={() => void handleConfirmUsername()} disabled={usernameSaving} variant="contained">
+                  {usernameSaving ? <CircularProgress size={18} /> : 'Confirmar'}
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            {/* Avatar confirm dialog */}
+            <Dialog open={avatarDialogOpen} onClose={() => setAvatarDialogOpen(false)} className="profile-dialog">
+              <DialogTitle>¿Cambiar foto de perfil?</DialogTitle>
+              <DialogContent>
+                {avatarPreview ? <Box component="img" src={avatarPreview} alt="preview" style={{ maxWidth: '320px', width: '100%' }} /> : null}
+              </DialogContent>
+              <DialogActions>
+                <Button variant="outlined" onClick={() => { setAvatarDialogOpen(false); setSelectedAvatarFile(null); setAvatarPreview('') }}>Cancelar</Button>
+                <Button onClick={() => void handleConfirmAvatar()} disabled={avatarSaving} variant="contained">
+                  {avatarSaving ? <CircularProgress size={18} /> : 'Confirmar'}
+                </Button>
+              </DialogActions>
+            </Dialog>
 
             <Box className="profile-page__posts-area">
               <Typography className="profile-page__posts-title">

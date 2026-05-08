@@ -15,7 +15,6 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/detalle-modelo/:postId" element={<ModelDetail/>} />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/profile/edit" element={<ProfilePage />} />
         <Route path="/profile/:userId" element={<ProfilePage />} />
         <Route path="/subir-modelo" element={<UploadModelPage />} />
 
