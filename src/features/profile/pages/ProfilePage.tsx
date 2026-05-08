@@ -393,7 +393,7 @@ function ProfilePage() {
                 <Box className="profile-page__loader profile-page__loader--posts">
                   <CircularProgress />
                 </Box>
-              ) : (
+              ) : posts.length ? (
                 <Box className="profile-page__posts-grid">
                   {posts.map((post) => (
                     <PostCard
@@ -406,12 +406,12 @@ function ProfilePage() {
                       onClick={() => navigate(`/detalle-modelo/${post.id}`)}
                     />
                   ))}
-
-                  {!posts.length && (
-                    <Typography className="profile-page__empty-posts">
-                      Este usuario todavía no tiene publicaciones.
-                    </Typography>
-                  )}
+                </Box>
+              ) : (
+                <Box className="profile-page__empty-wrapper">
+                  <Typography className="profile-page__empty-posts">
+                    Este usuario todavía no tiene publicaciones.
+                  </Typography>
                 </Box>
               )}
             </Box>

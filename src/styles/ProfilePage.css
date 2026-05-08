@@ -253,6 +253,8 @@
 .profile-page__empty-posts,
 .MuiTypography-root.profile-page__empty-posts {
   grid-column: 1 / -1;
+  justify-self: center;
+  align-self: center;
   padding: 16px;
   border-radius: 10px;
   border: 1px dashed rgba(255, 255, 255, 0.15);
