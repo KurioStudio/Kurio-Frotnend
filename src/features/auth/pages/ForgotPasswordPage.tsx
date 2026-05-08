@@ -8,6 +8,7 @@ import forgotVideo from '../../../assets/img_auth/forgotpass.mp4'
 import { sendForgotPasswordEmail } from '../../../utils/peticiones'
 import '../../../styles/auth.css'
 import '../../../styles/Header.css'
+import { useTranslation } from 'react-i18next'
 
 type CountryOption = {
 	code: string
@@ -16,11 +17,7 @@ type CountryOption = {
 
 const countries: CountryOption[] = [
 	{ code: 'es', name: 'Español' },
-  { code: 'us', name: 'Inglés' },
-  { code: 'fr', name: 'Francés' },
-  { code: 'de', name: 'Alemán' },
-  { code: 'it', name: 'Italiano' },
-  { code: 'pt', name: 'Portugués' },
+  { code: 'us', name: 'English' },
 ]
 
 const getFlagUrl = (countryCode: string) => `https://flagcdn.com/w40/${countryCode}.png`
@@ -29,24 +26,25 @@ function getForgotErrorMessage(error: unknown): string {
 	if (error instanceof FirebaseError) {
 		switch (error.code) {
 			case 'auth/invalid-email':
-				return 'El correo no es valido'
+				return 'auth.login.errors.invalidEmail'
 			case 'auth/user-not-found':
-				return 'No existe una cuenta con este correo'
+				return 'auth.login.errors.generic'
 			case 'auth/too-many-requests':
-				return 'Demasiados intentos. Intenta mas tarde'
+				return 'auth.login.errors.tooManyRequests'
 			default:
-				return 'No se pudo enviar el correo de recuperación'
+				return 'auth.login.errors.generic'
 		}
 	}
 
 	if (error instanceof Error) {
-		return error.message || 'No se pudo enviar el correo de recuperación'
+		return error.message || 'auth.login.errors.generic'
 	}
 
-	return 'No se pudo enviar el correo de recuperación'
+	return 'auth.login.errors.generic'
 }
 
 function ForgotPasswordPage() {
+	const { t, i18n } = useTranslation()
 	const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
 	const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
 	const [email, setEmail] = useState('')
@@ -66,6 +64,7 @@ function ForgotPasswordPage() {
 
 	const handleSelectCountry = (country: CountryOption) => {
 		setSelectedCountry(country)
+		i18n.changeLanguage(country.code === 'us' ? 'en' : country.code)
 		handleCloseCountryMenu()
 	}
 
@@ -75,7 +74,7 @@ function ForgotPasswordPage() {
 		setForgotSuccess(null)
 
 		if (!email.trim()) {
-			setForgotError('Debes ingresar un correo')
+			setForgotError(t('auth.forgotPassword.errors.completeEmail'))
 			return
 		}
 
@@ -83,9 +82,9 @@ function ForgotPasswordPage() {
 
 		try {
 			await sendForgotPasswordEmail(email.trim())
-			setForgotSuccess('Te enviamos un enlace de recuperación a tu correo')
+			setForgotSuccess(t('auth.register.success'))
 		} catch (error) {
-			setForgotError(getForgotErrorMessage(error))
+			setForgotError(t(getForgotErrorMessage(error)))
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -101,8 +100,8 @@ function ForgotPasswordPage() {
 					</Box>
 
 					<Box className="auth-page__content auth-page__content--forgot">
-						<Typography className="auth-page__title auth-page__title--forgot">Restablecer contraseña</Typography>
-						<Typography className="auth-page__subtitle auth-page__subtitle--forgot">Introduce tu correo</Typography>
+						<Typography className="auth-page__title auth-page__title--forgot">{t('auth.forgotPassword.title')}</Typography>
+						<Typography className="auth-page__subtitle auth-page__subtitle--forgot">{t('auth.forgotPassword.subtitle')}</Typography>
 
 						<Box component="form" className="auth-page__form" onSubmit={handleSubmit} autoComplete="off">
 							{forgotError ? <Alert severity="error">{forgotError}</Alert> : null}
@@ -112,21 +111,21 @@ function ForgotPasswordPage() {
 								size="small"
 								fullWidth
 								variant="outlined"
-								label="Correo"
+								label={t('auth.forgotPassword.email')}
 								className="auth-field"
 								value={email}
 								onChange={(event) => setEmail(event.target.value)}
 								disabled={isSubmitting}
-								placeholder="usuario@correo.com"
+								placeholder={t('auth.forgotPassword.placeholderEmail')}
 								autoComplete="off"
 							/>
 
 							<Button type="submit" variant="contained" className="auth-page__submit" disabled={isSubmitting}>
-								{isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Restablecer'}
+								{isSubmitting ? <CircularProgress size={20} color="inherit" /> : t('auth.forgotPassword.submit')}
 							</Button>
 
 							<MuiLink component={RouterLink} to="/auth/login" underline="hover" className="auth-page__link auth-page__link--centered">
-								Volver al inicio de sesion
+								{t('auth.forgotPassword.back')}
 							</MuiLink>
 						</Box>
 					</Box>

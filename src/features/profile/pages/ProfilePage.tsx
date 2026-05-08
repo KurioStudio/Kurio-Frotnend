@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEv
 import { Box, Button, CircularProgress, Typography, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, DialogContentText } from '@mui/material'
 import { FaPen, FaRegCircleUser } from 'react-icons/fa6'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Header from '../../../components/home/Header'
 import PostCard from '../../../components/home/PostCard'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
@@ -21,6 +22,7 @@ import {
 import '../../../styles/ProfilePage.css'
 
 function ProfilePage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { userId: userIdParam } = useParams<{ userId?: string }>()
   const [currentUserId, setCurrentUserId] = useState('')
@@ -48,16 +50,9 @@ function ProfilePage() {
   }, [currentUserId, profileUser])
 
   const formatMemberDate = (rawDate: string): string => {
-    if (!rawDate) {
-      return 'No disponible'
-    }
-
+    if (!rawDate) return t('profile.noUsername')
     const date = new Date(rawDate)
-
-    if (Number.isNaN(date.getTime())) {
-      return rawDate
-    }
-
+    if (Number.isNaN(date.getTime())) return rawDate
     return date.toLocaleDateString('es-ES')
   }
 
@@ -65,7 +60,6 @@ function ProfilePage() {
     let isCancelled = false
 
     const loadProfile = async () => {
-      // Reset edit states when changing profiles
       setIsEditingUsername(false)
       setUsernameDraft('')
       setUsernameConfirmDialogOpen(false)
@@ -98,18 +92,14 @@ function ProfilePage() {
 
         if (!isCancelled) {
           setCurrentUserId(currentUser.id)
-          // ensure follower/followed counts are fresh
           try {
             const [followersCount, followingCount] = await Promise.all([
               getFollowersCount(targetUserId),
               getFollowedCount(targetUserId),
             ])
-
             profile.followersCount = followersCount
             profile.followingCount = followingCount
-          } catch {
-            // ignore and keep backend values
-          }
+          } catch {}
 
           setProfileUser(profile)
           setPosts(userPosts)
@@ -117,7 +107,7 @@ function ProfilePage() {
           setLoadingProfile(false)
           setLoadingPosts(false)
         }
-      } catch (loadError) {
+      } catch {
         if (!isCancelled) {
           setLoadingProfile(false)
           setLoadingPosts(false)
@@ -126,40 +116,27 @@ function ProfilePage() {
     }
 
     void loadProfile()
-
-    return () => {
-      isCancelled = true
-    }
+    return () => { isCancelled = true }
   }, [navigate, userIdParam])
 
   const handleToggleFollow = async () => {
-    if (!profileUser || !currentUserId || isOwnProfile) {
-      return
-    }
+    if (!profileUser || !currentUserId || isOwnProfile) return
 
     setFollowLoading(true)
-
     try {
       if (isFollowing) {
-        // ask for confirmation instead of immediate unfollow
         setUnfollowConfirmOpen(true)
         return
       } else {
         await followUser(currentUserId, profileUser.id)
         setIsFollowing(true)
         setProfileUser((current) => {
-          if (!current) {
-            return current
-          }
-
-          return {
-            ...current,
-            followersCount: current.followersCount + 1,
-          }
+          if (!current) return current
+          return { ...current, followersCount: current.followersCount + 1 }
         })
       }
     } catch {
-      setError('No se pudo actualizar el seguimiento.')
+      setError(t('profile.unfollow'))
     } finally {
       setFollowLoading(false)
     }
@@ -170,7 +147,6 @@ function ProfilePage() {
 
     setFollowLoading(true)
     setUnfollowConfirmOpen(false)
-
     try {
       await unfollowUser(currentUserId, profileUser.id)
       setIsFollowing(false)
@@ -179,7 +155,7 @@ function ProfilePage() {
         return { ...current, followersCount: Math.max(0, current.followersCount - 1) }
       })
     } catch {
-      setError('No se pudo actualizar el seguimiento.')
+      setError(t('profile.unfollow'))
     } finally {
       setFollowLoading(false)
     }
@@ -188,23 +164,20 @@ function ProfilePage() {
   const handleConfirmUsername = async () => {
     if (!profileUser) return
     if (!usernameDraft.trim()) {
-      setError('El nombre de usuario no puede estar vacío')
+      setError(t('profile.changeUsername'))
       return
     }
     setUsernameSaving(true)
     setError('')
-
     try {
       await updateProfile(profileUser.id, usernameDraft, null)
-
       window.dispatchEvent(new CustomEvent('profile-updated'))
-
       setProfileUser((p) => p ? { ...p, username: usernameDraft } : p)
       setIsEditingUsername(false)
       setUsernameConfirmDialogOpen(false)
     } catch (err: any) {
       console.error(err)
-      setError(err?.message || 'No se pudo cambiar el nombre')
+      setError(err?.message || t('profile.changeUsername'))
     } finally {
       setUsernameSaving(false)
     }
@@ -214,19 +187,16 @@ function ProfilePage() {
     if (!selectedAvatarFile) return
     setAvatarSaving(true)
     setError('')
-
     try {
       await updateProfile(profileUser?.id || '', profileUser?.username || '', selectedAvatarFile)
-
       window.dispatchEvent(new CustomEvent('profile-updated'))
-
       setProfileUser((p) => p ? { ...p, avatarImg: avatarPreview || '' } : p)
       setAvatarDialogOpen(false)
       setSelectedAvatarFile(null)
       setAvatarPreview('')
     } catch (err: any) {
       console.error(err)
-      setError(err?.message || 'No se pudo actualizar la foto')
+      setError(err?.message || t('profile.uploadNewAvatar'))
     } finally {
       setAvatarSaving(false)
     }
@@ -237,7 +207,6 @@ function ProfilePage() {
       <SidebarMenu />
       <Box className="profile-page__content">
         <Header />
-
         {loadingProfile ? (
           <Box className="profile-page__loader">
             <CircularProgress />
@@ -280,7 +249,6 @@ function ProfilePage() {
                     reader.onload = () => setAvatarPreview(String(reader.result || ''))
                     reader.readAsDataURL(f)
                     setAvatarDialogOpen(true)
-                    // clear input value to allow re-select same file later
                     e.currentTarget.value = ''
                   }}
                 />
@@ -305,13 +273,13 @@ function ProfilePage() {
                       onClick={() => setUsernameConfirmDialogOpen(true)}
                       className="profile-page__username-confirm-btn"
                     >
-                      Confirmar
+                      {t('profile.changeUsername')}
                     </Button>
                   </Box>
                 ) : (
                   <>
                     <Typography className="profile-page__username">
-                      {profileUser?.username ?? 'Usuario'}
+                      {profileUser?.username ?? t('profile.noUsername')}
                     </Typography>
 
                     {isOwnProfile && (
@@ -337,16 +305,16 @@ function ProfilePage() {
                   disabled={followLoading}
                   className="profile-page__follow-button"
                 >
-                  {followLoading ? 'Procesando...' : isFollowing ? 'Siguiendo' : 'Seguir'}
+                  {followLoading ? t('home.loadingPosts') : isFollowing ? t('profile.unfollow') : t('profile.follow')}
                 </Button>
               )}
 
               <Typography className="profile-page__stats">
-                {profileUser?.followingCount ?? 0} seguidos | {profileUser?.followersCount ?? 0} seguidores
+                {profileUser?.followingCount ?? 0} {t('profile.following')} | {profileUser?.followersCount ?? 0} {t('profile.followers')}
               </Typography>
 
               <Typography className="profile-page__member-since">
-                Miembro desde: {formatMemberDate(profileUser?.createdAt ?? '')}
+                {t('profile.viewProfile')}: {formatMemberDate(profileUser?.createdAt ?? '')}
               </Typography>
 
               {error && (
@@ -358,35 +326,35 @@ function ProfilePage() {
 
             {/* Username confirmation dialog */}
             <Dialog open={usernameConfirmDialogOpen} onClose={() => setUsernameConfirmDialogOpen(false)} className="profile-dialog">
-              <DialogTitle>¿Cambiar nombre de usuario?</DialogTitle>
+              <DialogTitle>{t('profile.editUsername')}?</DialogTitle>
               <DialogContent>
-                <Typography>Nuevo nombre: <strong>{usernameDraft}</strong></Typography>
+                <Typography>{`${t('profile.changeUsername')}: `}<strong>{usernameDraft}</strong></Typography>
               </DialogContent>
               <DialogActions>
-                <Button variant="outlined" onClick={() => { setUsernameConfirmDialogOpen(false); setIsEditingUsername(false) }}>Cancelar</Button>
+                <Button variant="outlined" onClick={() => { setUsernameConfirmDialogOpen(false); setIsEditingUsername(false) }}>{t('profile.cancel')}</Button>
                 <Button onClick={() => void handleConfirmUsername()} disabled={usernameSaving} variant="contained">
-                  {usernameSaving ? <CircularProgress size={18} /> : 'Confirmar'}
+                  {usernameSaving ? <CircularProgress size={18} /> : t('profile.changeUsername')}
                 </Button>
               </DialogActions>
             </Dialog>
 
-            {/* Avatar confirm dialog */}
+            {/* Avatar confirmation dialog */}
             <Dialog open={avatarDialogOpen} onClose={() => setAvatarDialogOpen(false)} className="profile-dialog">
-              <DialogTitle>¿Cambiar foto de perfil?</DialogTitle>
+              <DialogTitle>{t('profile.editAvatar')}?</DialogTitle>
               <DialogContent>
                 {avatarPreview ? <Box component="img" src={avatarPreview} alt="preview" style={{ maxWidth: '320px', width: '100%' }} /> : null}
               </DialogContent>
               <DialogActions>
-                <Button variant="outlined" onClick={() => { setAvatarDialogOpen(false); setSelectedAvatarFile(null); setAvatarPreview('') }}>Cancelar</Button>
+                <Button variant="outlined" onClick={() => { setAvatarDialogOpen(false); setSelectedAvatarFile(null); setAvatarPreview('') }}>{t('profile.cancel')}</Button>
                 <Button onClick={() => void handleConfirmAvatar()} disabled={avatarSaving} variant="contained">
-                  {avatarSaving ? <CircularProgress size={18} /> : 'Confirmar'}
+                  {avatarSaving ? <CircularProgress size={18} /> : t('profile.uploadNewAvatar')}
                 </Button>
               </DialogActions>
             </Dialog>
 
             <Box className="profile-page__posts-area">
               <Typography className="profile-page__posts-title">
-                {isOwnProfile ? 'Tus creaciones' : `Creaciones de ${profileUser?.username ?? 'Usuario'}`}
+                {isOwnProfile ? t('profile.posts') : `${t('profile.viewProfile')} ${profileUser?.username ?? t('profile.noUsername')}`}
               </Typography>
 
               {loadingPosts ? (
@@ -410,7 +378,7 @@ function ProfilePage() {
               ) : (
                 <Box className="profile-page__empty-wrapper">
                   <Typography className="profile-page__empty-posts">
-                    Este usuario todavía no tiene publicaciones.
+                    {t('home.noPosts')}
                   </Typography>
                 </Box>
               )}
@@ -430,15 +398,15 @@ function ProfilePage() {
           },
         }}
       >
-        <DialogTitle id="unfollow-confirm-title" className="profile-page__dialog-title">Dejar de seguir</DialogTitle>
+        <DialogTitle id="unfollow-confirm-title" className="profile-page__dialog-title">{t('profile.unfollow')}</DialogTitle>
         <DialogContent className="profile-page__dialog-content">
           <DialogContentText className="profile-page__dialog-description">
-            ¿Estás seguro de que quieres dejar de seguir a {profileUser?.username ?? 'este usuario'}?
+            {`${t('profile.unfollow')} ${profileUser?.username ?? t('profile.noUsername')}?`}
           </DialogContentText>
         </DialogContent>
         <DialogActions className="profile-page__dialog-actions">
-          <Button onClick={() => setUnfollowConfirmOpen(false)} className="profile-page__dialog-button">Cancelar</Button>
-          <Button onClick={() => void confirmUnfollow()} variant="contained" color="error" className="profile-page__dialog-button profile-page__dialog-button--danger">Dejar de seguir</Button>
+          <Button onClick={() => setUnfollowConfirmOpen(false)} className="profile-page__dialog-button">{t('profile.cancel')}</Button>
+          <Button onClick={() => void confirmUnfollow()} variant="contained" color="error" className="profile-page__dialog-button profile-page__dialog-button--danger">{t('profile.unfollow')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

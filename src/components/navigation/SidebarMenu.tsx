@@ -14,78 +14,130 @@ import kurioLogo from '../../assets/iconos/kurioLogo.png'
 import { hasValidSession } from '../../utils/peticiones'
 import '../../styles/SidebarMenu.css'
 import type { FeedFilter } from '../../features/home/pages/HomePage'
+import { useTranslation } from 'react-i18next'
 
-type SidebarMenuProps = {
-	title?: string;
-	items?: {
-		label: string;
-		icon: React.ReactNode;
-		filter?: FeedFilter;
-		path?: string;
-	}[];
-	onSelect?: (filter: FeedFilter) => void;
+type SidebarItemId =
+	| 'all'
+	| 'top'
+	| 'recientes'
+	| 'seguidos'
+	| 'guardados'
+	| 'upload'
+	| 'inbox'
+
+type SidebarItem = {
+	id: SidebarItemId
+	label: string
+	icon: React.ReactNode
+	filter?: FeedFilter
+	path?: string
 }
 
-const defaultItems: {
-	label: string;
-	icon: React.ReactNode;
-	filter?: FeedFilter;
-	path?: string;
-}[] = [
-		{ label: 'Todas las publicaciones', icon: <IoGridOutline />, filter: 'all' },
-		{ label: 'Top publicaciones', icon: <IoTrendingUpOutline />, filter: 'top' },
-		{ label: 'Publicaciones recientes', icon: <IoTimeOutline />, filter: 'recientes' },
-		{ label: 'Seguidos', icon: <IoPeopleOutline />, filter: 'seguidos' },
-		{ label: 'Guardados', icon: <IoBookmarkOutline />, filter: 'guardados' },
-		{ label: 'Subir modelo', icon: <IoCloudUploadOutline />, path: '/subir-modelo' },
-		{ label: 'Inbox', icon: <IoMailOutline /> },
-	]
+type SidebarMenuProps = {
+	title?: string
+	onSelect?: (filter: FeedFilter) => void
+}
+
+const getDefaultItems = (t: any): SidebarItem[] => [
+	{
+		id: 'all',
+		label: t('sidebar.allPosts'),
+		icon: <IoGridOutline />,
+		filter: 'all',
+	},
+	{
+		id: 'top',
+		label: t('sidebar.topPosts'),
+		icon: <IoTrendingUpOutline />,
+		filter: 'top',
+	},
+	{
+		id: 'recientes',
+		label: t('sidebar.recentPosts'),
+		icon: <IoTimeOutline />,
+		filter: 'recientes',
+	},
+	{
+		id: 'seguidos',
+		label: t('sidebar.followed'),
+		icon: <IoPeopleOutline />,
+		filter: 'seguidos',
+	},
+	{
+		id: 'guardados',
+		label: t('sidebar.saved'),
+		icon: <IoBookmarkOutline />,
+		filter: 'guardados',
+	},
+	{
+		id: 'upload',
+		label: t('sidebar.uploadModel'),
+		icon: <IoCloudUploadOutline />,
+		path: '/subir-modelo',
+	},
+	{
+		id: 'inbox',
+		label: t('sidebar.inbox'),
+		icon: <IoMailOutline />,
+	},
+]
 
 function SidebarMenu({
 	title = 'Kurio',
-	items = defaultItems,
-	onSelect
+	onSelect,
 }: SidebarMenuProps) {
 	const navigate = useNavigate()
 	const location = useLocation()
-	const [selectedItem, setSelectedItem] = useState<string>('Top publicaciones')
+	const { t } = useTranslation()
+
+	const items = getDefaultItems(t)
+
+	const [selectedItem, setSelectedItem] =
+		useState<SidebarItemId>('top')
 
 	useEffect(() => {
-		// Map routes to sidebar item labels
 		if (location.pathname === '/subir-modelo') {
-			setSelectedItem('Subir modelo')
-		} else if (location.search.includes('search=')) {
-			setSelectedItem('')
+			setSelectedItem('upload')
 		} else if (location.search.includes('filter=all')) {
-			setSelectedItem('Todas las publicaciones')
+			setSelectedItem('all')
 		} else if (location.search.includes('filter=guardados')) {
-			setSelectedItem('Guardados')
+			setSelectedItem('guardados')
 		} else if (location.search.includes('filter=seguidos')) {
-			setSelectedItem('Seguidos')
+			setSelectedItem('seguidos')
 		} else if (location.search.includes('filter=recientes')) {
-			setSelectedItem('Publicaciones recientes')
-		} else if (location.pathname === '/' || location.search.includes('filter=top')) {
-			setSelectedItem('Top publicaciones')
+			setSelectedItem('recientes')
+		} else {
+			setSelectedItem('top')
 		}
 	}, [location])
 
-	const handleItemClick = async (item: typeof defaultItems[0]) => {
-		setSelectedItem(item.label)
-		
-		// Items that require authentication
-		const authRequiredItems = ['Seguidos', 'Guardados', 'Subir modelo', 'Inbox']
-		
-		if (authRequiredItems.includes(item.label)) {
+	const handleItemClick = async (item: SidebarItem) => {
+		setSelectedItem(item.id)
+
+		const authRequiredItems: SidebarItemId[] = [
+			'seguidos',
+			'guardados',
+			'upload',
+			'inbox',
+		]
+
+		if (authRequiredItems.includes(item.id)) {
 			const sessionIsValid = await hasValidSession()
+
 			if (!sessionIsValid) {
-				// Save the redirect path based on the item
 				let redirectPath = '/'
+
 				if (item.path) {
 					redirectPath = item.path
 				} else if (item.filter) {
 					redirectPath = `/?filter=${item.filter}`
 				}
-				localStorage.setItem('kurio_post_login_redirect', redirectPath)
+
+				localStorage.setItem(
+					'kurio_post_login_redirect',
+					redirectPath
+				)
+
 				navigate('/auth/login', { replace: true })
 				return
 			}
@@ -108,10 +160,11 @@ function SidebarMenu({
 				<Box
 					component="img"
 					src={kurioLogo}
-					onClick={() => window.location.href = '/'}
+					onClick={() => navigate('/')}
 					alt={title}
 					className="sidebar-menu__logo"
 				/>
+
 				<Typography className="sidebar-menu__title">
 					{title}
 				</Typography>
@@ -120,13 +173,21 @@ function SidebarMenu({
 			<Box className="sidebar-menu__items">
 				{items.map((item) => (
 					<ButtonBase
-						key={item.label}
-						className={`sidebar-menu__item ${selectedItem === item.label ? 'sidebar-menu__item--active' : ''}`}
+						key={item.id}
+						className={`sidebar-menu__item ${
+							selectedItem === item.id
+								? 'sidebar-menu__item--active'
+								: ''
+						}`}
 						onClick={() => handleItemClick(item)}
 					>
-						<Box component="span" className="sidebar-menu__item-icon">
+						<Box
+							component="span"
+							className="sidebar-menu__item-icon"
+						>
 							{item.icon}
 						</Box>
+
 						{item.label}
 					</ButtonBase>
 				))}
@@ -138,7 +199,7 @@ function SidebarMenu({
 				</Typography>
 			</Box>
 		</Box>
-	);
+	)
 }
 
 export default SidebarMenu

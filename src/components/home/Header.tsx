@@ -6,6 +6,7 @@ import { getAuth, onAuthStateChanged, type User as FirebaseUser } from 'firebase
 import { useNavigate } from 'react-router-dom'
 import { getProfileUserById, hasValidSession, logoutUser, touchSessionActivity } from '../../utils/peticiones'
 import '../../styles/Header.css'
+import { useTranslation } from 'react-i18next'
 
 type CountryOption = {
   code: string
@@ -14,12 +15,11 @@ type CountryOption = {
 
 const countries: CountryOption[] = [
   { code: 'es', name: 'Español' },
-  { code: 'us', name: 'Inglés' },
-  { code: 'fr', name: 'Francés' },
-  { code: 'de', name: 'Alemán' },
-  { code: 'it', name: 'Italiano' },
-  { code: 'pt', name: 'Portugués' },
+  { code: 'us', name: 'English' },
 ]
+
+const getCountryFromLanguage = (language: string): CountryOption =>
+  language.toLowerCase().startsWith('en') ? countries[1] : countries[0]
 
 const getFlagUrl = (countryCode: string) => `https://flagcdn.com/w40/${countryCode}.png`
 const headerProfileCacheKey = 'kurio_header_profile_cache'
@@ -38,11 +38,14 @@ const clearCachedHeaderProfile = (): void => {
 }
 
 function Header() {
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
-  const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
+  const [selectedCountry, setSelectedCountry] = useState<CountryOption>(() =>
+    getCountryFromLanguage(i18n.resolvedLanguage ?? i18n.language)
+  )
   const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null)
-  const [profileUserName, setProfileUserName] = useState('Iniciar Sesión')
+  const [profileUserName, setProfileUserName] = useState<string>(t('header.login'))
   const [profileUserAvatar, setProfileUserAvatar] = useState('')
   const [searchValue, setSearchValue] = useState('')
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
@@ -51,12 +54,16 @@ function Header() {
   const profileMenuOpen = Boolean(profileAnchorEl)
 
   useEffect(() => {
+    setSelectedCountry(getCountryFromLanguage(i18n.resolvedLanguage ?? i18n.language))
+  }, [i18n.language, i18n.resolvedLanguage])
+
+  useEffect(() => {
     let isCancelled = false
     const auth = getAuth()
 
     const applyProfile = (user: FirebaseUser | null) => {
       if (!user) {
-        setProfileUserName('Iniciar Sesión')
+        setProfileUserName(t('header.login'))
         setProfileUserAvatar('')
         clearCachedHeaderProfile()
         return
@@ -113,7 +120,7 @@ function Header() {
         window.removeEventListener(eventName, handleActivity)
       })
     }
-  }, [])
+  }, [t])
 
   const handleOpenCountryMenu = (event: MouseEvent<HTMLElement>) => {
     setCountryAnchorEl(event.currentTarget)
@@ -125,6 +132,8 @@ function Header() {
 
   const handleSelectCountry = (country: CountryOption) => {
     setSelectedCountry(country)
+    const nextLanguage = country.code === 'us' ? 'en' : country.code
+    void i18n.changeLanguage(nextLanguage)
     handleCloseCountryMenu()
   }
 
@@ -181,7 +190,7 @@ function Header() {
     handleCloseProfileMenu()
     setLogoutDialogOpen(false)
     clearCachedHeaderProfile()
-    setProfileUserName('Iniciar Sesión')
+    setProfileUserName(t('header.login'))
     setProfileUserAvatar('')
     navigate('/')
   }
@@ -212,7 +221,7 @@ function Header() {
         <Box className="header__search">
           <IoSearch className="header__search-icon" size={15} />
           <InputBase
-            placeholder="Buscar"
+            placeholder={t('search.placeholder')}
             className="header__search-input"
             value={searchValue}
             onChange={(event) => setSearchValue(event.target.value)}
@@ -227,7 +236,7 @@ function Header() {
             aria-controls={countryMenuOpen ? 'country-menu' : undefined}
             aria-expanded={countryMenuOpen ? 'true' : undefined}
             aria-haspopup="true"
-            aria-label="Seleccionar pais"
+            aria-label={t('header.login')}
           >
             <Box
               component="img"
@@ -318,13 +327,13 @@ function Header() {
           className="header__menu-item"
           onClick={() => void handleViewProfile()}
         >
-          Ver perfil
+          {t('header.viewProfile')}
         </MenuItem>
         <MenuItem
           className="header__menu-item header__menu-item--danger"
           onClick={handleAskLogout}
         >
-          Cerrar sesión
+          {t('header.logout')}
         </MenuItem>
       </Menu>
 
@@ -340,19 +349,19 @@ function Header() {
         }}
       >
         <DialogTitle id="logout-dialog-title" className="header__dialog-title">
-          Confirmar cierre de sesión
+          {t('header.logoutConfirmTitle')}
         </DialogTitle>
         <DialogContent className="header__dialog-content">
           <DialogContentText id="logout-dialog-description" className="header__dialog-description">
-            ¿Estás seguro de que quieres cerrar sesión?
+            {t('header.logoutConfirmText')}
           </DialogContentText>
         </DialogContent>
         <DialogActions className="header__dialog-actions">
           <Button onClick={handleCloseLogoutDialog} className="header__dialog-button">
-            Cancelar
+            {t('header.cancel')}
           </Button>
           <Button onClick={() => void handleLogout()} variant="contained" color="error" className="header__dialog-button header__dialog-button--danger">
-            Cerrar sesión
+            {t('header.logout')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -8,6 +8,7 @@ import registerVideo from '../../../assets/img_auth/register.mp4'
 import { registerWithEmail } from '../../../utils/peticiones'
 import '../../../styles/auth.css'
 import '../../../styles/Header.css'
+import { useTranslation } from 'react-i18next'
 
 type CountryOption = {
 	code: string
@@ -29,24 +30,25 @@ function getRegisterErrorMessage(error: unknown): string {
 	if (error instanceof FirebaseError) {
 		switch (error.code) {
 			case 'auth/email-already-in-use':
-				return 'Este correo ya esta registrado'
+				return 'auth.register.errors.emailInUse'
 			case 'auth/invalid-email':
-				return 'El correo no es valido'
+				return 'auth.register.errors.invalidEmail'
 			case 'auth/weak-password':
-				return 'La contraseña es demasiado debil'
+				return 'auth.register.errors.weakPassword'
 			default:
-				return 'No se pudo registrar la cuenta'
+				return 'auth.register.errors.generic'
 		}
 	}
 
 	if (error instanceof Error) {
-		return error.message || 'No se pudo registrar la cuenta'
+		return error.message || 'auth.register.errors.generic'
 	}
 
-	return 'No se pudo registrar la cuenta'
+	return 'auth.register.errors.generic'
 }
 
 function RegistrationPage() {
+	const { t, i18n } = useTranslation()
 	const navigate = useNavigate()
 	const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
 	const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
@@ -72,6 +74,7 @@ function RegistrationPage() {
 
 	const handleSelectCountry = (country: CountryOption) => {
 		setSelectedCountry(country)
+		i18n.changeLanguage(country.code === 'us' ? 'en' : country.code)
 		handleCloseCountryMenu()
 	}
 
@@ -81,12 +84,12 @@ function RegistrationPage() {
 		setRegisterSuccess(null)
 
 		if (!username.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
-			setRegisterError('Debes completar todos los campos')
+			setRegisterError(t('auth.register.errors.completeFields'))
 			return
 		}
 
 		if (password !== confirmPassword) {
-			setRegisterError('Las contraseñas no coinciden')
+			setRegisterError(t('auth.register.errors.passwordMismatch'))
 			return
 		}
 
@@ -99,7 +102,7 @@ function RegistrationPage() {
 				password,
 			})
 
-			setRegisterSuccess('Cuenta creada correctamente')
+			setRegisterSuccess(t('auth.register.success'))
 			// Check if there's a redirect path saved
 			const redirectPath = localStorage.getItem('kurio_post_login_redirect')
 			if (redirectPath) {
@@ -109,7 +112,7 @@ function RegistrationPage() {
 				navigate('/', { replace: true })
 			}
 		} catch (error) {
-			setRegisterError(getRegisterErrorMessage(error))
+			setRegisterError(t(getRegisterErrorMessage(error)))
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -125,8 +128,8 @@ function RegistrationPage() {
 					</Box>
 
 					<Box className="auth-page__content">
-						<Typography className="auth-page__title">Registro</Typography>
-						<Typography className="auth-page__subtitle">Crea tu cuenta</Typography>
+<Typography className="auth-page__title">{t('auth.register.title')}</Typography>
+					<Typography className="auth-page__subtitle">{t('auth.register.subtitle')}</Typography>
 
 						<Box component="form" className="auth-page__form" onSubmit={handleSubmit} autoComplete="off">
 							{registerError ? <Alert severity="error">{registerError}</Alert> : null}
@@ -136,12 +139,12 @@ function RegistrationPage() {
 								size="small"
 								fullWidth
 								variant="outlined"
-								label="Usuario"
+								label={t('auth.register.username')}
 								className="auth-field"
 								value={username}
 								onChange={(event) => setUsername(event.target.value)}
 								disabled={isSubmitting}
-								placeholder="Tu nombre de usuario"
+								placeholder={t('auth.register.placeholderUsername')}
 								autoComplete="off"
 							/>
 
@@ -149,12 +152,12 @@ function RegistrationPage() {
 								size="small"
 								fullWidth
 								variant="outlined"
-								label="Correo"
+								label={t('auth.register.email')}
 								className="auth-field"
 								value={email}
 								onChange={(event) => setEmail(event.target.value)}
 								disabled={isSubmitting}
-								placeholder="usuario@correo.com"
+								placeholder={t('auth.register.placeholderEmail')}
 								type="email"
 								autoComplete="off"
 							/>
@@ -164,7 +167,7 @@ function RegistrationPage() {
 								type={showPassword ? 'text' : 'password'}
 								fullWidth
 								variant="outlined"
-								label="Contraseña"
+								label={t('auth.register.password')}
 								className="auth-field auth-field--password"
 								value={password}
 								onChange={(event) => setPassword(event.target.value)}
@@ -175,7 +178,7 @@ function RegistrationPage() {
 											<InputAdornment position="end">
 												<IconButton
 													size="small"
-													aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+													aria-label={showPassword ? t('auth.register.password') : t('auth.register.password')}
 													className="auth-field__icon-button"
 													onClick={() => setShowPassword((current) => !current)}
 													disabled={isSubmitting}
@@ -186,7 +189,7 @@ function RegistrationPage() {
 										),
 									},
 								}}
-								placeholder="Crea una contraseña"
+								placeholder={t('auth.register.placeholderPassword')}
 								autoComplete="off"
 							/>
 
@@ -195,7 +198,7 @@ function RegistrationPage() {
 								type={showConfirmPassword ? 'text' : 'password'}
 								fullWidth
 								variant="outlined"
-								label="Confirmar contraseña"
+								label={t('auth.register.confirmPassword')}
 								className="auth-field auth-field--password"
 								value={confirmPassword}
 								onChange={(event) => setConfirmPassword(event.target.value)}
@@ -206,7 +209,7 @@ function RegistrationPage() {
 											<InputAdornment position="end">
 												<IconButton
 													size="small"
-													aria-label={showConfirmPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+													aria-label={showConfirmPassword ? t('auth.register.confirmPassword') : t('auth.register.confirmPassword')}
 													className="auth-field__icon-button"
 													onClick={() => setShowConfirmPassword((current) => !current)}
 													disabled={isSubmitting}
@@ -217,16 +220,16 @@ function RegistrationPage() {
 										),
 									},
 								}}
-								placeholder="Repite tu contraseña"
+								placeholder={t('auth.register.placeholderConfirm')}
 								autoComplete="off"
 							/>
 
 							<Button type="submit" variant="contained" className="auth-page__submit" disabled={isSubmitting}>
-								{isSubmitting ? <CircularProgress size={20} color="inherit" /> : 'Registrarse'}
+								{isSubmitting ? <CircularProgress size={20} color="inherit" /> : t('auth.register.submit')}
 							</Button>
 
 							<MuiLink component={RouterLink} to="/auth/login" underline="hover" className="auth-page__link auth-page__link--centered">
-								¿Ya tienes cuenta?
+							{t('auth.register.haveAccount')}
 							</MuiLink>
 						</Box>
 					</Box>

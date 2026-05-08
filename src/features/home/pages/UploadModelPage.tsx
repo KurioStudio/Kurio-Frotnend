@@ -6,6 +6,7 @@ import Header from '../../../components/home/Header'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
 import '../../../styles/UploadModelPage.css'
 import { subirPost, type Post } from '../../../utils/peticiones'
+import { useTranslation } from 'react-i18next'
 
 const formatFileSize = (sizeInBytes: number): string => {
     if (sizeInBytes < 1024) {
@@ -21,6 +22,8 @@ const formatFileSize = (sizeInBytes: number): string => {
 
 function UploadModelPage() {
     const navigate = useNavigate()
+    const { t } = useTranslation()
+
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [license, setLicense] = useState('')
@@ -88,6 +91,7 @@ function UploadModelPage() {
     const removeImage = (index: number) => {
         setSelectedImages((prev) => prev.filter((_, i) => i !== index))
     }
+
     const handleSelectModelFile = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0] ?? null
         setModelFile(file)
@@ -97,16 +101,16 @@ function UploadModelPage() {
     const handlePublicarPost = async () => {
         const newErrors: { title?: string; description?: string; images?: string; model?: string; license?: string } = {}
 
-        if (!title.trim()) newErrors.title = 'El título es obligatorio.'
-        if (!description.trim() || description.trim().length < 5) newErrors.description = 'La descripción debe tener al menos 5 caracteres.'
-        if (selectedImages.length === 0) newErrors.images = 'Añade al menos una imagen.'
-        if (!modelFile) newErrors.model = 'Añade el archivo del modelo.'
-        if (!license) newErrors.license = 'Selecciona una licencia.'
+        if (!title.trim()) newErrors.title = t('upload.errors.completeFields')
+        if (!description.trim() || description.trim().length < 5) newErrors.description = t('upload.errors.completeFields')
+        if (selectedImages.length === 0) newErrors.images = t('upload.errors.selectImages')
+        if (!modelFile) newErrors.model = t('upload.errors.selectModel')
+        if (!license) newErrors.license = t('upload.errors.selectLicense')
 
         setErrors(newErrors)
 
         if (Object.keys(newErrors).length === 0) {
-            const post : Post = {
+            const post: Post = {
                 id: '',
                 titulo: title,
                 descripcion: description,
@@ -124,6 +128,7 @@ function UploadModelPage() {
                 file: modelFile ? modelFile : new File([], ''),
                 createdAt: ""
             }
+
             subirPost(post).then(() => {
                 setTitle('')
                 setDescription('')
@@ -131,13 +136,13 @@ function UploadModelPage() {
                 setSelectedImages([])
                 setModelFile(null)
                 setFeedbackType('success')
-                setFeedbackMessage('La publicación se ha subido correctamente.')
+                setFeedbackMessage(t('upload.success'))
                 setFeedbackOpen(true)
                 startFeedbackTimer('success')
             }).catch((error) => {
                 console.error('Error al subir la publicación:', error)
                 setFeedbackType('error')
-                setFeedbackMessage('Hubo un error al subir la publicación. Inténtalo de nuevo.')
+                setFeedbackMessage(t('upload.error'))
                 setFeedbackOpen(true)
                 startFeedbackTimer('error')
             })
@@ -155,11 +160,11 @@ function UploadModelPage() {
                     <Box className="upload-page__form-shell">
                         <Box className="upload-page__form-panel">
                             <Box className="upload-page__section">
-                                <Typography className="upload-page__section-label">Añadir el título*</Typography>
+                                <Typography className="upload-page__section-label">{t('upload.modelTitle')}*</Typography>
                                 <TextField
                                     value={title}
                                     onChange={(event) => setTitle(event.target.value)}
-                                    placeholder="Introduce el título de la publicación..."
+                                    placeholder={t('upload.modelTitle')}
                                     variant="outlined"
                                     size="small"
                                     fullWidth
@@ -170,11 +175,11 @@ function UploadModelPage() {
                             </Box>
 
                             <Box className="upload-page__section">
-                                <Typography className="upload-page__section-label">Añadir la descripción*</Typography>
+                                <Typography className="upload-page__section-label">{t('upload.modelDescription')}*</Typography>
                                 <TextField
                                     value={description}
                                     onChange={(event) => setDescription(event.target.value)}
-                                    placeholder="Introduce la descripción de la publicación..."
+                                    placeholder={t('upload.modelDescription')}
                                     variant="outlined"
                                     multiline
                                     minRows={3}
@@ -186,7 +191,7 @@ function UploadModelPage() {
                             </Box>
 
                             <Box className="upload-page__section">
-                                <Typography className="upload-page__section-label">Añadir imágenes del modelo*</Typography>
+                                <Typography className="upload-page__section-label">{t('upload.selectImages')}*</Typography>
                                 <Box className={`upload-page__dropzone ${selectedImages.length > 0 ? 'upload-page__dropzone--filled' : ''} ${errors.images ? 'upload-page__dropzone--error' : ''}`}>
                                     <input
                                         ref={imagesInputRef}
@@ -197,7 +202,7 @@ function UploadModelPage() {
                                         onChange={handleSelectImages}
                                     />
                                     {selectedImages.length === 0 ? (
-                                        <Typography className="upload-page__dropzone-title">Arrastre las imágenes del modelo</Typography>
+                                        <Typography className="upload-page__dropzone-title">{t('upload.selectImages')}</Typography>
                                     ) : (
                                         <Box className="upload-page__preview-grid">
                                             {imagePreviewUrls.map((preview, idx) => (
@@ -221,7 +226,7 @@ function UploadModelPage() {
                                             className="upload-page__action-button"
                                             onClick={() => imagesInputRef.current?.click()}
                                         >
-                                            Explorar
+                                            {t('upload.selectImages')}
                                         </Button>
                                     </Box>
                                     {errors.images && <Typography className="upload-page__error-text">{errors.images}</Typography>}
@@ -229,7 +234,7 @@ function UploadModelPage() {
                             </Box>
 
                             <Box className="upload-page__section">
-                                <Typography className="upload-page__section-label">Archivo del modelo*</Typography>
+                                <Typography className="upload-page__section-label">{t('upload.selectModel')}*</Typography>
                                 <Box className={`upload-page__dropzone ${modelFile ? 'upload-page__dropzone--filled' : ''} ${errors.model ? 'upload-page__dropzone--error' : ''}`}>
                                     <input
                                         ref={modelInputRef}
@@ -244,21 +249,21 @@ function UploadModelPage() {
                                             <Typography className="upload-page__model-file-size">{formatFileSize(modelFile.size)}</Typography>
                                         </Box>
                                     ) : (
-                                        <Typography className="upload-page__dropzone-title">Arrastre los archivos .stl aquí</Typography>
+                                        <Typography className="upload-page__dropzone-title">{t('upload.selectModel')}</Typography>
                                     )}
                                     <Button
                                         variant="contained"
                                         className="upload-page__action-button"
                                         onClick={() => modelInputRef.current?.click()}
                                     >
-                                        Explorar
+                                        {t('upload.selectModel')}
                                     </Button>
                                 </Box>
                                 {errors.model && <Typography className="upload-page__error-text">{errors.model}</Typography>}
                             </Box>
 
                             <Box className="upload-page__section upload-page__section--license">
-                                <Typography className="upload-page__section-label">Licencia permitida*</Typography>
+                                <Typography className="upload-page__section-label">{t('upload.selectLicense')}*</Typography>
                                 <Box className="upload-page__license-list">
                                     <RadioGroup
                                         value={license}
@@ -268,12 +273,12 @@ function UploadModelPage() {
                                         <FormControlLabel
                                             value="sdfl"
                                             control={<Radio />}
-                                            label="Licencia Estándar de Archivos Digitales (SDFL)"
+                                            label={t('upload.license.sdfl')}
                                         />
                                         <FormControlLabel
                                             value="personal"
                                             control={<Radio />}
-                                            label="Licencia Personal/No Comercial"
+                                            label={t('upload.license.personal')}
                                         />
                                     </RadioGroup>
                                     {errors.license && <Typography className="upload-page__error-text">{errors.license}</Typography>}
@@ -286,7 +291,7 @@ function UploadModelPage() {
                                     className="upload-page__publish-button"
                                     onClick={() => handlePublicarPost()}
                                 >
-                                    Publicar
+                                    {t('upload.submit')}
                                 </Button>
                             </Box>
                         </Box>
@@ -321,7 +326,7 @@ function UploadModelPage() {
                     }
                 >
                     <Typography className="upload-page__feedback-title">
-                        {feedbackType === 'success' ? 'Publicación completada' : 'Error al publicar'}
+                        {feedbackType === 'success' ? t('upload.success') : t('upload.error')}
                     </Typography>
                     <Typography className="upload-page__feedback-text">{feedbackMessage}</Typography>
                 </Alert>

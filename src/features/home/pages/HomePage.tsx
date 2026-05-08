@@ -1,5 +1,6 @@
 import { Box } from '@mui/material'
 import Header from '../../../components/home/Header'
+import { useTranslation } from 'react-i18next'
 import PostCard from '../../../components/home/PostCard'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
 import '../../../styles/HomePage.css'
@@ -10,6 +11,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 export type FeedFilter = 'all' |'top' | 'recientes' | 'seguidos' | 'guardados'
 
 function HomePage() {
+	const { t } = useTranslation()
 	const navigate = useNavigate()
 	const [searchParams] = useSearchParams()
 	const [filter, setFilter] = useState<FeedFilter>('all')
@@ -101,7 +103,7 @@ function HomePage() {
 				<Box className="home-page__posts">
 					{loadingPosts ? (
 						<Box className="home-page__empty-state">
-							Cargando publicaciones...
+							{t('home.loadingPosts')}
 						</Box>
 					) : posts.length > 0 ? (
 						posts.map((post) => (
@@ -117,7 +119,7 @@ function HomePage() {
 						))
 					) : (
 						<Box className="home-page__empty-state">
-							No se encontraron publicaciones.
+							{t('home.noPosts')}
 						</Box>
 					)}
 				</Box>
