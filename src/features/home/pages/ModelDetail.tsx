@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { Box, Button, ButtonBase, IconButton, InputBase, Typography, Stack, Paper, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar, Alert } from '@mui/material'
 import {
 	IoChevronBackOutline,
@@ -11,6 +11,7 @@ import {
 	IoShareSocialOutline,
 	IoBookmark,
 	IoBookmarkOutline,
+	IoClose,
 } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import Header from '../../../components/home/Header'
@@ -38,6 +39,7 @@ import Comment from '../../../components/details/Comment'
 import { useNavigate, useParams } from 'react-router-dom'
 import '../../../styles/ModelDetail.css'
 import { useTranslation } from 'react-i18next'
+import { useAlert } from '../../../contexts/AlertContext'
 
 type CommentView = comentarios & {
 	username: string
@@ -90,10 +92,7 @@ function ModelDetail() {
 	const [followLoading, setFollowLoading] = useState(false)
 	const [unfollowConfirmOpen, setUnfollowConfirmOpen] = useState(false)
 	const [showing3D, setShowing3D] = useState(false)
-	const [shareFeedbackOpen, setShareFeedbackOpen] = useState(false)
-	const [shareFeedbackType, setShareFeedbackType] = useState<'success' | 'error'>('success')
-	const [shareFeedbackMessage, setShareFeedbackMessage] = useState('')
-	const shareFeedbackTimerRef = useRef<number | null>(null)
+	const { showAlert } = useAlert()
 
 	const currentImages = postData.imagenes.length > 0 ? postData.imagenes : []
 	const currentImage = currentImages.length > 0 ? currentImages[postData.imageIndex % currentImages.length] : ''
@@ -115,19 +114,7 @@ function ModelDetail() {
 		oid: post.oid,
 	})
 
-	const openShareFeedback = (type: 'success' | 'error', message: string) => {
-		if (shareFeedbackTimerRef.current) {
-			window.clearTimeout(shareFeedbackTimerRef.current)
-		}
-
-		setShareFeedbackType(type)
-		setShareFeedbackMessage(message)
-		setShareFeedbackOpen(true)
-
-		shareFeedbackTimerRef.current = window.setTimeout(() => {
-			setShareFeedbackOpen(false)
-		}, 10000)
-	}
+	// useAlert provides a global showAlert({ type, title?, message, onClose? })
 
   useEffect(() => {
 		let isCancelled = false
@@ -203,9 +190,32 @@ function ModelDetail() {
 
 		return () => {
 			isCancelled = true
-			if (shareFeedbackTimerRef.current) window.clearTimeout(shareFeedbackTimerRef.current)
 		}
   }, [postId])
+
+	// Refresh author profile (avatar) when it's updated
+	const handleProfileUpdate = useCallback(async () => {
+		if (!postData.authorId) return
+
+		try {
+			const authorProfile = await getProfileUserById(postData.authorId)
+			setPostData((prev) => ({
+				...prev,
+				authorName: authorProfile.username || prev.authorName,
+				authorAvatar: authorProfile.avatarImg || prev.authorAvatar,
+			}))
+		} catch (error) {
+			console.error('Error refreshing author profile:', error)
+		}
+	}, [postData.authorId])
+
+	useEffect(() => {
+		window.addEventListener('profile-updated', handleProfileUpdate)
+
+		return () => {
+			window.removeEventListener('profile-updated', handleProfileUpdate)
+		}
+	}, [handleProfileUpdate])
 
 	const handleSendComment = async () => {
 		if (!postId) return
@@ -238,8 +248,10 @@ function ModelDetail() {
 
 			setComentarios(updatedWithUser)
 			setCommentValue('')
+			showAlert({ type: 'success', message: t('post.comment.success') })
 		} catch (error) {
 			console.error(error)
+			showAlert({ type: 'error', message: t('post.comment.error') })
 		}
 	}
 
@@ -268,9 +280,12 @@ function ModelDetail() {
 				authorAvatar = authorProfile.avatarImg || authorAvatar
 			} catch {}
 
+			const isNowLiked = updatedPost.likedBy.includes(user.id)
 			setPostData({ ...mapPostToState(updatedPost), authorName, authorAvatar })
+			showAlert({ type: 'success', message: isNowLiked ? t('post.like.added') : t('post.like.removed') })
 		} catch (error) {
 			console.error(error)
+			showAlert({ type: 'error', message: t('post.like.error') })
 		}
 	}
 
@@ -292,9 +307,11 @@ function ModelDetail() {
 			} else {
 				await followUser(currentUserId, postData.authorId)
 				setIsFollowing(true)
+				showAlert({ type: 'success', message: t('post.follow.success') })
 			}
 		} catch (error) {
 			console.error(error)
+			showAlert({ type: 'error', message: t('post.follow.error') })
 		} finally {
 			setFollowLoading(false)
 		}
@@ -310,6 +327,8 @@ function ModelDetail() {
 			navigate('/auth/login', { replace: true })
 			return
 		}
+
+		const wasSaved = isSaved
 
 		try {
 			if (isSaved) {
@@ -332,8 +351,10 @@ function ModelDetail() {
 			} catch {}
 
 			setPostData({ ...mapPostToState(updatedPost), authorName, authorAvatar })
+			showAlert({ type: 'success', message: wasSaved ? t('post.unsave.success') : t('post.save.success') })
 		} catch (error) {
 			console.error(error)
+			showAlert({ type: 'error', message: t('post.save.error') })
 		}
 	}
 
@@ -346,8 +367,10 @@ function ModelDetail() {
 		try {
 			await unfollowUser(currentUserId, postData.authorId)
 			setIsFollowing(false)
+			showAlert({ type: 'success', message: t('post.unfollow.success') })
 		} catch (error) {
 			console.error(error)
+			showAlert({ type: 'error', message: t('post.unfollow.error') })
 		} finally {
 			setFollowLoading(false)
 		}
@@ -381,15 +404,15 @@ function ModelDetail() {
 
 	const handleSharePost = async () => {
 		if (!postId) {
-			openShareFeedback('error', t('post.share.error'))
+			showAlert({ type: 'error', message: t('post.share.error') })
 			return
 		}
 
 		try {
 			await navigator.clipboard.writeText(window.location.href)
-			openShareFeedback('success', t('post.share.success'))
+			showAlert({ type: 'success', message: t('post.share.success') })
 		} catch {
-			openShareFeedback('error', t('post.share.error'))
+			showAlert({ type: 'error', message: t('post.share.error') })
 		}
 	}
 
@@ -603,25 +626,7 @@ function ModelDetail() {
 							</DialogActions>
 						</Dialog>
 
-						<Snackbar
-							open={shareFeedbackOpen}
-							anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-							onClose={(_, reason) => {
-								if (reason === 'clickaway') return
-								setShareFeedbackOpen(false)
-							}}
-						>
-							<Alert
-								severity={shareFeedbackType === 'success' ? 'success' : 'error'}
-								variant="filled"
-							>
-								<Typography>
-									{shareFeedbackType === 'success' ? t('post.share.success') : t('post.share.error')}
-								</Typography>
 
-								<Typography>{shareFeedbackMessage}</Typography>
-							</Alert>
-						</Snackbar>
 					</Stack>
 				)}
 			</Box>

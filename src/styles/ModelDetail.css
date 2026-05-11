@@ -529,3 +529,33 @@
   font-size: 1.5rem;
 }
 
+.model-detail__feedback-toast {
+  min-width: 320px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  align-items: flex-start;
+}
+
+.model-detail__feedback-toast--success {
+  background: rgba(16, 61, 41, 0.98) !important;
+  border-color: rgba(97, 241, 168, 0.35);
+}
+
+.model-detail__feedback-toast--error {
+  background: rgba(84, 24, 24, 0.98) !important;
+  border-color: rgba(255, 120, 120, 0.4);
+}
+
+.model-detail__feedback-title {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.model-detail__feedback-close {
+  color: #ffffff;
+}
+
+.model-detail__feedback-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+

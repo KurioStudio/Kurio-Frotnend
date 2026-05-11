@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
-import { Box, Button, CircularProgress, Typography, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, DialogContentText } from '@mui/material'
+import { Box, Button, CircularProgress, Typography, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, DialogContentText, Snackbar, Alert, LinearProgress } from '@mui/material'
 import { FaPen, FaRegCircleUser } from 'react-icons/fa6'
+import { IoClose } from 'react-icons/io5'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Header from '../../../components/home/Header'
@@ -20,6 +21,7 @@ import {
   getFollowedCount,
 } from '../../../utils/peticiones'
 import '../../../styles/ProfilePage.css'
+import { useAlert } from '../../../contexts/AlertContext'
 
 function ProfilePage() {
   const { t } = useTranslation()
@@ -45,6 +47,8 @@ function ProfilePage() {
   const [avatarSaving, setAvatarSaving] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
+  const { showAlert } = useAlert()
+
   const isOwnProfile = useMemo(() => {
     return Boolean(currentUserId && profileUser?.id && currentUserId === profileUser.id)
   }, [currentUserId, profileUser])
@@ -55,6 +59,8 @@ function ProfilePage() {
     if (Number.isNaN(date.getTime())) return rawDate
     return date.toLocaleDateString('es-ES')
   }
+
+  // useAlert provides showAlert({ type, title?, message, onClose? })
 
   useEffect(() => {
     let isCancelled = false
@@ -116,7 +122,9 @@ function ProfilePage() {
     }
 
     void loadProfile()
-    return () => { isCancelled = true }
+    return () => { 
+      isCancelled = true
+    }
   }, [navigate, userIdParam])
 
   const handleToggleFollow = async () => {
@@ -134,9 +142,11 @@ function ProfilePage() {
           if (!current) return current
           return { ...current, followersCount: current.followersCount + 1 }
         })
+        showAlert({ type: 'success', message: t('profile.follow.success') })
       }
     } catch {
       setError(t('profile.unfollow'))
+      showAlert({ type: 'error', message: t('profile.follow.error') })
     } finally {
       setFollowLoading(false)
     }
@@ -154,8 +164,10 @@ function ProfilePage() {
         if (!current) return current
         return { ...current, followersCount: Math.max(0, current.followersCount - 1) }
       })
+      showAlert({ type: 'success', message: t('profile.unfollow.success') })
     } catch {
       setError(t('profile.unfollow'))
+      showAlert({ type: 'error', message: t('profile.unfollow.error') })
     } finally {
       setFollowLoading(false)
     }
@@ -171,13 +183,15 @@ function ProfilePage() {
     setError('')
     try {
       await updateProfile(profileUser.id, usernameDraft, null)
-      window.dispatchEvent(new CustomEvent('profile-updated'))
+      window.dispatchEvent(new CustomEvent('profile-updated', { detail: { username: usernameDraft, avatarImg: profileUser?.avatarImg } }))
       setProfileUser((p) => p ? { ...p, username: usernameDraft } : p)
       setIsEditingUsername(false)
       setUsernameConfirmDialogOpen(false)
+      showAlert({ type: 'success', message: t('profile.changeUsername.success') })
     } catch (err: any) {
       console.error(err)
       setError(err?.message || t('profile.changeUsername'))
+      showAlert({ type: 'error', message: t('profile.changeUsername.error') })
     } finally {
       setUsernameSaving(false)
     }
@@ -189,18 +203,22 @@ function ProfilePage() {
     setError('')
     try {
       await updateProfile(profileUser?.id || '', profileUser?.username || '', selectedAvatarFile)
-      window.dispatchEvent(new CustomEvent('profile-updated'))
+      window.dispatchEvent(new CustomEvent('profile-updated', { detail: { username: profileUser?.username, avatarImg: avatarPreview } }))
       setProfileUser((p) => p ? { ...p, avatarImg: avatarPreview || '' } : p)
       setAvatarDialogOpen(false)
       setSelectedAvatarFile(null)
       setAvatarPreview('')
+      showAlert({ type: 'success', message: t('profile.uploadNewAvatar.success') })
     } catch (err: any) {
       console.error(err)
       setError(err?.message || t('profile.uploadNewAvatar'))
+      showAlert({ type: 'error', message: t('profile.uploadNewAvatar.error') })
     } finally {
       setAvatarSaving(false)
     }
   }
+
+  
 
   return (
     <Box className="profile-page">
@@ -358,8 +376,11 @@ function ProfilePage() {
               </Typography>
 
               {loadingPosts ? (
-                <Box className="profile-page__loader profile-page__loader--posts">
-                  <CircularProgress />
+                <Box className="profile-page__posts-loading" sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1 }}>
+                  <Box sx={{ flex: 1 }}>
+                    <LinearProgress />
+                  </Box>
+                  <Typography>{t('home.loadingPosts')}</Typography>
                 </Box>
               ) : posts.length ? (
                 <Box className="profile-page__posts-grid">
@@ -409,6 +430,8 @@ function ProfilePage() {
           <Button onClick={() => void confirmUnfollow()} variant="contained" color="error" className="profile-page__dialog-button profile-page__dialog-button--danger">{t('profile.unfollow')}</Button>
         </DialogActions>
       </Dialog>
+
+      
     </Box>
   )
 }

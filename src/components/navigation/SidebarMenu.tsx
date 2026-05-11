@@ -93,11 +93,19 @@ function SidebarMenu({
 	const items = getDefaultItems(t)
 
 	const [selectedItem, setSelectedItem] =
-		useState<SidebarItemId>('top')
+		useState<SidebarItemId | null>('all')
 
 	useEffect(() => {
+		// If viewing a single model detail or performing a search, clear selection
+		if (location.pathname.startsWith('/detalle-modelo') || location.search.includes('search=')) {
+			setSelectedItem(null)
+			return
+		}
+
 		if (location.pathname === '/subir-modelo') {
 			setSelectedItem('upload')
+		} else if (location.search.includes('filter=top')) {
+			setSelectedItem('top')
 		} else if (location.search.includes('filter=all')) {
 			setSelectedItem('all')
 		} else if (location.search.includes('filter=guardados')) {
@@ -107,7 +115,8 @@ function SidebarMenu({
 		} else if (location.search.includes('filter=recientes')) {
 			setSelectedItem('recientes')
 		} else {
-			setSelectedItem('top')
+			// default highlight is 'all' posts
+			setSelectedItem('all')
 		}
 	}, [location])
 

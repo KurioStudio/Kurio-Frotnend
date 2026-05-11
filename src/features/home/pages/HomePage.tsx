@@ -1,10 +1,10 @@
-import { Box } from '@mui/material'
+import { Box, LinearProgress, Typography } from '@mui/material'
 import Header from '../../../components/home/Header'
 import { useTranslation } from 'react-i18next'
 import PostCard from '../../../components/home/PostCard'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
 import '../../../styles/HomePage.css'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { findFollowedPosts, findRecentPosts, findTopPosts, findAllPosts, findPostsByTitle, findSavedPostsByUser, getCurrentUser, type FeedPost } from '../../../utils/peticiones'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -92,6 +92,60 @@ function HomePage() {
 		}
 	}, [filter, searchTitle])
 
+	// Memoized handler for profile updates to avoid re-subscribing on every render
+	const handleProfileUpdate = useCallback(async () => {
+		setLoadingPosts(true)
+		setPosts([])
+
+		try {
+			let response: FeedPost[] = []
+			const trimmedSearchTitle = searchTitle.trim()
+
+			if (trimmedSearchTitle) {
+				response = await findPostsByTitle(trimmedSearchTitle)
+			} else {
+				switch (filter) {
+					case 'all':
+						response = await findAllPosts()
+						break
+					case 'top':
+						response = await findTopPosts()
+						break
+					case 'recientes':
+						response = await findRecentPosts()
+						break
+					case 'seguidos':
+						response = await findFollowedPosts()
+						break
+					case 'guardados':
+						const currentUser = await getCurrentUser()
+						if (!currentUser) {
+							response = []
+						} else {
+							response = await findSavedPostsByUser(currentUser.id)
+						}
+						break
+				}
+			}
+
+			setPosts(response)
+		} catch (error) {
+			setPosts([])
+			console.error('Error al recargar publicaciones:', error)
+		} finally {
+			setLoadingPosts(false)
+		}
+	}, [filter, searchTitle])
+
+	// Reload posts when profile is updated (e.g., avatar change)
+	useEffect(() => {
+		window.addEventListener('profile-updated', handleProfileUpdate)
+
+		return () => {
+			window.removeEventListener('profile-updated', handleProfileUpdate)
+		}
+	}, [handleProfileUpdate])
+
 
 
 	return (
@@ -102,8 +156,11 @@ function HomePage() {
 				<Header />
 				<Box className="home-page__posts">
 					{loadingPosts ? (
-						<Box className="home-page__empty-state">
-							{t('home.loadingPosts')}
+							<Box className="home-page__loading-row" sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1 }}>
+								<Box sx={{ flex: 1 }}>
+									<LinearProgress />
+								</Box>
+								<Typography>{t('home.loadingPosts')}</Typography>
 						</Box>
 					) : posts.length > 0 ? (
 						posts.map((post) => (

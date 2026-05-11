@@ -1,12 +1,13 @@
 import { useEffect, useState, type KeyboardEvent, type MouseEvent } from 'react'
-import { Box, Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
-import { IoSearch, IoChevronDown } from 'react-icons/io5'
+import { Box, Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, InputBase, Menu, MenuItem, Typography, Snackbar, Alert } from '@mui/material'
+import { IoSearch, IoChevronDown, IoClose } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import { getAuth, onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
 import { getProfileUserById, hasValidSession, logoutUser, touchSessionActivity } from '../../utils/peticiones'
 import '../../styles/Header.css'
 import { useTranslation } from 'react-i18next'
+import { useAlert } from '../../contexts/AlertContext'
 
 type CountryOption = {
   code: string
@@ -49,6 +50,7 @@ function Header() {
   const [profileUserAvatar, setProfileUserAvatar] = useState('')
   const [searchValue, setSearchValue] = useState('')
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+  const { showAlert } = useAlert()
 
   const countryMenuOpen = Boolean(countryAnchorEl)
   const profileMenuOpen = Boolean(profileAnchorEl)
@@ -89,7 +91,20 @@ function Header() {
       void applyProfile(user)
     })
 
-    const handleProfileUpdate = () => {
+    const handleProfileUpdate = (e?: Event) => {
+      // If the event contains profile details, use them immediately
+      const custom = e as CustomEvent | undefined
+      if (custom?.detail && (custom.detail.username !== undefined || custom.detail.avatarImg !== undefined)) {
+        const { username, avatarImg } = custom.detail
+        const nextUsername = username !== undefined ? username : profileUserName
+        const nextAvatar = avatarImg !== undefined ? avatarImg : profileUserAvatar
+        setProfileUserName(nextUsername)
+        setProfileUserAvatar(nextAvatar)
+        // Always update cache with latest values to avoid stale data on page reload
+        saveCachedHeaderProfile({ username: nextUsername, avatarImg: nextAvatar })
+        return
+      }
+
       const user = auth.currentUser
       if (user) {
         void applyProfile(user)
@@ -135,6 +150,7 @@ function Header() {
     const nextLanguage = country.code === 'us' ? 'en' : country.code
     void i18n.changeLanguage(nextLanguage)
     handleCloseCountryMenu()
+    showAlert({ type: 'success', message: t('header.languageChanged') })
   }
 
   const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -365,6 +381,8 @@ function Header() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      
     </>
   )
 }
