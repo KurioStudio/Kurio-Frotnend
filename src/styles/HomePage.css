@@ -18,8 +18,6 @@
   gap: 12px;
   align-content: start;
   padding: 12px;
-  overflow: auto;
-  max-height: calc(100vh - 96px);
   border-radius: 4px;
 }
 
@@ -56,6 +54,5 @@
 
   .home-page__posts {
     grid-template-columns: 1fr;
-    max-height: calc(100vh - 160px);
   }
 }
