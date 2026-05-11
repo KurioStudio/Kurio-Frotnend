@@ -20,7 +20,7 @@
   text-align: center;
   padding: 24px 24px 19px;
   border-bottom: 1px solid var(--kurio-border-strong);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+  background: var(--kurio-surface);
 }
 
 .sidebar-menu__logo {

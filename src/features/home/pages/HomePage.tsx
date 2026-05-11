@@ -1,4 +1,4 @@
-import { Box, LinearProgress, Typography } from '@mui/material'
+import { Box, CircularProgress, Typography } from '@mui/material'
 import Header from '../../../components/home/Header'
 import { useTranslation } from 'react-i18next'
 import PostCard from '../../../components/home/PostCard'
@@ -156,11 +156,9 @@ function HomePage() {
 				<Header />
 				<Box className="home-page__posts">
 					{loadingPosts ? (
-							<Box className="home-page__loading-row" sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1 }}>
-								<Box sx={{ flex: 1 }}>
-									<LinearProgress />
-								</Box>
-								<Typography>{t('home.loadingPosts')}</Typography>
+						<Box className="home-page__empty-state" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
+							<CircularProgress />
+							<Typography>{t('home.loadingPosts')}</Typography>
 						</Box>
 					) : posts.length > 0 ? (
 						posts.map((post) => (

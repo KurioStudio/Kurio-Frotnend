@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
-import { Box, Button, CircularProgress, Typography, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, DialogContentText, Snackbar, Alert, LinearProgress } from '@mui/material'
+import { Box, Button, CircularProgress, Typography, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, DialogContentText, Snackbar, Alert } from '@mui/material'
 import { FaPen, FaRegCircleUser } from 'react-icons/fa6'
 import { IoClose } from 'react-icons/io5'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -376,10 +376,8 @@ function ProfilePage() {
               </Typography>
 
               {loadingPosts ? (
-                <Box className="profile-page__posts-loading" sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1 }}>
-                  <Box sx={{ flex: 1 }}>
-                    <LinearProgress />
-                  </Box>
+                <Box className="profile-page__posts-loading" sx={{ minHeight: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, p: 1 }}>
+                  <CircularProgress />
                   <Typography>{t('home.loadingPosts')}</Typography>
                 </Box>
               ) : posts.length ? (

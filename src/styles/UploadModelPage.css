@@ -20,7 +20,7 @@
 .upload-page__workspace {
   min-height: 0;
   padding: 18px;
-  background: linear-gradient(180deg, rgba(37, 44, 56, 0.9), rgba(31, 42, 61, 0.95));
+  background: var(--kurio-surface);
   border-radius: 4px;
   overflow: auto;
 }
