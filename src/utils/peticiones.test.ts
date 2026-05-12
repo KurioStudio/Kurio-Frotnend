@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { getFollowersCount, getFollowedCount, findPostsByTitle, getProfileUserById, checkIfUserFollows } from './peticiones'
+import { getFollowersCount, findPostsByTitle, getProfileUserById, checkIfUserFollows } from './peticiones'
 
 const originalFetch = global.fetch
 
