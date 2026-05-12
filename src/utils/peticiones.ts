@@ -114,7 +114,7 @@ type FeedPostResponse = {
 }
 
 // AUTH Service
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').trim()
+const apiBaseUrl = (import.meta.env.VITE_BACKEND_URL ?? '').trim()
 const authSessionKey = 'kurio_auth_session'
 const authLastActivityKey = 'kurio_auth_last_activity'
 const defaultIdleHours = 8
@@ -169,7 +169,7 @@ const sessionManager = {
       return undefined
     }
 
-    const response = await fetch(`${apiBaseUrl}/api/users`, {
+    const response = await fetch(`${apiBaseUrl}/users`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${idToken}`,
@@ -292,7 +292,7 @@ export async function registerWithEmail(payload: RegisterPayload): Promise<Login
     throw new Error('Backend URL no está configurado')
   }
 
-  const response = await fetch(`${apiBaseUrl}/api/users/register`, {
+  const response = await fetch(`${apiBaseUrl}/users/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -502,25 +502,42 @@ export async function findAllPosts(): Promise<FeedPost[]> {
 
 export async function findRecentPosts(): Promise<FeedPost[]> {
     const currentUser = await getCurrentUser()
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/recent`, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${currentUser?.idToken ?? ''}`
+        const headers: HeadersInit = {}
+
+    if (currentUser?.idToken) {
+        headers.Authorization = `Bearer ${currentUser.idToken}`
+    }
+
+    const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/posts/recent`,
+        {
+            method: 'GET',
+            headers
         }
-    })
+    )
     const posts = await response.json()
     return posts.map(mapFeedPost)
 }
 
 export async function findTopPosts(): Promise<FeedPost[]> {
     const currentUser = await getCurrentUser()
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/top`, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${currentUser?.idToken ?? ''}`
+
+    const headers: HeadersInit = {}
+
+    if (currentUser?.idToken) {
+        headers.Authorization = `Bearer ${currentUser.idToken}`
+    }
+
+    const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/posts/top`,
+        {
+            method: 'GET',
+            headers
         }
-    })
+    )
+
     const posts = await response.json()
+
     return posts.map(mapFeedPost)
 }
 
@@ -791,11 +808,16 @@ export async function isPostSaved(idPost: string, idUser: string): Promise<boole
 
 export async function getModelSTL(oid: string): Promise<Blob> {
     const currentUser = await getCurrentUser()
+
+    const headers: HeadersInit = {}
+
+    if (currentUser?.idToken) {
+        headers.Authorization = `Bearer ${currentUser.idToken}`
+    }
+
     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/${oid}/descargar`, {
         method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${currentUser?.idToken ?? ''}`
-        }
+        headers
     })
 
     if (!response.ok) {

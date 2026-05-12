@@ -33,6 +33,85 @@
   }
 }
 
+@media (max-width: 900px) {
+  .model-detail {
+    margin-left: 0;
+    padding: 74px 10px 18px;
+  }
+
+  .model-detail__container,
+  .model-detail__loader {
+    min-height: calc(100vh - 92px);
+  }
+
+  .model-detail__info-paper {
+    min-width: 0;
+    padding: 16px;
+  }
+
+  .model-detail__stats-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .model-detail {
+    padding: 68px 8px 16px;
+  }
+
+  .model-detail__gallery-paper,
+  .model-detail__info-paper,
+  .model-detail__comments-paper {
+    border-radius: 12px !important;
+  }
+
+  .model-detail__gallery-paper {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .model-detail__thumbnails {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .model-detail__preview-btn {
+    left: 10px !important;
+    bottom: 10px !important;
+    padding: 7px 12px !important;
+  }
+
+  .model-detail__info-title {
+    font-size: 1.4rem !important;
+  }
+
+  .model-detail__meta-row,
+  .model-detail__meta-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .model-detail__info-date {
+    justify-self: start;
+    text-align: left;
+  }
+
+  .model-detail__download-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .model-detail__stats-bar {
+    gap: 6px;
+    padding: 10px 0;
+  }
+
+  .model-detail__feedback-toast {
+    min-width: 0;
+    width: calc(100vw - 20px);
+  }
+}
+
 .model-detail__gallery-paper,
 .model-detail__info-paper,
 .model-detail__comments-paper {
@@ -310,6 +389,13 @@
 .model-detail__follow-btn:hover {
   color: #fff !important;
   background: var(--kurio-accent) !important;
+}
+
+@media (max-width: 600px) {
+  .model-detail__follow-btn {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
 }
 
 .model-detail__likes-badge {

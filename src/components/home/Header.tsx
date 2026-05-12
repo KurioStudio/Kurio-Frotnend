@@ -1,6 +1,6 @@
 import { useEffect, useState, type KeyboardEvent, type MouseEvent } from 'react'
-import { Box, Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, InputBase, Menu, MenuItem, Typography, Snackbar, Alert } from '@mui/material'
-import { IoSearch, IoChevronDown, IoClose } from 'react-icons/io5'
+import { Box, Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
+import { IoSearch, IoChevronDown } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import { getAuth, onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'

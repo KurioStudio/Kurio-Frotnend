@@ -379,3 +379,68 @@
 
   /* rely on global PostCard sizing on small screens */
 }
+
+@media (max-width: 600px) {
+  .profile-page__content {
+    padding: 68px 8px 8px;
+  }
+
+  .profile-page__layout {
+    padding: 8px;
+    gap: 12px;
+  }
+
+  .profile-page__user-panel {
+    padding: 10px;
+    align-items: stretch;
+  }
+
+  .profile-page__avatar-wrap {
+    width: min(100%, 152px);
+  }
+
+  .profile-page__username-row,
+  .profile-page__username-edit-wrap {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .profile-page__username,
+  .MuiTypography-root.profile-page__username,
+  .profile-page__stats,
+  .MuiTypography-root.profile-page__stats,
+  .profile-page__member-since,
+  .MuiTypography-root.profile-page__member-since {
+    text-align: center;
+  }
+
+  .profile-page__username,
+  .MuiTypography-root.profile-page__username {
+    font-size: 1.2rem;
+  }
+
+  .profile-page__posts-title,
+  .MuiTypography-root.profile-page__posts-title {
+    font-size: 1.3rem;
+  }
+
+  .profile-page__posts-grid {
+    gap: 8px;
+  }
+
+  .profile-page__dialog-actions {
+    padding: 0 16px 16px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .profile-page__dialog-actions .MuiButton-root {
+    width: 100%;
+  }
+
+  .profile-page__feedback-toast {
+    min-width: 0;
+    width: calc(100vw - 20px);
+  }
+}

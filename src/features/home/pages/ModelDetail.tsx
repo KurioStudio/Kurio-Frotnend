@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Box, Button, ButtonBase, IconButton, InputBase, Typography, Stack, Paper, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar, Alert } from '@mui/material'
+import { Box, Button, ButtonBase, IconButton, InputBase, Typography, Stack, Paper, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
 import {
 	IoChevronBackOutline,
 	IoChevronForwardOutline,
@@ -11,7 +11,6 @@ import {
 	IoShareSocialOutline,
 	IoBookmark,
 	IoBookmarkOutline,
-	IoClose,
 } from 'react-icons/io5'
 import { FaRegCircleUser } from 'react-icons/fa6'
 import Header from '../../../components/home/Header'

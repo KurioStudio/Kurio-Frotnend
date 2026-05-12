@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useRef, useState, type ReactNode } from 'react'
 import { Snackbar, Alert, IconButton, Typography } from '@mui/material'
 import { IoClose } from 'react-icons/io5'
 import '../styles/GlobalAlert.css'

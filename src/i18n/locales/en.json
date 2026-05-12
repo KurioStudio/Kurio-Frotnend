@@ -54,7 +54,7 @@
     "upload.license.sdfl": "Standard Digital File License (SDFL)",
     "upload.license.personal": "Personal/Non-Commercial License",
     "upload.selectImages": "Select images",
-    "upload.selectModel": "Select 3D model",
+    "upload.selectModel": "Select 3D model file (.stl, .3mf)",
     "upload.selectLicense": "Select license",
     "upload.submit": "Upload model",
     "upload.errors.completeFields": "Complete all fields",
