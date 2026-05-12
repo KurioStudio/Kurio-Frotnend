@@ -402,13 +402,13 @@ function ModelDetail() {
 	}
 
 	const handleSharePost = async () => {
-		if (!postId) {
-			showAlert({ type: 'error', message: t('post.share.error') })
-			return
-		}
-
 		try {
-			await navigator.clipboard.writeText(window.location.href)
+			const input = document.createElement('input')
+			input.value = window.location.href
+			document.body.appendChild(input)
+			input.select()
+			document.execCommand('copy')
+			input.remove()
 			showAlert({ type: 'success', message: t('post.share.success') })
 		} catch {
 			showAlert({ type: 'error', message: t('post.share.error') })
