@@ -1,5 +1,5 @@
 {
-    "profile.viewProfile": "View publications",
+    "profile.viewProfile": "Account created on",
     "profile.editProfile": "Edit profile",
     "profile.follow": "Follow",
     "profile.followers": "Followers",
@@ -140,6 +140,20 @@
     "profile.follow.error": "Error following user",
     "profile.unfollow.success": "Unfollowed",
     "profile.unfollow.error": "Error unfollowing user",
+
+    "profile.deletePost.success": "Post deleted successfully",
+    "profile.deletePost.error": "Could not delete post",
+
+    "profile.deletePost.confirmTitle": "Delete post",
+    "profile.deletePost.confirmText": "Are you sure you want to delete the post \"{{title}}\"?",
+    "profile.deletePost.confirmButton": "Delete",
+
+    "post.comment.delete.success": "Comment deleted successfully",
+    "post.comment.delete.error": "Could not delete comment",
+    "post.comment.delete.confirmTitle": "Delete comment",
+    "post.comment.delete.confirmText": "Are you sure you want to delete this comment?",
+
+    "errors.generic": "An error occurred",
 
     "model.commentPlaceholder": "Write your comment...",
     "model.unfollow": "Unfollow",

@@ -1,5 +1,5 @@
 {
-    "profile.viewProfile": "Ver publicaciones",
+    "profile.viewProfile": "Cuenta creada en",
     "profile.editProfile": "Editar perfil",
     "profile.follow": "Seguir",
     "profile.followers": "Seguidores",
@@ -139,6 +139,20 @@
     "profile.follow.error": "Error al seguir",
     "profile.unfollow.success": "Dejaste de seguir al usuario",
     "profile.unfollow.error": "Error al dejar de seguir",
+
+    "profile.deletePost.success": "Publicación eliminada correctamente",
+    "profile.deletePost.error": "No se pudo eliminar la publicación",
+
+    "profile.deletePost.confirmTitle": "Eliminar publicación",
+    "profile.deletePost.confirmText": "¿Estás seguro de que quieres eliminar el post \"{{title}}\"?",
+    "profile.deletePost.confirmButton": "Eliminar",
+
+    "post.comment.delete.success": "Comentario eliminado correctamente",
+    "post.comment.delete.error": "No se pudo eliminar el comentario",
+    "post.comment.delete.confirmTitle": "Eliminar comentario",
+    "post.comment.delete.confirmText": "¿Seguro que quieres eliminar este comentario?",
+
+    "errors.generic": "Ha ocurrido un error",
 
     "model.commentPlaceholder": "Escribe tu comentario...",
     "model.unfollow": "Dejar de seguir",

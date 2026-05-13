@@ -2,6 +2,7 @@ import { createContext, useContext, useRef, useState, type ReactNode } from 'rea
 import { Snackbar, Alert, IconButton, Typography } from '@mui/material'
 import { IoClose } from 'react-icons/io5'
 import '../styles/GlobalAlert.css'
+import i18n from '../i18n'
 
 type AlertType = 'success' | 'error'
 
@@ -36,8 +37,19 @@ export function AlertProvider({ children }: { children: ReactNode }) {
     if (timerRef.current) window.clearTimeout(timerRef.current)
     onCloseRef.current = payload.onClose ?? null
     setType(payload.type)
-    setTitle(payload.title)
-    setMessage(payload.message)
+    // If it's an error and caller didn't set a title, use a generic localized title
+    const localizedTitle = payload.title ?? (payload.type === 'error' ? i18n.t('errors.generic') : undefined)
+    setTitle(localizedTitle)
+
+    // Sanitize error messages: avoid showing raw exceptions or stacks to the user
+    let sanitizedMessage = payload.message
+    if (payload.type === 'error') {
+      const looksLikeException = /Exception|Error:|\n|\{|\[|stack/i.test(payload.message)
+      if (looksLikeException || payload.message.length > 200) {
+        sanitizedMessage = i18n.t('errors.generic')
+      }
+    }
+    setMessage(sanitizedMessage)
     setOpen(true)
     timerRef.current = window.setTimeout(() => {
       setOpen(false)
@@ -58,7 +70,7 @@ export function AlertProvider({ children }: { children: ReactNode }) {
 
       <Snackbar
         open={open}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         onClose={handleClose}
       >
         <Alert

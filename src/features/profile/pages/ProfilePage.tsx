@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
-import { Box, Button, CircularProgress, Typography, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, DialogContentText } from '@mui/material'
+import { Box, Button, CircularProgress, Typography, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, DialogContentText, Alert } from '@mui/material'
 import { FaPen, FaRegCircleUser, FaTrashCan } from 'react-icons/fa6'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -241,9 +241,9 @@ function ProfilePage() {
       setPosts((currentPosts) => currentPosts.filter((post) => post.id !== postToDelete.id))
       setDeletePostConfirmOpen(false)
       setPostToDelete(null)
-      showAlert({ type: 'success', message: 'Post eliminado correctamente' })
+      showAlert({ type: 'success', message: t('profile.deletePost.success') })
     } catch {
-      showAlert({ type: 'error', message: 'No se pudo eliminar el post' })
+      showAlert({ type: 'error', message: t('profile.deletePost.error') })
     } finally {
       setDeletingPost(false)
     }
@@ -365,12 +365,6 @@ function ProfilePage() {
               <Typography className="profile-page__member-since">
                 {t('profile.viewProfile')}: {formatMemberDate(profileUser?.createdAt ?? '')}
               </Typography>
-
-              {error && (
-                <Typography className="profile-page__error">
-                  {error}
-                </Typography>
-              )}
             </Box>
 
             {/* Username confirmation dialog */}
@@ -405,6 +399,12 @@ function ProfilePage() {
               <Typography className="profile-page__posts-title">
                 {isOwnProfile ? t('profile.posts') : `${t('profile.viewProfile')}`}
               </Typography>
+
+              {error && (
+                <Box sx={{ mt: 1 }}>
+                  <Alert severity="error">{error}</Alert>
+                </Box>
+              )}
 
               {loadingPosts ? (
                 <Box className="profile-page__posts-loading" sx={{ minHeight: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, p: 1 }}>
@@ -485,11 +485,11 @@ function ProfilePage() {
         }}
       >
         <DialogTitle id="delete-post-confirm-title" className="profile-page__dialog-title">
-          Eliminar publicacion
+          {t('profile.deletePost.confirmTitle')}
         </DialogTitle>
         <DialogContent className="profile-page__dialog-content">
           <DialogContentText className="profile-page__dialog-description">
-            {`Estas seguro de que quieres eliminar el post "${postToDelete?.titulo ?? ''}"?`}
+            {t('profile.deletePost.confirmText', { title: postToDelete?.titulo ?? '' })}
           </DialogContentText>
         </DialogContent>
         <DialogActions className="profile-page__dialog-actions">
@@ -503,7 +503,7 @@ function ProfilePage() {
             disabled={deletingPost}
             className="profile-page__dialog-button profile-page__dialog-button--danger"
           >
-            {deletingPost ? <CircularProgress size={18} /> : 'Eliminar'}
+            {deletingPost ? <CircularProgress size={18} /> : t('profile.deletePost.confirmButton')}
           </Button>
         </DialogActions>
       </Dialog>

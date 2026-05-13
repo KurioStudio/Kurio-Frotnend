@@ -346,10 +346,10 @@ function ModelDetail() {
 			
 			setDeleteCommentConfirmOpen(false)
 			setCommentToDelete(null)
-			showAlert({ type: 'success', message: 'Comentario eliminado correctamente' })
+						showAlert({ type: 'success', message: t('post.comment.delete.success') })
 		} catch (error) {
 			console.error('Error eliminando comentario:', error)
-			showAlert({ type: 'error', message: `No se pudo eliminar el comentario: ${error instanceof Error ? error.message : 'Error desconocido'}` })
+						showAlert({ type: 'error', message: t('post.comment.delete.error') })
 		} finally {
 			setDeletingComment(false)
 		}
@@ -712,18 +712,18 @@ function ModelDetail() {
 									}
 								}}
 							>
-								<DialogTitle id="delete-comment-confirm-title">Eliminar comentario</DialogTitle>
+								<DialogTitle id="delete-comment-confirm-title">{t('post.comment.delete.confirmTitle')}</DialogTitle>
 
 								<DialogContent>
 									<DialogContentText className="model-detail__dialog-description">
-										¿Seguro que quieres eliminar este comentario?
+										{t('post.comment.delete.confirmText')}
 									</DialogContentText>
 								</DialogContent>
 
 								<DialogActions>
-									<Button onClick={handleCloseDeleteCommentConfirm} disabled={deletingComment}>Cancelar</Button>
+									<Button onClick={handleCloseDeleteCommentConfirm} disabled={deletingComment}>{t('profile.cancel')}</Button>
 									<Button onClick={() => void handleConfirmDeleteComment()} variant="contained" color="error" disabled={deletingComment}>
-										{deletingComment ? <CircularProgress size={18} /> : 'Eliminar'}
+										{deletingComment ? <CircularProgress size={18} /> : t('profile.deletePost.confirmButton')}
 									</Button>
 								</DialogActions>
 							</Dialog>

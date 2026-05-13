@@ -246,7 +246,7 @@ function LoginPage() {
 							/>
 
 							{loginError ? (
-								<Box sx={{ mt: 0.4 }}>
+								<Box sx={{ mt: 1 }}>
 									<Alert severity="error">
 										{loginError}
 									</Alert>
