@@ -166,6 +166,13 @@
   margin-bottom: 8px;
 }
 
+.comment-item__top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .comment-item__header--clickable {
   cursor: pointer;
   transition: opacity 0.2s ease;
@@ -174,6 +181,19 @@
 
 .comment-item__header--clickable:hover {
   opacity: 0.8;
+}
+
+.comment-item__delete-btn.MuiIconButton-root {
+  width: 28px;
+  height: 28px;
+  color: #ff9d9d;
+  background: rgba(10, 15, 24, 0.4);
+  border: 1px solid rgba(255, 157, 157, 0.28);
+}
+
+.comment-item__delete-btn.MuiIconButton-root:hover {
+  background: rgba(155, 38, 38, 0.32);
+  color: #ffd7d7;
 }
 
 /* Creation date shown below the comment */

@@ -1004,9 +1004,10 @@ export async function findAllComments(idPost: string): Promise<comentarios[]> {
 
       return {
           idPost: comentario.idPost,
-          idUser: comentario.idUser,
-          contenido: comentario.contenido,
-          idComment: comentario.idComment,
+      idUser: comentario.idUser,
+      contenido: comentario.contenido,
+      // The backend may return the comment identifier under different keys ('id', 'idComment', '_id')
+      idComment: comentario.id ?? comentario.idComment ?? comentario._id,
           createdAt: date.toLocaleString("es-ES", {
               day: "2-digit",
               month: "2-digit",
@@ -1037,16 +1038,24 @@ export const sendComment = async (idPost: string, idUser: string, idToken: strin
     return data;
 }
 
-export const deleteComment = async (idComment: string, idToken: string): Promise<void> => {
-  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/comentario/${idComment}`, {
+export const deleteComment = async (idComment: string, idToken: string): Promise<string> => {
+  const url = `${import.meta.env.VITE_BACKEND_URL}/comentario/${idComment}`
+  console.log(`DELETE request a: ${url}`)
+  
+  const response = await fetch(url, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${idToken ?? ''}`
     }
   })
 
+  console.log(`DELETE response status: ${response.status}`)
+  const responseText = await response.text()
+  console.log(`DELETE response body: ${responseText}`)
+  
   if (!response.ok) {
-    const errorBody = await response.text().catch(() => '')
-    throw new Error(errorBody || 'No se pudo eliminar el comentario')
+    throw new Error(responseText || `Error ${response.status}: No se pudo eliminar el comentario`)
   }
+  
+  return responseText
 }
