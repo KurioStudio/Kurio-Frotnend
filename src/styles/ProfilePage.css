@@ -238,6 +238,27 @@
   overflow: auto;
 }
 
+.profile-page__post-card-wrap {
+  position: relative;
+}
+
+.profile-page__delete-post-button.MuiIconButton-root {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  width: 32px;
+  height: 32px;
+  background: rgba(10, 15, 24, 0.72);
+  color: #ff9d9d;
+  border: 1px solid rgba(255, 157, 157, 0.35);
+}
+
+.profile-page__delete-post-button.MuiIconButton-root:hover {
+  background: rgba(155, 38, 38, 0.42);
+  color: #ffd7d7;
+}
+
 /* Use global PostCard styles for cards inside profile page */
 
 .profile-page__loader {

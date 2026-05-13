@@ -20,6 +20,7 @@ import {
 	checkIfUserFollows,
 	descargarFichero,
 	findAllComments,
+	deleteComment as deleteCommentRequest,
 	followUser,
 	getCurrentUser,
 	getModelSTL,
@@ -43,6 +44,8 @@ import { useAlert } from '../../../contexts/AlertContext'
 type CommentView = comentarios & {
 	username: string
 	avatarImg: string
+	pending?: boolean
+	isMine?: boolean
 }
 
 type ModelPostState = {
@@ -82,6 +85,8 @@ function ModelDetail() {
 	const [commentValue, setCommentValue] = useState('')
 	const [comentarios, setComentarios] = useState<CommentView[]>([])
 	const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+	const [currentUserUsername, setCurrentUserUsername] = useState<string | null>(null)
+	const [currentUserAvatar, setCurrentUserAvatar] = useState<string>('')
 	const [loadingPost, setLoadingPost] = useState(true)
 	const [loadingComments, setLoadingComments] = useState(false)
 	const [stlBlob, setStlBlob] = useState<Blob | undefined>()
@@ -91,13 +96,26 @@ function ModelDetail() {
 	const [followLoading, setFollowLoading] = useState(false)
 	const [unfollowConfirmOpen, setUnfollowConfirmOpen] = useState(false)
 	const [showing3D, setShowing3D] = useState(false)
+	const [deleteCommentConfirmOpen, setDeleteCommentConfirmOpen] = useState(false)
+	const [commentToDelete, setCommentToDelete] = useState<CommentView | null>(null)
+	const [deletingComment, setDeletingComment] = useState(false)
 	const { showAlert } = useAlert()
 
 	const currentImages = postData.imagenes.length > 0 ? postData.imagenes : []
 	const currentImage = currentImages.length > 0 ? currentImages[postData.imageIndex % currentImages.length] : ''
-	const commentCount = comentarios.length
+	const commentCount = Math.max(postData.comentarios, comentarios.length)
 	const isLikedByCurrentUser = Boolean(currentUserId && postData.likedBy.includes(currentUserId))
 	const canFollowAuthor = Boolean(currentUserId && postData.authorId && currentUserId !== postData.authorId)
+	const canDeleteComment = useCallback(
+		(comment: CommentView) => Boolean(
+			comment.idComment && (
+				comment.isMine ||
+				(currentUserId && comment.idUser === currentUserId) ||
+				(currentUserUsername && comment.username === currentUserUsername)
+			)
+		),
+		[currentUserId, currentUserUsername]
+	)
 
 	const mapPostToState = (post: PostDetail): ModelPostState => ({
 		imageIndex: 0,
@@ -130,6 +148,8 @@ function ModelDetail() {
 				const user = await getCurrentUser()
 				if (!isCancelled) {
 					setCurrentUserId(user?.id ?? null)
+					setCurrentUserUsername(user?.username ?? null)
+					setCurrentUserAvatar(user?.avatarImg ?? '')
 				}
 
 				if (!postId) return
@@ -167,9 +187,11 @@ function ModelDetail() {
 					response.map(async (comentario) => {
 						try {
 							const usuario = await getProfileUserById(comentario.idUser)
-							return { ...comentario, username: usuario.username, avatarImg: usuario.avatarImg }
+							const isMine = Boolean(user?.id && comentario.idUser === user.id) || Boolean(user?.username && usuario.username === user.username)
+							return { ...comentario, username: usuario.username, avatarImg: usuario.avatarImg, isMine }
 						} catch {
-							return { ...comentario, username: comentario.idUser, avatarImg: '' }
+							const isMine = Boolean(user?.id && comentario.idUser === user.id)
+							return { ...comentario, username: comentario.idUser, avatarImg: '', isMine }
 						}
 					})
 				)
@@ -230,27 +252,106 @@ function ModelDetail() {
 		if (!commentValue.trim()) return
 
 		try {
-			await sendComment(postId, user.id, user.idToken, commentValue)
+			const comentarioTexto = commentValue.trim()
+			const createdId = await sendComment(postId, user.id, user.idToken, comentarioTexto)
 
-			const updated = await findAllComments(postId)
+			setPostData((currentPost) => ({
+				...currentPost,
+				comentarios: currentPost.comentarios + 1,
+			}))
 
-			const updatedWithUser = await Promise.all(
-				updated.map(async (comentario) => {
-					try {
-						const usuario = await getProfileUserById(comentario.idUser)
-						return { ...comentario, username: usuario.username, avatarImg: usuario.avatarImg }
-					} catch {
-						return { ...comentario, username: comentario.idUser, avatarImg: '' }
-					}
-				})
-			)
+			// Get user profile to obtain the real avatar
+			let userAvatar = currentUserAvatar
+			try {
+				const userProfile = await getProfileUserById(user.id)
+				userAvatar = userProfile.avatarImg || currentUserAvatar
+			} catch {
+				// Fall back to currentUserAvatar if profile fetch fails
+			}
 
-			setComentarios(updatedWithUser)
+			setComentarios((currentComments) => [
+				{
+					idPost: postId,
+					idUser: user.id,
+					contenido: comentarioTexto,
+					idComment: createdId,
+					createdAt: new Date().toLocaleString('es-ES', {
+						day: '2-digit',
+						month: '2-digit',
+						year: 'numeric',
+						hour: '2-digit',
+						minute: '2-digit',
+					}),
+					username: currentUserUsername || user.username || 'Usuario',
+					avatarImg: userAvatar,
+					pending: false,
+					isMine: true,
+				},
+				...currentComments,
+			])
 			setCommentValue('')
 			showAlert({ type: 'success', message: t('post.comment.success') })
 		} catch (error) {
 			console.error(error)
 			showAlert({ type: 'error', message: t('post.comment.error') })
+		}
+	}
+
+	const handleOpenDeleteCommentConfirm = (comment: CommentView) => {
+		if (!canDeleteComment(comment)) return
+		setCommentToDelete(comment)
+		setDeleteCommentConfirmOpen(true)
+	}
+
+	const handleCloseDeleteCommentConfirm = () => {
+		if (deletingComment) return
+		setDeleteCommentConfirmOpen(false)
+		setCommentToDelete(null)
+	}
+
+	const handleConfirmDeleteComment = async () => {
+		const targetComment = commentToDelete
+		if (!targetComment?.idComment || !canDeleteComment(targetComment)) return
+
+		const user = await getCurrentUser()
+		if (!user) {
+			localStorage.setItem('kurio_post_login_redirect', window.location.pathname)
+			navigate('/auth/login', { replace: true })
+			return
+		}
+
+		setDeletingComment(true)
+		try {
+			console.log('Eliminando comentario:', targetComment.idComment)
+			await deleteCommentRequest(targetComment.idComment, user.idToken)
+			console.log('Comentario eliminado exitosamente')
+			
+			// Eliminar del estado local primero
+			setComentarios((currentComments) => {
+				console.log(`Filtrando comentario con ID: ${targetComment.idComment}`)
+				const filtered = currentComments.filter((item) => {
+					const keep = item.idComment !== targetComment.idComment
+					if (!keep) console.log(`Removiendo comentario: ${item.idComment}`)
+					return keep
+				})
+				console.log(`Comentarios antes: ${currentComments.length}, después: ${filtered.length}`)
+				return filtered
+			})
+			
+			// Luego actualizar el contador
+			setPostData((currentPost) => ({
+				...currentPost,
+				comentarios: Math.max(0, currentPost.comentarios - 1),
+			}))
+			
+			setDeleteCommentConfirmOpen(false)
+			setCommentToDelete(null)
+			showAlert({ type: 'success', message: 'Comentario eliminado correctamente' })
+		} catch (error) {
+			console.error('Error eliminando comentario:', error)
+			showAlert({ type: 'error', message: `No se pudo eliminar el comentario: ${error instanceof Error ? error.message : 'Error desconocido'}` })
+		} finally {
+			setDeletingComment(false)
 		}
 	}
 
@@ -585,19 +686,47 @@ function ModelDetail() {
 								<Box className="model-detail__comments-list">
 									{comentarios.map((cmt, idx) => (
 										<Comment
-											key={`${cmt.idPost}-${cmt.idUser}-${idx}`}
+												key={cmt.idComment ? cmt.idComment : `${cmt.idPost}-${cmt.idUser}-${idx}`}
 											idPost={cmt.idPost}
 											idUser={cmt.idUser}
 											username={cmt.username}
 											avatarImg={cmt.avatarImg}
 											contenido={cmt.contenido}
 											createdAt={cmt.createdAt}
-											idComment={`${cmt.idPost}-${idx}`}
+												idComment={cmt.idComment}
+											canDelete={canDeleteComment(cmt)}
+												onDelete={() => handleOpenDeleteCommentConfirm(cmt)}
 										/>
 									))}
 								</Box>
 							)}
 						</Paper>
+
+							<Dialog
+								open={deleteCommentConfirmOpen}
+								onClose={handleCloseDeleteCommentConfirm}
+								aria-labelledby="delete-comment-confirm-title"
+								slotProps={{
+									paper: {
+										className: 'model-detail__dialog-paper',
+									}
+								}}
+							>
+								<DialogTitle id="delete-comment-confirm-title">Eliminar comentario</DialogTitle>
+
+								<DialogContent>
+									<DialogContentText className="model-detail__dialog-description">
+										¿Seguro que quieres eliminar este comentario?
+									</DialogContentText>
+								</DialogContent>
+
+								<DialogActions>
+									<Button onClick={handleCloseDeleteCommentConfirm} disabled={deletingComment}>Cancelar</Button>
+									<Button onClick={() => void handleConfirmDeleteComment()} variant="contained" color="error" disabled={deletingComment}>
+										{deletingComment ? <CircularProgress size={18} /> : 'Eliminar'}
+									</Button>
+								</DialogActions>
+							</Dialog>
 
 						<Dialog
 							open={unfollowConfirmOpen}
