@@ -988,13 +988,24 @@ export async function findAllComments(idPost: string): Promise<comentarios[]> {
         body: JSON.stringify({ idPost })
     })
     const comentarios = await response.json()
-    return comentarios.map((comentario: any) => ({
-        idPost: comentario.idPost,
-        idUser: comentario.idUser,
-        contenido: comentario.contenido,
-        idComment: comentario.idComment,
-        createdAt: comentario.createdAt
-    }))
+    
+    return comentarios.map((comentario: any) => {
+      const date = new Date(comentario.createdAt);
+
+      return {
+          idPost: comentario.idPost,
+          idUser: comentario.idUser,
+          contenido: comentario.contenido,
+          idComment: comentario.idComment,
+          createdAt: date.toLocaleString("es-ES", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit"
+          })
+      };
+  });
 }
 
 export const sendComment = async (idPost: string, idUser: string, idToken: string, contenido: string): Promise<string> => { 
