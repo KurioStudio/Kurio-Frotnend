@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
 import { Box, Button, CircularProgress, Typography, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, DialogContentText } from '@mui/material'
-import { FaPen, FaRegCircleUser } from 'react-icons/fa6'
+import { FaPen, FaRegCircleUser, FaTrashCan } from 'react-icons/fa6'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Header from '../../../components/home/Header'
@@ -18,6 +18,7 @@ import {
   unfollowUser,
   getFollowersCount,
   getFollowedCount,
+  deletePost,
 } from '../../../utils/peticiones'
 import '../../../styles/ProfilePage.css'
 import { useAlert } from '../../../contexts/AlertContext'
@@ -39,6 +40,9 @@ function ProfilePage() {
   const [usernameDraft, setUsernameDraft] = useState('')
   const [usernameSaving, setUsernameSaving] = useState(false)
   const [usernameConfirmDialogOpen, setUsernameConfirmDialogOpen] = useState(false)
+  const [deletePostConfirmOpen, setDeletePostConfirmOpen] = useState(false)
+  const [postToDelete, setPostToDelete] = useState<FeedPost | null>(null)
+  const [deletingPost, setDeletingPost] = useState(false)
 
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState('')
@@ -217,6 +221,34 @@ function ProfilePage() {
     }
   }
 
+  const handleOpenDeletePostConfirm = (post: FeedPost) => {
+    setPostToDelete(post)
+    setDeletePostConfirmOpen(true)
+  }
+
+  const handleCloseDeletePostConfirm = () => {
+    if (deletingPost) return
+    setDeletePostConfirmOpen(false)
+    setPostToDelete(null)
+  }
+
+  const handleConfirmDeletePost = async () => {
+    if (!postToDelete?.id) return
+
+    setDeletingPost(true)
+    try {
+      await deletePost(postToDelete.id)
+      setPosts((currentPosts) => currentPosts.filter((post) => post.id !== postToDelete.id))
+      setDeletePostConfirmOpen(false)
+      setPostToDelete(null)
+      showAlert({ type: 'success', message: 'Post eliminado correctamente' })
+    } catch {
+      showAlert({ type: 'error', message: 'No se pudo eliminar el post' })
+    } finally {
+      setDeletingPost(false)
+    }
+  }
+
   
 
   return (
@@ -382,15 +414,29 @@ function ProfilePage() {
               ) : posts.length ? (
                 <Box className="profile-page__posts-grid">
                   {posts.map((post) => (
-                    <PostCard
-                      key={post.id}
-                      title={post.titulo}
-                      author={post.username}
-                      image={post.image}
-                      likes={post.likes}
-                      userImage={post.user.avatarImg ? post.user.avatarImg : ''}
-                      onClick={() => navigate(`/detalle-modelo/${post.id}`)}
-                    />
+                    <Box key={post.id} className="profile-page__post-card-wrap">
+                      {isOwnProfile && (
+                        <IconButton
+                          size="small"
+                          aria-label="Eliminar post"
+                          className="profile-page__delete-post-button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            handleOpenDeletePostConfirm(post)
+                          }}
+                        >
+                          <FaTrashCan />
+                        </IconButton>
+                      )}
+                      <PostCard
+                        title={post.titulo}
+                        author={post.username}
+                        image={post.image}
+                        likes={post.likes}
+                        userImage={post.user.avatarImg ? post.user.avatarImg : ''}
+                        onClick={() => navigate(`/detalle-modelo/${post.id}`)}
+                      />
+                    </Box>
                   ))}
                 </Box>
               ) : (
@@ -425,6 +471,40 @@ function ProfilePage() {
         <DialogActions className="profile-page__dialog-actions">
           <Button onClick={() => setUnfollowConfirmOpen(false)} className="profile-page__dialog-button">{t('profile.cancel')}</Button>
           <Button onClick={() => void confirmUnfollow()} variant="contained" color="error" className="profile-page__dialog-button profile-page__dialog-button--danger">{t('profile.unfollow')}</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={deletePostConfirmOpen}
+        onClose={handleCloseDeletePostConfirm}
+        aria-labelledby="delete-post-confirm-title"
+        slotProps={{
+          paper: {
+            className: 'profile-page__dialog-paper',
+          },
+        }}
+      >
+        <DialogTitle id="delete-post-confirm-title" className="profile-page__dialog-title">
+          Eliminar publicacion
+        </DialogTitle>
+        <DialogContent className="profile-page__dialog-content">
+          <DialogContentText className="profile-page__dialog-description">
+            {`Estas seguro de que quieres eliminar el post "${postToDelete?.titulo ?? ''}"?`}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions className="profile-page__dialog-actions">
+          <Button onClick={handleCloseDeletePostConfirm} disabled={deletingPost} className="profile-page__dialog-button">
+            {t('profile.cancel')}
+          </Button>
+          <Button
+            onClick={() => void handleConfirmDeletePost()}
+            variant="contained"
+            color="error"
+            disabled={deletingPost}
+            className="profile-page__dialog-button profile-page__dialog-button--danger"
+          >
+            {deletingPost ? <CircularProgress size={18} /> : 'Eliminar'}
+          </Button>
         </DialogActions>
       </Dialog>
 

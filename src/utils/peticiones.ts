@@ -310,7 +310,6 @@ export async function registerWithEmail(payload: RegisterPayload): Promise<Login
     throw new Error(body || 'No se pudo registrar el usuario en el backend')
   }
 
-  // After backend registration, sign in with Firebase using the credentials
   const credential = await signInWithEmailAndPassword(auth, payload.email, payload.password)
   const idToken = await credential.user.getIdToken()
 
@@ -699,7 +698,6 @@ export async function updateProfile(userId: string, username: string, file?: Fil
     throw new Error(err || 'No se pudo actualizar el perfil')
   }
 
-  // Try to parse json response; if not JSON, return text
   const text = await response.text()
   try {
     return JSON.parse(text)
@@ -871,13 +869,11 @@ export async function checkIfUserFollows(idFollower: string, idFollowed: string)
 function getFilenameFromDisposition(contentDisposition: string | null): string | null {
   if (!contentDisposition) return null;
 
-  // filename*=UTF-8''archivo.3mf
   let match = contentDisposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
   if (match) {
     return decodeURIComponent(match[1]);
   }
 
-  // filename="archivo.3mf" o filename=archivo.3mf
   match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/i);
   if (match) {
     return match[1].replace(/['"]/g, "").trim();
@@ -976,6 +972,20 @@ export async function getPostById(idPost: string): Promise<PostDetail> {
     }
 }
 
+export async function deletePost(idPost: string): Promise<void> {
+    const currentUser = await getCurrentUser()
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts/${idPost}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${currentUser?.idToken ?? ''}`
+        }
+    })
+    if (!response.ok) {
+        const errorBody = await response.text().catch(() => '')
+        throw new Error(errorBody || 'No se pudo eliminar la publicación')
+    }
+}
+
 // DETAIL Service
 export async function findAllComments(idPost: string): Promise<comentarios[]> {
     const url = `${import.meta.env.VITE_BACKEND_URL}/comentario/post`
@@ -1025,4 +1035,18 @@ export const sendComment = async (idPost: string, idUser: string, idToken: strin
     const data = await response.text();
     
     return data;
+}
+
+export const deleteComment = async (idComment: string, idToken: string): Promise<void> => {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/comentario/${idComment}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${idToken ?? ''}`
+    }
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '')
+    throw new Error(errorBody || 'No se pudo eliminar el comentario')
+  }
 }
