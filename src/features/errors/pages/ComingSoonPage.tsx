@@ -12,7 +12,7 @@ function ComingSoonPage() {
 	return (
 		<Box sx={{
 			minHeight: '100vh',
-			background: 'radial-gradient(circle at 88% 8%, rgba(215, 164, 73, 0.14), transparent 34%), radial-gradient(circle at 12% 92%, rgba(32, 58, 97, 0.48), transparent 38%), var(--kurio-bg)',
+			background: 'rgba(32, 58, 97, 0.48), transparent 38%), var(--kurio-bg)',
 			marginLeft: 'var(--kurio-sidebar-width)',
 			padding: 'calc(var(--kurio-header-height) + 30px) 16px 24px',
 			display: 'flex',
@@ -31,24 +31,8 @@ function ComingSoonPage() {
 				maxWidth: 600,
 				gap: 3
 			}}>
-
 				<Typography sx={{
-					fontSize: { xs: '4rem', sm: '5rem', md: '6rem' },
-					fontWeight: 900,
-					lineHeight: 1,
-					background: 'linear-gradient(135deg, rgba(215, 164, 73, 0.8), rgba(160, 119, 45, 0.8))',
-					backgroundClip: 'text',
-					WebkitBackgroundClip: 'text',
-					WebkitTextFillColor: 'transparent',
-					color: 'var(--kurio-accent)',
-					letterSpacing: '-2px'
-				}}>
-					🚀
-				</Typography>
-
-
-				<Typography sx={{
-					fontSize: { xs: '1.75rem', sm: '2.25rem' },
+					fontSize: { xs: '2.25rem', sm: '3.25rem' },
 					fontWeight: 700,
 					color: 'var(--kurio-text)'
 				}}>

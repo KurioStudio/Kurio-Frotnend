@@ -170,5 +170,6 @@
     "sidebar.top": "Top",
     "sidebar.recent": "Recientes",
     "sidebar.followed": "Seguidos",
-    "sidebar.saved": "Guardados"
+    "sidebar.saved": "Guardados",
+    "sidebar.footer.version":"Versión"
 }
