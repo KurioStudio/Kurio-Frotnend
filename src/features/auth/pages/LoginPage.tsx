@@ -4,6 +4,7 @@ import {
 	Alert,
 	Box,
 	Button,
+	ButtonBase,
 	CircularProgress,
 	IconButton,
 	InputAdornment,
@@ -156,7 +157,11 @@ function LoginPage() {
 		<Box component="main" className="auth-page">
 			<Box className="auth-page__shell">
 				<Box component="section" className="auth-page__panel">
-					<Box className="auth-page__brand">
+					<ButtonBase
+						className="auth-page__brand"
+						onClick={() => navigate('/')}
+						sx={{ textDecoration: 'none', cursor: 'pointer', width: 'fit-content', alignSelf: 'flex-start' }}
+					>
 						<Box
 							component="img"
 							src={kurioLogo}
@@ -167,7 +172,7 @@ function LoginPage() {
 						<Typography className="auth-page__brand-name">
 							Kurio
 						</Typography>
-					</Box>
+					</ButtonBase>
 
 					<Box className="auth-page__content">
 						<Typography className="auth-page__title">
