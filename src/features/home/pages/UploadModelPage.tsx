@@ -20,8 +20,9 @@ const formatFileSize = (sizeInBytes: number): string => {
     return `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`
 }
 
-const isAllowedModelFile = (file: File): boolean => {
-    const normalizedName = file.name.toLowerCase()
+const isAllowedModelFile = (file: unknown): boolean => {
+    if (!(file instanceof File)) return false
+    const normalizedName = (file.name ?? '').toLowerCase()
     return normalizedName.endsWith('.stl') || normalizedName.endsWith('.3mf')
 }
 

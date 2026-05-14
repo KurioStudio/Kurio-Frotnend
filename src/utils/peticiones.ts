@@ -641,7 +641,17 @@ export async function subirPost(post: Omit<Post, 'id' | 'likedBy' | 'createdAt'>
         formData.append(`imagenes`, img)
     })
 
-    formData.append('file', post.file)
+    // Ensure the provided file is a real File and has an allowed extension.
+    const file = post.file
+    if (!(file instanceof File)) {
+      throw new Error('Invalid model file: must be a File')
+    }
+    const name = (file.name ?? '').toLowerCase()
+    if (!(name.endsWith('.stl') || name.endsWith('.3mf'))) {
+      throw new Error('Invalid model file type: only .stl and .3mf are allowed')
+    }
+
+    formData.append('file', file)
 
     await fetch(`${import.meta.env.VITE_BACKEND_URL}/posts`, {
         method: 'POST',
