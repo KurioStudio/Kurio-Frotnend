@@ -20,6 +20,11 @@ const formatFileSize = (sizeInBytes: number): string => {
     return `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`
 }
 
+const isAllowedModelFile = (file: File): boolean => {
+    const normalizedName = file.name.toLowerCase()
+    return normalizedName.endsWith('.stl') || normalizedName.endsWith('.3mf')
+}
+
 function UploadModelPage() {
     const navigate = useNavigate()
     const { t } = useTranslation()
@@ -94,7 +99,13 @@ function UploadModelPage() {
 
     const handleSelectModelFile = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0] ?? null
-        setModelFile(file)
+        if (file && isAllowedModelFile(file)) {
+            setModelFile(file)
+            setErrors((prev) => ({ ...prev, model: undefined }))
+        } else {
+            setModelFile(null)
+            setErrors((prev) => ({ ...prev, model: file ? t('upload.errors.selectModel') : prev.model }))
+        }
         event.target.value = ''
     }
 
@@ -105,6 +116,7 @@ function UploadModelPage() {
         if (!description.trim() || description.trim().length < 5) newErrors.description = t('upload.errors.completeFields')
         if (selectedImages.length === 0) newErrors.images = t('upload.errors.selectImages')
         if (!modelFile) newErrors.model = t('upload.errors.selectModel')
+        if (modelFile && !isAllowedModelFile(modelFile)) newErrors.model = t('upload.errors.selectModel')
         if (!license) newErrors.license = t('upload.errors.selectLicense')
 
         setErrors(newErrors)
@@ -239,7 +251,7 @@ function UploadModelPage() {
                                     <input
                                         ref={modelInputRef}
                                         type="file"
-                                        accept=".stl,.obj,.3mf"
+                                        accept=".stl,.3mf"
                                         className="upload-page__hidden-input"
                                         onChange={handleSelectModelFile}
                                     />
