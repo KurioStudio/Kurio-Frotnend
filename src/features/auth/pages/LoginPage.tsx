@@ -72,7 +72,10 @@ function LoginPage() {
 		useState<null | HTMLElement>(null)
 
 	const [selectedCountry, setSelectedCountry] =
-		useState<CountryOption>(countries[0])
+		useState<CountryOption>(() => {
+			const lang = i18n.language.toLowerCase().startsWith('en') ? 'us' : 'es'
+			return countries.find(c => c.code === lang) || countries[0]
+		})
 
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')

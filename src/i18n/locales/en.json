@@ -70,6 +70,13 @@
     "model.follow": "Follow",
     
     "errors.notFound": "Page not found",
+    "errors.notFound.description": "The page you are looking for does not exist or has been moved. Don't worry, we can help you find what you need.",
+    "errors.notFound.back": "Back",
+    "errors.notFound.home": "Go back home",
+    "errors.comingSoon.title": "Coming soon",
+    "errors.comingSoon.description": "This feature is under development. Come back soon to see what's new!",
+    "errors.comingSoon.back": "Back",
+    "errors.comingSoon.home": "Go back home",
     "errors.goHome": "Go back home",
     "search.placeholder": "Search",
   

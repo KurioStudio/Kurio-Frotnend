@@ -9,6 +9,7 @@ import ModelDetail from './features/home/pages/ModelDetail'
 import ProfilePage from './features/profile/pages/ProfilePage'
 import UploadModelPage from './features/home/pages/UploadModelPage'
 import NotFoundPage from './features/errors/pages/NotFoundPage'
+import ComingSoonPage from './features/errors/pages/ComingSoonPage'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/:userId" element={<ProfilePage />} />
           <Route path="/subir-modelo" element={<UploadModelPage />} />
+          <Route path="/inbox" element={<ComingSoonPage />} />
 
           <Route path="/auth">
               <Route path="login" element={<LoginPage />} />

@@ -79,6 +79,7 @@ const getDefaultItems = (t: any): SidebarItem[] => [
 		id: 'inbox',
 		label: t('sidebar.inbox'),
 		icon: <IoMailOutline />,
+		path: '/inbox',
 	},
 ]
 

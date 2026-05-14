@@ -397,7 +397,7 @@ function ProfilePage() {
 
             <Box className="profile-page__posts-area">
               <Typography className="profile-page__posts-title">
-                {isOwnProfile ? t('profile.posts') : `${t('profile.viewProfile')}`}
+                {t('profile.posts')}
               </Typography>
 
               {error && (

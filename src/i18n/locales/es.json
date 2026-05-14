@@ -40,6 +40,13 @@
     "model.follow": "Seguir",
     
     "errors.notFound": "Página no encontrada",
+    "errors.notFound.description": "La página que buscas no existe o ha sido movida. No te preocupes, podemos ayudarte a encontrar lo que necesitas.",
+    "errors.notFound.back": "Atrás",
+    "errors.notFound.home": "Ir al inicio",
+    "errors.comingSoon.title": "Próximamente",
+    "errors.comingSoon.description": "Esta función está en desarrollo. ¡Vuelve pronto para ver las novedades!",
+    "errors.comingSoon.back": "Atrás",
+    "errors.comingSoon.home": "Ir al inicio",
     "errors.goHome": "Volver al inicio",
     "search.placeholder": "Buscar",
 

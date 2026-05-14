@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import Header from '../../../components/home/Header'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
 
-function NotFoundPage() {
+function ComingSoonPage() {
 	const navigate = useNavigate()
 	const { t } = useTranslation()
 
@@ -33,7 +33,7 @@ function NotFoundPage() {
 			}}>
 
 				<Typography sx={{
-					fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
+					fontSize: { xs: '4rem', sm: '5rem', md: '6rem' },
 					fontWeight: 900,
 					lineHeight: 1,
 					background: 'linear-gradient(135deg, rgba(215, 164, 73, 0.8), rgba(160, 119, 45, 0.8))',
@@ -43,7 +43,7 @@ function NotFoundPage() {
 					color: 'var(--kurio-accent)',
 					letterSpacing: '-2px'
 				}}>
-					404
+					🚀
 				</Typography>
 
 
@@ -52,17 +52,22 @@ function NotFoundPage() {
 					fontWeight: 700,
 					color: 'var(--kurio-text)'
 				}}>
-				{t('errors.notFound')}
-			</Typography>
+					{t('errors.comingSoon.title')}
+				</Typography>
 
 
-			<Typography sx={{
-				fontSize: '1rem',
-				color: 'var(--kurio-text-soft)',
-				lineHeight: 1.6,
-				maxWidth: 400
-			}}>
-				{t('errors.notFound.description')}
+				<Typography sx={{
+					fontSize: '1rem',
+					color: 'var(--kurio-text-soft)',
+					lineHeight: 1.6,
+					maxWidth: 400
+				}}>
+					{t('errors.comingSoon.description')}
+				</Typography>
+
+
+				<Box sx={{
+					width: 60,
 					height: 2,
 					background: 'var(--kurio-accent)',
 					borderRadius: '999px'
@@ -90,7 +95,9 @@ function NotFoundPage() {
 						}}
 						startIcon={<IoArrowBackOutline />}
 					>
-					{t('errors.notFound.back')}
+						{t('errors.comingSoon.back')}
+					</Button>
+
 					<Button
 						onClick={() => navigate('/')}
 						sx={{
@@ -109,35 +116,12 @@ function NotFoundPage() {
 						}}
 						startIcon={<IoHomeOutline />}
 					>
-					{t('errors.notFound.home')}
-
-
-				<Box sx={{
-					marginTop: 3,
-					padding: 2,
-					background: 'rgba(18, 24, 35, 0.62)',
-					border: '1px solid rgba(255, 255, 255, 0.06)',
-					borderRadius: '12px',
-					width: '100%'
-				}}>
-					<Typography sx={{
-						fontSize: '0.85rem',
-						color: 'var(--kurio-text-muted)',
-						marginBottom: 1
-					}}>
-						Error Code:
-					</Typography>
-					<Typography sx={{
-						fontSize: '0.9rem',
-						color: 'var(--kurio-text-soft)',
-						fontFamily: 'monospace'
-					}}>
-						404 - Resource Not Found
-					</Typography>
+						{t('errors.comingSoon.home')}
+					</Button>
 				</Box>
 			</Box>
 		</Box>
 	)
 }
 
-export default NotFoundPage
+export default ComingSoonPage

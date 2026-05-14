@@ -46,7 +46,10 @@ function getForgotErrorMessage(error: unknown): string {
 function ForgotPasswordPage() {
 	const { t, i18n } = useTranslation()
 	const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
-	const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
+	const [selectedCountry, setSelectedCountry] = useState<CountryOption>(() => {
+		const lang = i18n.language.toLowerCase().startsWith('en') ? 'us' : 'es'
+		return countries.find(c => c.code === lang) || countries[0]
+	})
 	const [email, setEmail] = useState('')
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [forgotError, setForgotError] = useState<string | null>(null)
@@ -104,22 +107,21 @@ function ForgotPasswordPage() {
 						<Typography className="auth-page__subtitle auth-page__subtitle--forgot">{t('auth.forgotPassword.subtitle')}</Typography>
 
 						<Box component="form" className="auth-page__form" onSubmit={handleSubmit} autoComplete="off">
-							{forgotError ? <Alert severity="error">{forgotError}</Alert> : null}
-							{forgotSuccess ? <Alert severity="success">{forgotSuccess}</Alert> : null}
+						<TextField
+							size="small"
+							fullWidth
+							variant="outlined"
+							label={t('auth.forgotPassword.email')}
+							className="auth-field"
+							value={email}
+							onChange={(event) => setEmail(event.target.value)}
+							disabled={isSubmitting}
+							placeholder={t('auth.forgotPassword.placeholderEmail')}
+							autoComplete="off"
+						/>
 
-							<TextField
-								size="small"
-								fullWidth
-								variant="outlined"
-								label={t('auth.forgotPassword.email')}
-								className="auth-field"
-								value={email}
-								onChange={(event) => setEmail(event.target.value)}
-								disabled={isSubmitting}
-								placeholder={t('auth.forgotPassword.placeholderEmail')}
-								autoComplete="off"
-							/>
-
+						{forgotError ? <Alert severity="error">{forgotError}</Alert> : null}
+						{forgotSuccess ? <Alert severity="success">{forgotSuccess}</Alert> : null}
 							<Button type="submit" variant="contained" className="auth-page__submit" disabled={isSubmitting}>
 								{isSubmitting ? <CircularProgress size={20} color="inherit" /> : t('auth.forgotPassword.submit')}
 							</Button>

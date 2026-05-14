@@ -301,7 +301,7 @@ function UploadModelPage() {
 
             <Snackbar
                 open={feedbackOpen}
-                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                 onClose={(_, reason) => {
                     if (reason === 'clickaway') {
                         return

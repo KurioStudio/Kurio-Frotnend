@@ -51,7 +51,10 @@ function RegistrationPage() {
 	const { t, i18n } = useTranslation()
 	const navigate = useNavigate()
 	const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
-	const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
+	const [selectedCountry, setSelectedCountry] = useState<CountryOption>(() => {
+		const lang = i18n.language.toLowerCase().startsWith('en') ? 'us' : 'es'
+		return countries.find(c => c.code === lang) || countries[0]
+	})
 	const [username, setUsername] = useState('')
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
@@ -132,10 +135,7 @@ function RegistrationPage() {
 					<Typography className="auth-page__subtitle">{t('auth.register.subtitle')}</Typography>
 
 						<Box component="form" className="auth-page__form" onSubmit={handleSubmit} autoComplete="off">
-							{registerError ? <Alert severity="error">{registerError}</Alert> : null}
-							{registerSuccess ? <Alert severity="success">{registerSuccess}</Alert> : null}
 
-							<TextField
 								size="small"
 								fullWidth
 								variant="outlined"
@@ -223,7 +223,8 @@ function RegistrationPage() {
 								placeholder={t('auth.register.placeholderConfirm')}
 								autoComplete="off"
 							/>
-
+						{registerError ? <Alert severity="error">{registerError}</Alert> : null}
+						{registerSuccess ? <Alert severity="success">{registerSuccess}</Alert> : null}
 							<Button type="submit" variant="contained" className="auth-page__submit" disabled={isSubmitting}>
 								{isSubmitting ? <CircularProgress size={20} color="inherit" /> : t('auth.register.submit')}
 							</Button>
