@@ -195,7 +195,6 @@ function ProfilePage() {
       showAlert({ type: 'success', message: t('profile.changeUsername.success') })
     } catch (err: any) {
       console.error(err)
-      setError(err?.message || t('profile.changeUsername'))
       showAlert({ type: 'error', message: t('profile.changeUsername.error') })
     } finally {
       setUsernameSaving(false)
