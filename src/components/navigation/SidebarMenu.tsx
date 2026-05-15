@@ -211,7 +211,7 @@ function SidebarMenu({
 
 			<Box className="sidebar-menu__footer">
 				<Typography className="sidebar-menu__footer-text">
-					{t('sidebar.footer.version')} 1.0.5
+					{t('sidebar.footer.version')} 1.0.6
 				</Typography>
 			</Box>
 		</Box>

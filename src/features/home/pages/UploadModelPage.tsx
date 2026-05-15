@@ -41,6 +41,8 @@ function UploadModelPage() {
     const [feedbackOpen, setFeedbackOpen] = useState(false)
     const [feedbackType, setFeedbackType] = useState<'success' | 'error'>('success')
     const [feedbackMessage, setFeedbackMessage] = useState('')
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [hasUploaded, setHasUploaded] = useState(false)
     const feedbackTimerRef = useRef<number | null>(null)
 
     const imagePreviewUrls = useMemo(
@@ -111,6 +113,10 @@ function UploadModelPage() {
     }
 
     const handlePublicarPost = async () => {
+        if (isSubmitting || hasUploaded) {
+            return
+        }
+
         const newErrors: { title?: string; description?: string; images?: string; model?: string; license?: string } = {}
 
         if (!title.trim()) newErrors.title = t('upload.errors.completeFields')
@@ -123,6 +129,8 @@ function UploadModelPage() {
         setErrors(newErrors)
 
         if (Object.keys(newErrors).length === 0) {
+            setIsSubmitting(true)
+
             const post: Post = {
                 id: '',
                 titulo: title,
@@ -142,7 +150,9 @@ function UploadModelPage() {
                 createdAt: ""
             }
 
-            subirPost(post).then(() => {
+            try {
+                await subirPost(post)
+                setHasUploaded(true)
                 setTitle('')
                 setDescription('')
                 setLicense('')
@@ -152,13 +162,15 @@ function UploadModelPage() {
                 setFeedbackMessage(t('upload.success'))
                 setFeedbackOpen(true)
                 startFeedbackTimer('success')
-            }).catch((error) => {
+            } catch (error) {
                 console.error('Error al subir la publicación:', error)
                 setFeedbackType('error')
                 setFeedbackMessage(t('upload.error'))
                 setFeedbackOpen(true)
                 startFeedbackTimer('error')
-            })
+            } finally {
+                setIsSubmitting(false)
+            }
         }
     }
 
@@ -302,7 +314,8 @@ function UploadModelPage() {
                                 <Button
                                     variant="contained"
                                     className="upload-page__publish-button"
-                                    onClick={() => handlePublicarPost()}
+                                    onClick={handlePublicarPost}
+                                    disabled={isSubmitting || hasUploaded}
                                 >
                                     {t('upload.submit')}
                                 </Button>
