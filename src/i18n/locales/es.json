@@ -16,7 +16,7 @@
     "sidebar.recentPosts": "Publicaciones recientes",
     "sidebar.uploadModel": "Subir modelo",
     "sidebar.inbox": "Inbox",
-    
+
     "upload.title": "Subir modelo 3D",
     "upload.modelTitle": "Título del modelo",
     "upload.modelDescription": "Descripción",
@@ -105,6 +105,8 @@
     "auth.login.errors.tooManyRequests": "Demasiados intentos. Intenta más tarde",
     "auth.login.errors.generic": "No se pudo iniciar sesión",
     "auth.login.errors.completeFields": "Debes completar correo y contraseña",
+    "auth.login.selectLanguage": "Seleccionar idioma",
+    "auth.language":"Idioma",
 
     "auth.register.title": "Registro",
     "auth.register.subtitle": "Crea tu cuenta",
@@ -137,6 +139,7 @@
     "profile.cancel": "Cancelar",
     "profile.unfollow": "Dejar de seguir",
     "profile.editUsername": "Editar nombre de usuario",
+    "profile.changeUsername.empty": "El nombre de usuario no puede estar vacio",
     "profile.editAvatar": "Cambiar avatar",
     "profile.changeUsername.success": "Nombre de usuario actualizado",
     "profile.changeUsername.error": "Error al actualizar nombre de usuario",

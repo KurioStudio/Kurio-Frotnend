@@ -15,7 +15,7 @@ import {
   Typography,
 } from '@mui/material'
 import { IoChevronDown, IoEye, IoEyeOff } from 'react-icons/io5'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 import kurioLogo from '../../../assets/iconos/kurioLogo.png'
 import registerVideo from '../../../assets/img_auth/register.mp4'
 import { registerWithEmail } from '../../../utils/peticiones'
@@ -59,6 +59,7 @@ function getRegisterErrorMessage(error: unknown): string {
 function RegistrationPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
   const [selectedCountry, setSelectedCountry] = useState<CountryOption>(() => {
     const lang = i18n.language.toLowerCase().startsWith('en') ? 'us' : 'es'
@@ -118,7 +119,16 @@ function RegistrationPage() {
       const redirectPath = localStorage.getItem('kurio_post_login_redirect')
       if (redirectPath) {
         localStorage.removeItem('kurio_post_login_redirect')
-        navigate(redirectPath, { replace: true })
+        const returnTo = localStorage.getItem('kurio_post_login_return_to')
+
+        if (returnTo) {
+          localStorage.removeItem('kurio_post_login_return_to')
+        }
+
+        navigate(redirectPath, {
+          replace: true,
+          state: returnTo ? { returnTo } : location.state,
+        })
       } else {
         navigate('/', { replace: true })
       }

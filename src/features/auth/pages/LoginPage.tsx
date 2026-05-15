@@ -14,7 +14,7 @@ import {
 	TextField,
 	Typography,
 } from '@mui/material'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 import { IoChevronDown, IoEyeOff, IoEye } from 'react-icons/io5'
 import kurioLogo from '../../../assets/iconos/kurioLogo.png'
 import loginVideo from '../../../assets/img_auth/login_2.mp4'
@@ -67,6 +67,7 @@ function getLoginErrorMessage(error: unknown): string {
 
 function LoginPage() {
 	const navigate = useNavigate()
+	const location = useLocation()
 	const { t, i18n } = useTranslation()
 
 	const [countryAnchorEl, setCountryAnchorEl] =
@@ -141,8 +142,16 @@ function LoginPage() {
 
 			if (redirectPath) {
 				localStorage.removeItem('kurio_post_login_redirect')
+				const returnTo = localStorage.getItem('kurio_post_login_return_to')
 
-				navigate(redirectPath, { replace: true })
+				if (returnTo) {
+					localStorage.removeItem('kurio_post_login_return_to')
+				}
+
+				navigate(redirectPath, {
+					replace: true,
+					state: returnTo ? { returnTo } : location.state,
+				})
 			} else {
 				navigate('/', { replace: true })
 			}
@@ -301,7 +310,7 @@ function LoginPage() {
 
 					<Box component="footer" className="auth-page__footer">
 						<Typography className="auth-page__footer-label">
-							Idioma
+							{t('auth.language')}
 						</Typography>
 
 						<IconButton
@@ -316,7 +325,7 @@ function LoginPage() {
 								countryMenuOpen ? 'true' : undefined
 							}
 							aria-haspopup="true"
-							aria-label="Seleccionar idioma"
+							aria-label={t('auth.selectLanguage')}
 						>
 							<Box
 								component="img"

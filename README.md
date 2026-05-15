@@ -1,6 +1,6 @@
 # Kurio Frontend
 
-Interfaz web de Kurio, una plataforma para descubrir, publicar y gestionar modelos 3D. Esta aplicación permite navegar por un feed de publicaciones, ver el detalle de cada modelo, interactuar con otros usuarios y autenticarse mediante Firebase.
+Interfaz del proyecto de fin de grado Kurio, una plataforma para descubrir, publicar y gestionar modelos 3D. Esta aplicación permite navegar por un feed de publicaciones, ver el detalle de cada modelo, interactuar con otros usuarios y autenticarse mediante Firebase.
 
 ## Funcionalidades principales
 

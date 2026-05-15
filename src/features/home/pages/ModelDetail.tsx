@@ -253,7 +253,18 @@ function ModelDetail() {
 
 		try {
 			const comentarioTexto = commentValue.trim()
-			const createdId = await sendComment(postId, user.id, user.idToken, comentarioTexto)
+			const createdIdResponse = await sendComment(postId, user.id, user.idToken, comentarioTexto)
+			const createdId = createdIdResponse.trim() && createdIdResponse.trim() !== '0'
+				? createdIdResponse.trim()
+				: await (async () => {
+					const refreshedComments = await findAllComments(postId)
+					const matchingComment = refreshedComments.find((comment) => comment.idUser === user.id && comment.contenido === comentarioTexto)
+					return matchingComment?.idComment ?? ''
+				})()
+
+			if (!createdId) {
+				throw new Error('No se pudo obtener el id real del comentario recién creado')
+			}
 
 			setPostData((currentPost) => ({
 				...currentPost,
@@ -262,9 +273,12 @@ function ModelDetail() {
 
 			// Get user profile to obtain the real avatar
 			let userAvatar = currentUserAvatar
+			let userDisplayName = currentUserUsername || user.username || 'Usuario'
 			try {
 				const userProfile = await getProfileUserById(user.id)
+				userDisplayName = userProfile.username || userDisplayName
 				userAvatar = userProfile.avatarImg || currentUserAvatar
+				setCurrentUserUsername(userDisplayName)
 			} catch {
 				// Fall back to currentUserAvatar if profile fetch fails
 			}
@@ -282,7 +296,7 @@ function ModelDetail() {
 						hour: '2-digit',
 						minute: '2-digit',
 					}),
-					username: currentUserUsername || user.username || 'Usuario',
+					username: userDisplayName,
 					avatarImg: userAvatar,
 					pending: false,
 					isMine: true,
@@ -477,6 +491,12 @@ function ModelDetail() {
 	}
 
 	const handleDownload = async () => {
+		if (!currentUserId) {
+			localStorage.setItem('kurio_post_login_redirect', window.location.pathname)
+			navigate('/auth/login', { replace: true })
+			return
+		}
+
 		if (!postData.oid) return
 
 		try {

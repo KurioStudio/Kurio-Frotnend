@@ -313,6 +313,17 @@
   box-shadow: none;
 }
 
+.upload-page__publish-button.Mui-disabled,
+.MuiButton-root.upload-page__publish-button.Mui-disabled {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+.upload-page__publish-button.Mui-disabled:hover,
+.MuiButton-root.upload-page__publish-button.Mui-disabled:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .upload-page__feedback-toast {
   min-width: 320px;
   border-radius: 12px;

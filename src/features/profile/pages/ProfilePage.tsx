@@ -179,7 +179,9 @@ function ProfilePage() {
   const handleConfirmUsername = async () => {
     if (!profileUser) return
     if (!usernameDraft.trim()) {
-      setError(t('profile.changeUsername'))
+      const message = t('profile.changeUsername.empty')
+      setError(message)
+      showAlert({ type: 'error', message })
       return
     }
     setUsernameSaving(true)
