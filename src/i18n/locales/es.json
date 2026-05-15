@@ -139,6 +139,7 @@
     "profile.cancel": "Cancelar",
     "profile.unfollow": "Dejar de seguir",
     "profile.editUsername": "Editar nombre de usuario",
+    "profile.changeUsername.empty": "El nombre de usuario no puede estar vacio",
     "profile.editAvatar": "Cambiar avatar",
     "profile.changeUsername.success": "Nombre de usuario actualizado",
     "profile.changeUsername.error": "Error al actualizar nombre de usuario",

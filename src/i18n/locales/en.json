@@ -140,6 +140,7 @@
     "profile.cancel": "Cancel",
     "profile.unfollow": "Unfollow",
     "profile.editUsername": "Edit username",
+    "profile.changeUsername.empty": "The username cannot be empty",
     "profile.editAvatar": "Change avatar",
     "profile.changeUsername.success": "Username updated",
     "profile.changeUsername.error": "Error updating username",
