@@ -180,7 +180,6 @@ function ProfilePage() {
     if (!profileUser) return
     if (!usernameDraft.trim()) {
       const message = t('profile.changeUsername.empty')
-      setError(message)
       showAlert({ type: 'error', message })
       return
     }
