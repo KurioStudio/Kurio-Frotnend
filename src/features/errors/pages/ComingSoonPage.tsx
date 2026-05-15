@@ -1,13 +1,15 @@
 import { Box, Button, Typography } from '@mui/material'
 import { IoArrowBackOutline, IoHomeOutline } from 'react-icons/io5'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Header from '../../../components/home/Header'
 import SidebarMenu from '../../../components/navigation/SidebarMenu'
 
 function ComingSoonPage() {
 	const navigate = useNavigate()
+	const location = useLocation()
 	const { t } = useTranslation()
+	const returnTo = (location.state as { returnTo?: string } | null)?.returnTo
 
 	return (
 		<Box sx={{
@@ -60,7 +62,14 @@ function ComingSoonPage() {
 
 				<Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, width: '100%', maxWidth: 400 }}>
 					<Button
-						onClick={() => navigate(-1)}
+						onClick={() => {
+							if (returnTo) {
+								navigate(returnTo, { replace: true })
+								return
+							}
+
+							navigate(-1)
+						}}
 						sx={{
 							flex: 1,
 							height: 44,

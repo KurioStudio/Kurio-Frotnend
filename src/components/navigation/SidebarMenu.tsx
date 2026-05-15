@@ -105,6 +105,8 @@ function SidebarMenu({
 
 		if (location.pathname === '/subir-modelo') {
 			setSelectedItem('upload')
+		} else if (location.pathname === '/inbox') {
+			setSelectedItem('inbox')
 		} else if (location.search.includes('filter=top')) {
 			setSelectedItem('top')
 		} else if (location.search.includes('filter=all')) {
@@ -146,6 +148,10 @@ function SidebarMenu({
 				localStorage.setItem(
 					'kurio_post_login_redirect',
 					redirectPath
+				)
+				localStorage.setItem(
+					'kurio_post_login_return_to',
+					`${location.pathname}${location.search}`
 				)
 
 				navigate('/auth/login', { replace: true })
