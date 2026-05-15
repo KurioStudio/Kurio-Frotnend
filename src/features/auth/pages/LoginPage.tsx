@@ -310,7 +310,7 @@ function LoginPage() {
 
 					<Box component="footer" className="auth-page__footer">
 						<Typography className="auth-page__footer-label">
-							Idioma
+							{t('auth.language')}
 						</Typography>
 
 						<IconButton
@@ -325,7 +325,7 @@ function LoginPage() {
 								countryMenuOpen ? 'true' : undefined
 							}
 							aria-haspopup="true"
-							aria-label="Seleccionar idioma"
+							aria-label={t('auth.selectLanguage')}
 						>
 							<Box
 								component="img"

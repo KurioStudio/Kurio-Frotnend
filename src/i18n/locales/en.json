@@ -106,6 +106,8 @@
     "auth.login.errors.tooManyRequests": "Too many attempts. Try again later",
     "auth.login.errors.generic": "Could not sign in",
     "auth.login.errors.completeFields": "Please complete email and password",
+    "auth.login.selectLanguage": "Select language",
+    "auth.language":"Language",
 
     "auth.register.title": "Register",
     "auth.register.subtitle": "Create your account",
