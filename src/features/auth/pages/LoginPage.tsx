@@ -4,6 +4,7 @@ import {
 	Alert,
 	Box,
 	Button,
+	ButtonBase,
 	CircularProgress,
 	IconButton,
 	InputAdornment,
@@ -72,7 +73,10 @@ function LoginPage() {
 		useState<null | HTMLElement>(null)
 
 	const [selectedCountry, setSelectedCountry] =
-		useState<CountryOption>(countries[0])
+		useState<CountryOption>(() => {
+			const lang = i18n.language.toLowerCase().startsWith('en') ? 'us' : 'es'
+			return countries.find(c => c.code === lang) || countries[0]
+		})
 
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
@@ -153,7 +157,11 @@ function LoginPage() {
 		<Box component="main" className="auth-page">
 			<Box className="auth-page__shell">
 				<Box component="section" className="auth-page__panel">
-					<Box className="auth-page__brand">
+					<ButtonBase
+						className="auth-page__brand"
+						onClick={() => navigate('/')}
+						sx={{ textDecoration: 'none', cursor: 'pointer', width: 'fit-content', alignSelf: 'flex-start' }}
+					>
 						<Box
 							component="img"
 							src={kurioLogo}
@@ -164,7 +172,7 @@ function LoginPage() {
 						<Typography className="auth-page__brand-name">
 							Kurio
 						</Typography>
-					</Box>
+					</ButtonBase>
 
 					<Box className="auth-page__content">
 						<Typography className="auth-page__title">
@@ -246,7 +254,7 @@ function LoginPage() {
 							/>
 
 							{loginError ? (
-								<Box sx={{ mt: 0.4 }}>
+								<Box sx={{ mt: 1 }}>
 									<Alert severity="error">
 										{loginError}
 									</Alert>

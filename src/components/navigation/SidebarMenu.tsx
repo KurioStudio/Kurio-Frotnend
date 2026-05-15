@@ -79,6 +79,7 @@ const getDefaultItems = (t: any): SidebarItem[] => [
 		id: 'inbox',
 		label: t('sidebar.inbox'),
 		icon: <IoMailOutline />,
+		path: '/inbox',
 	},
 ]
 
@@ -204,7 +205,7 @@ function SidebarMenu({
 
 			<Box className="sidebar-menu__footer">
 				<Typography className="sidebar-menu__footer-text">
-					Version 1.0.0
+					{t('sidebar.footer.version')} 1.0.5
 				</Typography>
 			</Box>
 		</Box>

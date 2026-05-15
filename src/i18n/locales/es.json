@@ -1,5 +1,5 @@
 {
-    "profile.viewProfile": "Ver publicaciones",
+    "profile.viewProfile": "Cuenta creada en",
     "profile.editProfile": "Editar perfil",
     "profile.follow": "Seguir",
     "profile.followers": "Seguidores",
@@ -40,6 +40,13 @@
     "model.follow": "Seguir",
     
     "errors.notFound": "Página no encontrada",
+    "errors.notFound.description": "La página que buscas no existe o ha sido movida. No te preocupes, podemos ayudarte a encontrar lo que necesitas.",
+    "errors.notFound.back": "Atrás",
+    "errors.notFound.home": "Ir al inicio",
+    "errors.comingSoon.title": "Próximamente",
+    "errors.comingSoon.description": "Esta función está en desarrollo. ¡Vuelve pronto para ver las novedades!",
+    "errors.comingSoon.back": "Atrás",
+    "errors.comingSoon.home": "Ir al inicio",
     "errors.goHome": "Volver al inicio",
     "search.placeholder": "Buscar",
 
@@ -140,6 +147,20 @@
     "profile.unfollow.success": "Dejaste de seguir al usuario",
     "profile.unfollow.error": "Error al dejar de seguir",
 
+    "profile.deletePost.success": "Publicación eliminada correctamente",
+    "profile.deletePost.error": "No se pudo eliminar la publicación",
+
+    "profile.deletePost.confirmTitle": "Eliminar publicación",
+    "profile.deletePost.confirmText": "¿Estás seguro de que quieres eliminar el post \"{{title}}\"?",
+    "profile.deletePost.confirmButton": "Eliminar",
+
+    "post.comment.delete.success": "Comentario eliminado correctamente",
+    "post.comment.delete.error": "No se pudo eliminar el comentario",
+    "post.comment.delete.confirmTitle": "Eliminar comentario",
+    "post.comment.delete.confirmText": "¿Seguro que quieres eliminar este comentario?",
+
+    "errors.generic": "Ha ocurrido un error",
+
     "model.commentPlaceholder": "Escribe tu comentario...",
     "model.unfollow": "Dejar de seguir",
 
@@ -149,5 +170,6 @@
     "sidebar.top": "Top",
     "sidebar.recent": "Recientes",
     "sidebar.followed": "Seguidos",
-    "sidebar.saved": "Guardados"
+    "sidebar.saved": "Guardados",
+    "sidebar.footer.version":"Versión"
 }

@@ -1,8 +1,8 @@
 import { useState, type FormEvent, type MouseEvent } from 'react'
 import { FirebaseError } from 'firebase/app'
-import { Alert, Box, Button, CircularProgress, IconButton, Link as MuiLink, Menu, MenuItem, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, ButtonBase, CircularProgress, IconButton, Link as MuiLink, Menu, MenuItem, TextField, Typography } from '@mui/material'
 import { IoChevronDown } from 'react-icons/io5'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import kurioLogo from '../../../assets/iconos/kurioLogo.png'
 import forgotVideo from '../../../assets/img_auth/forgotpass.mp4'
 import { sendForgotPasswordEmail } from '../../../utils/peticiones'
@@ -45,8 +45,12 @@ function getForgotErrorMessage(error: unknown): string {
 
 function ForgotPasswordPage() {
 	const { t, i18n } = useTranslation()
+	const navigate = useNavigate()
 	const [countryAnchorEl, setCountryAnchorEl] = useState<null | HTMLElement>(null)
-	const [selectedCountry, setSelectedCountry] = useState<CountryOption>(countries[0])
+	const [selectedCountry, setSelectedCountry] = useState<CountryOption>(() => {
+		const lang = i18n.language.toLowerCase().startsWith('en') ? 'us' : 'es'
+		return countries.find(c => c.code === lang) || countries[0]
+	})
 	const [email, setEmail] = useState('')
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [forgotError, setForgotError] = useState<string | null>(null)
@@ -94,32 +98,35 @@ function ForgotPasswordPage() {
 		<Box component="main" className="auth-page">
 			<Box className="auth-page__shell">
 				<Box component="section" className="auth-page__panel">
-					<Box className="auth-page__brand">
+					<ButtonBase
+						className="auth-page__brand"
+						onClick={() => navigate('/')}
+						sx={{ textDecoration: 'none', cursor: 'pointer', width: 'fit-content', alignSelf: 'flex-start' }}
+					>
 						<Box component="img" src={kurioLogo} alt="Kurio" className="auth-page__brand-logo" />
 						<Typography className="auth-page__brand-name">Kurio</Typography>
-					</Box>
+					</ButtonBase>
 
 					<Box className="auth-page__content auth-page__content--forgot">
 						<Typography className="auth-page__title auth-page__title--forgot">{t('auth.forgotPassword.title')}</Typography>
 						<Typography className="auth-page__subtitle auth-page__subtitle--forgot">{t('auth.forgotPassword.subtitle')}</Typography>
 
 						<Box component="form" className="auth-page__form" onSubmit={handleSubmit} autoComplete="off">
-							{forgotError ? <Alert severity="error">{forgotError}</Alert> : null}
-							{forgotSuccess ? <Alert severity="success">{forgotSuccess}</Alert> : null}
+						<TextField
+							size="small"
+							fullWidth
+							variant="outlined"
+							label={t('auth.forgotPassword.email')}
+							className="auth-field"
+							value={email}
+							onChange={(event) => setEmail(event.target.value)}
+							disabled={isSubmitting}
+							placeholder={t('auth.forgotPassword.placeholderEmail')}
+							autoComplete="off"
+						/>
 
-							<TextField
-								size="small"
-								fullWidth
-								variant="outlined"
-								label={t('auth.forgotPassword.email')}
-								className="auth-field"
-								value={email}
-								onChange={(event) => setEmail(event.target.value)}
-								disabled={isSubmitting}
-								placeholder={t('auth.forgotPassword.placeholderEmail')}
-								autoComplete="off"
-							/>
-
+						{forgotError ? <Alert severity="error">{forgotError}</Alert> : null}
+						{forgotSuccess ? <Alert severity="success">{forgotSuccess}</Alert> : null}
 							<Button type="submit" variant="contained" className="auth-page__submit" disabled={isSubmitting}>
 								{isSubmitting ? <CircularProgress size={20} color="inherit" /> : t('auth.forgotPassword.submit')}
 							</Button>
